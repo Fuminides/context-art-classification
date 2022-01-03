@@ -68,7 +68,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            target[j] = target[j].cuda(async=True)
+            target[j] = target[j].cuda(non_blocking=True)
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
@@ -119,7 +119,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            target[j] = target[j].cuda(async=True)
+            target[j] = target[j].cuda(non_blocking=True)
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Predictions
@@ -279,7 +279,7 @@ def train_knowledgegraph_classifier(args_dict):
                 'valtrack': pat_track,
                 'curr_val': accval,
             })
-        print '** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track)
+        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 
 def train_multitask_classifier(args_dict):
@@ -366,7 +366,7 @@ def train_multitask_classifier(args_dict):
                 'curr_val': accval,
             })
 
-        print '** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track)
+        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 
 def run_train(args_dict):
