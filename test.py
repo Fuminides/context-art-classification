@@ -131,7 +131,7 @@ def test_multitask(args_dict):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            target[j] = target[j].cuda(async=True)
+            target[j] = target[j].cuda(non_blocking=True)
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
