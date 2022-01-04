@@ -12,7 +12,7 @@ def save_obj(obj, filename):
 
 def load_obj(filename):
     f = open(filename, 'rb')
-    obj = pickle.load(f)
+    obj = pickle.load(f, encoding='latin1')
     f.close()
     return obj
 
