@@ -99,7 +99,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch):
             epoch, batch_idx, len(train_loader), 100. * batch_idx / len(train_loader), loss=losses))
 
     # Plot
-    plotter.plot('closs', 'train', 'Class Loss', epoch, losses.avg)
+    #plotter.plot('closs', 'train', 'Class Loss', epoch, losses.avg)
 
 
 def valEpoch(args_dict, val_loader, model, criterion, epoch):
@@ -184,8 +184,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
     # Print validation info
     print('Validation set: Average loss: {:.4f}\t'
           'Accuracy {acc}'.format(losses.avg, acc=acc))
-    plotter.plot('closs', 'val', 'Class Loss', epoch, losses.avg)
-    plotter.plot('acc', 'val', 'Class Accuracy', epoch, acc)
+    #plotter.plot('closs', 'val', 'Class Loss', epoch, losses.avg)
+    #plotter.plot('acc', 'val', 'Class Accuracy', epoch, acc)
 
     # Return acc
     return acc
@@ -377,8 +377,8 @@ def run_train(args_dict):
         torch.cuda.manual_seed(args_dict.seed)
 
     # Plots
-    global plotter
-    plotter = utils.VisdomLinePlotter(env_name=args_dict.name)
+    #global plotter
+    #plotter = utils.VisdomLinePlotter(env_name=args_dict.name)
 
     if args_dict.model == 'mtl':
         train_multitask_classifier(args_dict)

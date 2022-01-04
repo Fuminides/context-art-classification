@@ -38,7 +38,7 @@ class AverageMeter(object):
 class VisdomLinePlotter(object):
     """Plots to Visdom"""
     def __init__(self, env_name='main'):
-        self.viz = Visdom()
+        self.viz = None #Visdom()
         self.env = env_name
         self.plots = {}
     def plot(self, var_name, split_name, title_name, x, y):
