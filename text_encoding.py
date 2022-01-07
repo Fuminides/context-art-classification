@@ -9,22 +9,22 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 def bow_load_train_text_corpus(semart_path='C:\\Users\\javier.fumanal\\Documents\SemArt\\', k=50):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
-    semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
+    #semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 
     transformer = CountVectorizer(stop_words='english')
     transformer = transformer.fit(semart_train['DESCRIPTION'])
 
     coded_semart_train = transformer.transform(semart_train['DESCRIPTION'])
-    coded_semart_test = transformer.transform(semart_test['DESCRIPTION'])
+    #coded_semart_test = transformer.transform(semart_test['DESCRIPTION'])
 
     freqs = np.asarray(coded_semart_train.sum(axis=0))
     sorted_freqs = np.argsort(freqs)
     chosen_words = sorted_freqs[0][::-1][0:k]
 
     chosen_coded_semart_train = coded_semart_train[:, chosen_words]
-    chosen_coded_semart_test = coded_semart_test[:, chosen_words]
+    #chosen_coded_semart_test = coded_semart_test[:, chosen_words]
 
-    return chosen_coded_semart_train, coded_semart_test
+    return chosen_coded_semart_train
 
 def fcm_coded_context(chosen_coded_semart):
     from skfuzzy.cluster import cmeans
