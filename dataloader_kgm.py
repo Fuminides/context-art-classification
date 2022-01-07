@@ -8,7 +8,7 @@ from gensim.models import Word2Vec
 
 class ArtDatasetKGM(data.Dataset):
 
-    def __init__(self, args_dict, set, att2i, att_name, transform = None):
+    def __init__(self, args_dict, set, att2i, att_name, transform = None, embedds='graph'):
         """
         Args:
             args_dict: parameters dictionary
@@ -20,12 +20,17 @@ class ArtDatasetKGM(data.Dataset):
 
         self.args_dict = args_dict
         self.set = set
-
+        self.embedds = embedds
         # Load Data + Graph Embeddings
         self.graphEmb = []
         if self.set == 'train':
-            textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
-            self.graphEm = Word2Vec.load(os.path.join(args_dict.dir_data, args_dict.graph_embs))
+            if embedds == 'graph':
+                textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
+                self.graphEm = Word2Vec.load(os.path.join(args_dict.dir_data, args_dict.graph_embs))
+            else:
+                import text_encoding
+                self.chosen_coded_semart_train, _ = text_encoding.bow_load_train_text_corpus(k=5)
+
         elif self.set == 'val':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
         elif self.set == 'test':
@@ -74,8 +79,14 @@ class ArtDatasetKGM(data.Dataset):
 
         # Graph embedding (only training samples)
         if self.set == 'train':
-            graph_emb = self.graphEm.wv[self.imageurls[index]]
+            if self.embedds == 'graph':
+                graph_emb = self.graphEm.wv[self.imageurls[index]]
+            else:
+                graph_emb = self.chosen_coded_semart_train[index, :]
+
             graph_emb = torch.FloatTensor(graph_emb)
             return [image], [idclass, graph_emb]
+
+
         else:
             return [image], [idclass]
