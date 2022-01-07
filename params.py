@@ -38,6 +38,7 @@ def get_parser():
     parser.add_argument('--graph_embs', default='semart-artgraph-node2vec.model')
     parser.add_argument('--lambda_c', default=0.9, type=float)
     parser.add_argument('--lambda_e', default=0.1, type=float)
+    parser.add_argument('--embedds', default='graph', type=str)
 
     # Test
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
