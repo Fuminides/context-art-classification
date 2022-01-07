@@ -29,7 +29,7 @@ class ArtDatasetKGM(data.Dataset):
                 self.graphEm = Word2Vec.load(os.path.join(args_dict.dir_data, args_dict.graph_embs))
             else:
                 import text_encoding
-                self.chosen_coded_semart_train, _ = text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, k=5)
+                self.chosen_coded_semart_train, _ = text_encoding.fcm_coded_context(text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, k=5))
 
         elif self.set == 'val':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
@@ -86,6 +86,7 @@ class ArtDatasetKGM(data.Dataset):
                 graph_emb = self.chosen_coded_semart_train[index, :]
 
             graph_emb = torch.FloatTensor(graph_emb.toarray())
+
             return [image], [idclass, graph_emb]
 
 
