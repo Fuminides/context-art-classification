@@ -85,7 +85,7 @@ class ArtDatasetKGM(data.Dataset):
             else:
                 graph_emb = self.chosen_coded_semart_train[index, :]
 
-            graph_emb = torch.FloatTensor(graph_emb)
+            graph_emb = torch.FloatTensor(graph_emb.toarray())
             return [image], [idclass, graph_emb]
 
 
