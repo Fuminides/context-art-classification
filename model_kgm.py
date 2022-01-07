@@ -5,7 +5,7 @@ from torchvision import models
 class KGM(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
 
-    def __init__(self, num_class):
+    def __init__(self, num_class, end_dim=128):
         super(KGM, self).__init__()
 
         # Load pre-trained visual model
@@ -16,7 +16,7 @@ class KGM(nn.Module):
         self.classifier = nn.Sequential(nn.Linear(2048, num_class))
 
         # Graph space encoder
-        self.nodeEmb = nn.Sequential(nn.Linear(2048, 128))
+        self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
 
 
     def forward(self, img):

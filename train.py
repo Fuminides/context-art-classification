@@ -14,6 +14,7 @@ from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 
+N_CLUSTERS = 15
 
 def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
     print('Att type\t %d classes' % len(type2idx))
@@ -205,7 +206,11 @@ def train_knowledgegraph_classifier(args_dict):
         att2i = author2idx
 
     # Define model
-    model = KGM(len(att2i))
+    if args_dict.embedds == 'graph':
+        model = KGM(len(att2i))
+    else:
+        model = KGM(len(att2i), N_CLUSTERS)
+
     if args_dict.use_gpu:
         model.cuda()
 
