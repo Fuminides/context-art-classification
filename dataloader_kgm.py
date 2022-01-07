@@ -57,7 +57,7 @@ class ArtDatasetKGM(data.Dataset):
 
     def class_from_name(self, vocab, name):
 
-        if vocab.has_key(name):
+        if name in vocab:
             idclass= vocab[name]
         else:
             idclass = vocab['UNK']
