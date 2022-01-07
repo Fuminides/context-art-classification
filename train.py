@@ -209,7 +209,7 @@ def train_knowledgegraph_classifier(args_dict):
     if args_dict.embedds == 'graph':
         model = KGM(len(att2i))
     else:
-        model = KGM(len(att2i), N_CLUSTERS)
+        model = KGM(len(att2i), end_dim=N_CLUSTERS)
 
     if args_dict.use_gpu:
         model.cuda()
