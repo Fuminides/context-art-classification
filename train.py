@@ -239,12 +239,12 @@ def train_knowledgegraph_classifier(args_dict):
 
     # Dataloaders for training and validation
     train_loader = torch.utils.data.DataLoader(
-        ArtDatasetKGM(args_dict, set = 'train', att2i=att2i, att_name=args_dict.att, transform = train_transforms, embedds=args_dict.embbeds),
+        ArtDatasetKGM(args_dict, set = 'train', att2i=att2i, att_name=args_dict.att, transform = train_transforms, embedds=args_dict.embedds),
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
     print('Training loader with %d samples' % train_loader.__len__())
 
     val_loader = torch.utils.data.DataLoader(
-        ArtDatasetKGM(args_dict, set = 'val', att2i=att2i, att_name=args_dict.att, transform = val_transforms, embedds=args_dict.embbeds),
+        ArtDatasetKGM(args_dict, set = 'val', att2i=att2i, att_name=args_dict.att, transform = val_transforms, embedds=args_dict.embedds),
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
     print('Validation loader with %d samples' % val_loader.__len__())
 
