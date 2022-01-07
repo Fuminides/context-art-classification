@@ -24,8 +24,8 @@ class ArtDatasetKGM(data.Dataset):
         # Load Data + Graph Embeddings
         self.graphEmb = []
         if self.set == 'train':
+            textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
             if embedds == 'graph':
-                textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
                 self.graphEm = Word2Vec.load(os.path.join(args_dict.dir_data, args_dict.graph_embs))
             else:
                 import text_encoding
@@ -35,6 +35,7 @@ class ArtDatasetKGM(data.Dataset):
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
         elif self.set == 'test':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
+
         df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
 
         self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
