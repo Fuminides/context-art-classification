@@ -115,12 +115,17 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
-            input_var.append(torch.autograd.Variable(input[j]).cuda())
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
 
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            target[j] = target[j].cuda(non_blocking=True)
+            if torch.cuda.is_available():
+                target[j] = target[j].cuda(non_blocking=True)
+
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Predictions
@@ -211,11 +216,15 @@ def train_knowledgegraph_classifier(args_dict):
     else:
         model = KGM(len(att2i), end_dim=N_CLUSTERS)
 
-    if args_dict.use_gpu:
+    if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
 
     # Loss and optimizer
-    class_loss = nn.CrossEntropyLoss().cuda()
+    if torch.cuda.is_available():
+        class_loss = nn.CrossEntropyLoss().cuda()
+    else:
+        class_loss = nn.CrossEntropyLoss()
+
     encoder_loss = nn.SmoothL1Loss()
     loss = [class_loss, encoder_loss]
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())), lr=args_dict.lr, momentum=args_dict.momentum)
@@ -296,11 +305,15 @@ def train_multitask_classifier(args_dict):
 
     # Define model
     model = MTL(num_classes)
-    if args_dict.use_gpu:
+    if torch.cuda.is_available():
         model.cuda()
 
     # Loss and optimizer
-    class_loss = nn.CrossEntropyLoss().cuda()
+    if torch.cuda.is_available():
+        class_loss = nn.CrossEntropyLoss().cuda()
+    else:
+        class_loss = nn.CrossEntropyLoss()
+
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
                                 momentum=args_dict.momentum)
@@ -378,7 +391,7 @@ def run_train(args_dict):
 
     # Set seed for reproducibility
     torch.manual_seed(args_dict.seed)
-    if args_dict.use_gpu:
+    if torch.cuda.is_available():
         torch.cuda.manual_seed(args_dict.seed)
 
     # Plots

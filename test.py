@@ -25,7 +25,7 @@ def test_knowledgegraph(args_dict):
         att2i = author2idx
 
     model = KGM(len(att2i))
-    if args_dict.use_gpu:
+    if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
 
     # Load best model
@@ -46,9 +46,15 @@ def test_knowledgegraph(args_dict):
     ])
 
     # Data Loaders for test
-    test_loader = torch.utils.data.DataLoader(
-        ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms),
-        batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+    if torch.cuda.is_available():
+        test_loader = torch.utils.data.DataLoader(
+            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms),
+            batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+    else:
+        test_loader = torch.utils.data.DataLoader(
+            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms),
+            batch_size=args_dict.batch_size, shuffle=False, pin_memory=False,
+            num_workers=args_dict.workers)
 
     # Switch to evaluation mode & compute test samples embeddings
     model.eval()
@@ -57,12 +63,18 @@ def test_knowledgegraph(args_dict):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
-            input_var.append(torch.autograd.Variable(input[j]).cuda())
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
 
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            target[j] = target[j].cuda(non_blocking=True)
+            if torch.cuda.is_available():
+                target[j] = target[j].cuda(non_blocking=True)
+
+
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
@@ -94,7 +106,7 @@ def test_multitask(args_dict):
     att2i = [type2idx, school2idx, time2idx, author2idx]
 
     model = MTL(num_classes)
-    if args_dict.use_gpu:
+    if torch.cuda.is_available():
         model.cuda()
 
     # Load best model
@@ -115,9 +127,15 @@ def test_multitask(args_dict):
     ])
 
     # Data Loaders for test
-    test_loader = torch.utils.data.DataLoader(
-        ArtDatasetMTL(args_dict, set = 'test', att2i=att2i, transform = test_transforms),
-        batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+    if torch.cuda.is_available():
+        test_loader = torch.utils.data.DataLoader(
+            ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=test_transforms),
+            batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+    else:
+        test_loader = torch.utils.data.DataLoader(
+            ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=test_transforms),
+            batch_size=args_dict.batch_size, shuffle=False, pin_memory=False,
+            num_workers=args_dict.workers)
 
     # Switch to evaluation mode & compute test
     model.eval()
@@ -126,12 +144,17 @@ def test_multitask(args_dict):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
-            input_var.append(torch.autograd.Variable(input[j]).cuda())
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
 
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            target[j] = target[j].cuda(non_blocking=True)
+            if torch.cuda.is_available():
+                target[j] = target[j].cuda(non_blocking=True)
+
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
