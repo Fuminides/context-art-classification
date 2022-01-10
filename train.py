@@ -23,11 +23,11 @@ def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
     print('Att author\t %d classes' % len(author2idx))
 
 
-def save_model(args_dict, state):
+def save_model(args_dict, state, type='school', train_feature='kgm'):
     directory = args_dict.dir_model + "%s/"%(args_dict.name)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = directory + 'best_model.pth.tar'
+    filename = directory + train_feature + '_' + type + '_best_model.pth.tar'
     torch.save(state, filename)
 
 
@@ -297,7 +297,7 @@ def train_knowledgegraph_classifier(args_dict):
                 'optimizer': optimizer.state_dict(),
                 'valtrack': pat_track,
                 'curr_val': accval,
-            })
+            }, type=args_dict.att, train_feature=args_dict.embedds)
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 
@@ -387,7 +387,7 @@ def train_multitask_classifier(args_dict):
                 'optimizer': optimizer.state_dict(),
                 'valtrack': pat_track,
                 'curr_val': accval,
-            })
+            }, type=args_dict.att, train_feature=args_dict.embedds)
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
