@@ -3,6 +3,7 @@
 #$ -q cal.q
 #$ -cwd
 #$ -t 1
-#$ -e school_error.txt
-#$ -o school_out.txt
+#$ -e salidas/school_error.txt
+#$ -o salidas/school_out.txt
+source activate py365
 python main.py --mode train --model kgm --att time --dir_dataset "../SemArt/" --batch_size 126 --nepochs 300 --embedds fcm
