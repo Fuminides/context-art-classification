@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 
-def bow_load_train_text_corpus(semart_path='C:\\Users\\javier.fumanal\\Documents\SemArt\\', k=50):
+def bow_load_train_text_corpus(semart_path='../SemArt/', k=50):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
     #semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 

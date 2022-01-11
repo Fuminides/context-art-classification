@@ -37,6 +37,7 @@ class ArtDatasetKGM(data.Dataset):
         elif self.set == 'test':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
 
+
         df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
 
         self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
@@ -51,7 +52,6 @@ class ArtDatasetKGM(data.Dataset):
             self.att = list(df['TIMEFRAME'])
         elif att_name == 'author':
             self.att = list(df['AUTHOR'])
-
 
     def __len__(self):
         return len(self.imageurls)
