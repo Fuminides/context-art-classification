@@ -24,7 +24,12 @@ def test_knowledgegraph(args_dict):
     elif args_dict.att == 'author':
         att2i = author2idx
 
-    model = KGM(len(att2i))
+    # Define model
+    if args_dict.embedds == 'graph':
+        model = KGM(len(att2i))
+    else:
+        model = KGM(len(att2i), end_dim=15)
+
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
 
@@ -74,7 +79,6 @@ def test_knowledgegraph(args_dict):
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
 
-
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
@@ -89,9 +93,9 @@ def test_knowledgegraph(args_dict):
             label = target[0].cpu().numpy()
             scores = conf.data.cpu().numpy()
         else:
-            out = np.concatenate((out,predicted.data.cpu().numpy()),axis=0)
-            label = np.concatenate((label,target[0].cpu().numpy()),axis=0)
-            scores = np.concatenate((scores, conf.data.cpu().numpy()),axis=0)
+            out = np.concatenate((out,predicted.data.cpu().numpy()), axis=0)
+            label = np.concatenate((label,target[0].cpu().numpy()), axis=0)
+            scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
 
     # Compute Accuracy
     acc = np.sum(out == label)/len(out)
