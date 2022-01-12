@@ -257,15 +257,17 @@ def train_knowledgegraph_classifier(args_dict):
     ])
 
     # Dataloaders for training and validation
+    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
+    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
     train_loader = torch.utils.data.DataLoader(
-        ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, transform=train_transforms, embedds=args_dict.embedds),
+        semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % train_loader.__len__())
+    print('Training loader with %d samples' % semart_train_loader.__len__())
 
     val_loader = torch.utils.data.DataLoader(
-        ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, embedds=args_dict.embedds),
+        semart_val_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % val_loader.__len__())
+    print('Validation loader with %d samples' % semart_val_loader.__len__())
 
     # Now, let's start the training process!
     print('Start training KGM model...')
@@ -345,16 +347,19 @@ def train_multitask_classifier(args_dict):
                              std=[0.229, 0.224, 0.225])
     ])
 
+
     # Dataloaders for training and validation
+    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
+    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
     train_loader = torch.utils.data.DataLoader(
-        ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms),
+        semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % train_loader.__len__())
+    print('Training loader with %d samples' % semart_train_loader.__len__())
 
     val_loader = torch.utils.data.DataLoader(
-        ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms),
+        semart_val_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % val_loader.__len__())
+    print('Validation loader with %d samples' % semart_val_loader.__len__())
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
