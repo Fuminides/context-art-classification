@@ -1,5 +1,5 @@
 import pickle
-from visdom import Visdom
+#from visdom import Visdom
 import numpy as np
 
 
