@@ -40,6 +40,10 @@ def get_parser():
     parser.add_argument('--lambda_e', default=0.1, type=float)
     parser.add_argument('--embedds', default='graph', type=str)
 
+    # FCM model
+    parser.add_argument('--k', default=100, type=int)
+    parser.add_argument('--clusters', default=150, type=int)
+
     # Test
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
     parser.add_argument('--no_cuda', action='store_true')

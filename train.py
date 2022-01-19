@@ -14,7 +14,7 @@ from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 
-N_CLUSTERS = 15
+
 
 def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
     print('Att type\t %d classes' % len(type2idx))
@@ -214,6 +214,7 @@ def train_knowledgegraph_classifier(args_dict):
         att2i = time2idx
     elif args_dict.att == 'author':
         att2i = author2idx
+    N_CLUSTERS = args_dict.clusters
 
     # Define model
     if args_dict.embedds == 'graph':
@@ -255,10 +256,10 @@ def train_knowledgegraph_classifier(args_dict):
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
-
+    k = args_dict.k
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, transform=train_transforms, embedds=args_dict.embedds)
-    semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, embedds=args_dict.embedds)
+    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, transform=train_transforms, embedds=args_dict.embedds, clusters=N_CLUSTERS, k=k)
+    semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, embedds=args_dict.embedds, clusters=N_CLUSTERS, k=k)
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
