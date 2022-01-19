@@ -8,7 +8,7 @@ from gensim.models import Word2Vec
 
 class ArtDatasetKGM(data.Dataset):
 
-    def __init__(self, args_dict, set, att2i, att_name, transform = None, embedds='graph'):
+    def __init__(self, args_dict, set, att2i, att_name, transform=None, embedds='graph', clusters=15, k=100):
         """
         Args:
             args_dict: parameters dictionary
@@ -30,7 +30,7 @@ class ArtDatasetKGM(data.Dataset):
             else:
                 import text_encoding
                 self.chosen_coded_semart_train = text_encoding.fcm_coded_context(
-                    text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, k=5))
+                    text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, k=k), clusters=clusters)
 
         elif self.set == 'val':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
