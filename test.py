@@ -28,7 +28,7 @@ def test_knowledgegraph(args_dict):
     if args_dict.embedds == 'graph':
         model = KGM(len(att2i))
     else:
-        model = KGM(len(att2i), end_dim=15)
+        model = KGM(len(att2i), end_dim=args_dict.clusters)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
