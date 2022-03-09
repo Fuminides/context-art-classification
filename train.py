@@ -8,6 +8,7 @@ from torchvision import transforms
 import numpy as np
 
 import utils
+#from model_gcn import GCN
 from model_mtl import MTL
 from model_kgm import KGM
 from dataloader_mtl import ArtDatasetMTL

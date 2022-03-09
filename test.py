@@ -34,12 +34,17 @@ def test_knowledgegraph(args_dict):
         model.cuda()
 
     # Load best model
-    print("=> loading checkpoint '{}'".format(args_dict.model_path))
-    checkpoint = torch.load(args_dict.model_path)
-    args_dict.start_epoch = checkpoint['epoch']
-    model.load_state_dict(checkpoint['state_dict'])
-    print("=> loaded checkpoint '{}' (epoch {})"
-          .format(args_dict.model_path, checkpoint['epoch']))
+    try:
+        print("=> loading checkpoint '{}'".format(args_dict.model_path))
+        checkpoint = torch.load(args_dict.model_path)
+        args_dict.start_epoch = checkpoint['epoch']
+        model.load_state_dict(checkpoint['state_dict'])
+        print("=> loaded checkpoint '{}' (epoch {})"
+              .format(args_dict.model_path, checkpoint['epoch']))
+    except RuntimeError:
+        print('No checkpoint available')
+        args_dict.start_epoch = 0
+
 
     # Data transformation for test
     test_transforms = transforms.Compose([
