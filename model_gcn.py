@@ -4,9 +4,12 @@ from pygcn.layers import GraphConvolution
 
 from torchvision import models
 
+NODE2VEC_OUTPUT = 1028
+VISUALENCONDING_SIZE = 1028
+
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
-
+    
     def __init__(self, num_class, adj, dropout=True):
         super(GCN, self).__init__()
 
@@ -14,13 +17,19 @@ class GCN(nn.Module):
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
         self.adj = adj
-
+        self.final_embedding_size = 128
+        self.hidden_size = NODE2VEC_OUTPUT / 2
+        
+        # Autoencoders for visual features
+        if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
+            visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT)
+            # visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE)
+         
         #GCN model
-        self.gc1 = GraphConvolution(2048, 1028)
-        self.gc2 = GraphConvolution(1028, self.final_embedding_size)
+        self.gc1 = GraphConvolution(NODE2VEC_OUTPUT, self.hidden_size)
+        self.gc2 = GraphConvolution(self.hidden_size, self.final_embedding_size)
         self.dropout = dropout
 
-        self.final_embedding_size = 128
         # Classifiers
         self.class_type = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[0]))
         self.class_school = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[1]))
@@ -32,16 +41,21 @@ class GCN(nn.Module):
         x = F.dropout(x, self.dropout, training=self.training)
         x = self.gc2(x, self.adj)
 
-        return F.log_softmax(x, dim=1)
+        return x # F.log_softmax(x, dim=1) # Softmax needed?
 
     def forward(self, img):
 
         visual_emb = self.resnet(img)
-
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
-        out_type = self.class_type(visual_emb)
-        out_school = self.class_school(visual_emb)
-        out_time = self.class_tf(visual_emb)
-        out_author = self.class_author(visual_emb)
+        
+        if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
+            visual_emb = visual_autoencoder_l1(visual_emb)
+            
+        graph_emb = self._GCN_forward(visual_emb)
+        
+        out_type = self.class_type(graph_emb)
+        out_school = self.class_school(graph_emb)
+        out_time = self.class_tf(graph_emb)
+        out_author = self.class_author(graph_emb)
 
         return [out_type, out_school, out_time, out_author]

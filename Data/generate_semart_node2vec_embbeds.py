@@ -25,6 +25,7 @@ def generate_kg_semart(semart_path=r'/home/javier/Documents/GitHub/SemArt'):
              
              for idx_nz in indexes_nonzero:
                  coo_matrix_fill[key_dict[element], idx_nz] = 1
+                 coo_matrix_fill[idx_nz, key_dict[element]] = 1
         
         return coo_matrix_fill
             
