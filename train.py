@@ -409,10 +409,11 @@ def train_gcn_classifier(args_dict):
     att2i = [type2idx, school2idx, time2idx, author2idx]
 
     # Load semart data
-    semart_edge_list = pd.read_csv('Data/kg_semart.csv')
-    n_samples = semart_edge_list.max().max()
+    semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
+    n_samples = semart_edge_list.max().max()+1
     
     adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
+
     for row in range(semart_edge_list.shape[0]):
         emisor = semart_edge_list.iloc[row, 0]
         receptor = semart_edge_list.iloc[row, 1]
@@ -471,7 +472,7 @@ def train_gcn_classifier(args_dict):
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
-    print('Start training MTL model...')
+    print('Start training GCN model...')
     pat_track = 0
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 

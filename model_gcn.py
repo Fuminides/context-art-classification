@@ -18,11 +18,11 @@ class GCN(nn.Module):
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
         self.adj = adj
         self.final_embedding_size = 128
-        self.hidden_size = NODE2VEC_OUTPUT / 2
+        self.hidden_size = int(NODE2VEC_OUTPUT / 2)
         
         # Autoencoders for visual features
         if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT)
+            visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT))
             # visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE)
          
         #GCN model
