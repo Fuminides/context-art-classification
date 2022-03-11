@@ -1,11 +1,12 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from pygcn.layers import GraphConvolution
+from scipy.sparse import coo_matrix
 
 from torchvision import models
 
 NODE2VEC_OUTPUT = 1028
-VISUALENCONDING_SIZE = 1028
+VISUALENCONDING_SIZE = 2048
 
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
@@ -16,13 +17,25 @@ class GCN(nn.Module):
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-        self.adj = adj
+        coo = coo_matrix(adj)
+        values = coo.data
+        indices = np.vstack((coo.row, coo.col))
+
+        i = torch.LongTensor(indices)
+        v = torch.FloatTensor(values)
+        shape = coo.shape
+        self.adj = torch.sparse.FloatTensor(i, v, torch.Size(shape))
+
+        if torch.cuda.is_available():
+                self.adj = self.adj.cuda(non_blocking=True)
+        
+        
         self.final_embedding_size = 128
         self.hidden_size = int(NODE2VEC_OUTPUT / 2)
         
         # Autoencoders for visual features
         if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT))
+            self.visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT))
             # visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE)
          
         #GCN model
@@ -49,7 +62,7 @@ class GCN(nn.Module):
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         
         if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            visual_emb = visual_autoencoder_l1(visual_emb)
+            visual_emb = self.visual_autoencoder_l1(visual_emb)
             
         graph_emb = self._GCN_forward(visual_emb)
         

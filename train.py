@@ -53,7 +53,7 @@ def resume(args_dict, model, optimizer):
     return best_val, model, optimizer
 
 
-def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch):
+def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extra_params=None):
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
@@ -79,7 +79,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch):
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
-        output = model(input_var[0])
+        if extra_params is None:
+            output = model(input_var[0])
+        else:
+            output = model(input_var[0], extra_params)
 
         if args_dict.model == 'mtl':
             train_loss = 0.25 * criterion(output[0], target_var[0]) + \
