@@ -62,7 +62,7 @@ def vis_encoder_gen(args_dict):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        
+        i += 1
         if i % 500 == 0:
             print(str(i) + 'th processed out of '+ str(train_loader.__len__()))
     
