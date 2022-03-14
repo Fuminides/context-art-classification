@@ -28,7 +28,9 @@ class VisEncoder(nn.Module):
     def forward(self, img):
         visual_cue = self.resnet(img)
         print(visual_cue.shape)
-        return self.visual_autoencoder_l2(self.visual_autoencoder_l1(visual_cue))
+        l1_out = self.visual_autoencoder_l1(visual_cue)
+        print(l1_out.shape)
+        return self.visual_autoencoder_l2(l1_out)
 
     def reduce(self, img):
         return self.visual_autoencoder_l1(self.visual_autoencoder_l1(self.resnet(img)))
