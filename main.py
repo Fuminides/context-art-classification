@@ -17,10 +17,10 @@ def vis_encoder_gen(args_dict):
 
     epochs = args_dict.epochs
 
-    # Load the model
     model = mgcn.VisEncoder()
-    
-
+    # Load the model
+    if torch.cuda.is_available():
+        model = model.cuda()
     
     # Load transforms and data loader
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
