@@ -49,7 +49,7 @@ def vis_encoder_gen(args_dict):
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3,
                              weight_decay=1e-5)
-    i=0
+
 
     for epoch in range(epochs):
 
@@ -74,10 +74,10 @@ def vis_encoder_gen(args_dict):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            i += 1
 
 
-        # switch to evaluation mode
+
+        # EVAL
         model.eval()
         for batch_idx, (input, target) in enumerate(val_loader):
 
