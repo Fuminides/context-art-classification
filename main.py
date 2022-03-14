@@ -51,7 +51,7 @@ def vis_encoder_gen(args_dict):
                              weight_decay=1e-5)
     i=0
 
-    for epoch in epochs:
+    for epoch in range(epochs):
 
         print('Epoch: ' + str(epoch) + '/' + epochs)
 
