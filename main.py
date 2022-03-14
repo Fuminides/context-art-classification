@@ -66,6 +66,7 @@ def vis_encoder_gen(args_dict):
                 else:
                     input_var.append(torch.autograd.Variable(input[j]))
 
+            print(input_var[0].shape, len(input_var))
             output = model(input_var[0])
             target = model.gen_target(input_var[0])
             loss = criterion(output, target)
