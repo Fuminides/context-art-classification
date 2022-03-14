@@ -26,7 +26,9 @@ class VisEncoder(nn.Module):
         self.visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE).cuda()).cuda()
 
     def forward(self, img):
-        return self.visual_autoencoder_l2(self.visual_autoencoder_l1(self.resnet(img)))
+        visual_cue = self.resnet(img)
+        print(visual_cue.shape)
+        return self.visual_autoencoder_l2(self.visual_autoencoder_l1(visual_cue))
 
     def reduce(self, img):
         return self.visual_autoencoder_l1(self.visual_autoencoder_l1(self.resnet(img)))
