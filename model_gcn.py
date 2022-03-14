@@ -26,17 +26,15 @@ class VisEncoder(nn.Module):
         self.visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE))
 
     def forward(self, img):
-        visual_cue = self.resnet(img)
-        print(visual_cue.shape)
+        visual_cue = self.resnet(img).squeeze()
         l1_out = self.visual_autoencoder_l1(visual_cue)
-        print(l1_out.shape)
         return self.visual_autoencoder_l2(l1_out)
 
     def reduce(self, img):
-        return self.visual_autoencoder_l1(self.visual_autoencoder_l1(self.resnet(img)))
+        return self.visual_autoencoder_l1(self.visual_autoencoder_l1(self.resnet(img).squeeze()))
     
     def gen_target(self, img):
-        return self.resnet(img)
+        return self.resnet(img).squeeze()
     
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
