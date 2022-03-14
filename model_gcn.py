@@ -22,8 +22,8 @@ class VisEncoder(nn.Module):
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-        self.visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT), nn.ReLU()).cuda()
-        self.visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE)).cuda()
+        self.visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT).cuda(), nn.ReLU()).cuda()
+        self.visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE).cuda()).cuda()
 
     def forward(self, img):
         return self.visual_autoencoder_l2(self.visual_autoencoder_l1(self.resnet(img).reshape([1,1,1, VISUALENCONDING_SIZE])))
