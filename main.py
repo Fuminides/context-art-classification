@@ -15,7 +15,7 @@ def vis_encoder_gen(args_dict):
     from torchvision import transforms
     from attributes import load_att_class
 
-    epochs = args_dict.epochs
+    epochs = args_dict.nepochs
 
     model = mgcn.VisEncoder()
     # Load the model
