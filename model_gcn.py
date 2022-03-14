@@ -10,7 +10,7 @@ from scipy.sparse import coo_matrix
 
 from torchvision import models
 
-NODE2VEC_OUTPUT = 1028
+NODE2VEC_OUTPUT = 128
 VISUALENCONDING_SIZE = 2048
 
 class VisEncoder(nn.Module):
