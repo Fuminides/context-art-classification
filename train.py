@@ -14,7 +14,7 @@ from model_kgm import KGM
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
-
+from torch_geometric.loader import DataLoader
 
 
 def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
@@ -403,6 +403,28 @@ def train_multitask_classifier(args_dict):
 
 
 def train_gcn_classifier(args_dict):
+
+    def gen_semart_dataset(adj_mat, n_pantings, visual_model, dataloader):
+        import model_gcn as mgcn
+        from PIL import Image
+
+        samples = adj_mat.shape[0]
+        full_feature_mat = np.zeros((samples, mgcn.NODE2VEC_OUTPUT))
+        node2vec_embds = dataloader.node2vac_embd_path()
+
+        for ix in range(len(samples)):
+            if ix < n_pantings:
+                # Load image & apply transformation
+                imagepath = dataloader.imagefolder + dataloader.imageurls[ix]
+                image = Image.open(imagepath).convert('RGB')
+                if dataloader.transform is not None:
+                    image = dataloader.transform(image)
+
+                full_feature_mat[ix, :] = visual_model(image)
+            else:
+
+
+
     import pandas as pd
     from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
     from model_gcn import GCN
@@ -421,7 +443,8 @@ def train_gcn_classifier(args_dict):
         emisor = semart_edge_list.iloc[row, 0]
         receptor = semart_edge_list.iloc[row, 1]
         adj_sparse[emisor, receptor] = 1
-    
+
+
     # Define model
     model = GCN(num_classes, adj_sparse)
     if torch.cuda.is_available():
@@ -459,7 +482,7 @@ def train_gcn_classifier(args_dict):
                              std=[0.229, 0.224, 0.225])
     ])
 
-
+    data = Data(x=x, edge_index=indices)
     # Dataloaders for training and validation
     semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
     semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)

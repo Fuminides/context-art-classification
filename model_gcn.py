@@ -1,5 +1,7 @@
 import numpy as np
 
+from torch_geometric.data import Data
+
 import torch.nn as nn
 import torch.nn.functional as F
 from pygcn.layers import GraphConvolution
@@ -19,6 +21,8 @@ class GCN(nn.Module):
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+
+
         coo = coo_matrix(adj)
         values = coo.data
         indices = np.vstack((coo.row, coo.col))
@@ -27,6 +31,7 @@ class GCN(nn.Module):
         v = torch.FloatTensor(values)
         shape = coo.shape
         self.adj = torch.sparse.FloatTensor(i, v, torch.Size(shape))
+
 
         if torch.cuda.is_available():
                 self.adj = self.adj.cuda(non_blocking=True)
