@@ -15,6 +15,7 @@ def vis_encoder_gen(args_dict):
     from torchvision import transforms
     from attributes import load_att_class
 
+    epochs = args_dict.epochs
 
     # Load the model
     model = mgcn.VisEncoder()
@@ -33,40 +34,74 @@ def vis_encoder_gen(args_dict):
                              std=[0.229, 0.224, 0.225])
     ])
     
-    train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=train_transforms)
-    
-    
+    semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=train_transforms)
+    semart_val_loader = ArtDatasetKGM(args_dict, att_name='type', set='val', att2i=type2idx,
+                                        transform=train_transforms)
+
+    train_loader = torch.utils.data.DataLoader(
+        semart_train_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
+    val_loader = torch.utils.data.DataLoader(
+        semart_val_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
     # train loop
     model.train()
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3,
                              weight_decay=1e-5)
     i=0
-    for batch_idx, (input, target) in enumerate(train_loader):
 
-        # Inputs to Variable type
-        input_var = list()
-        for j in range(len(input)):
-            if torch.cuda.is_available():
-                input_var.append(torch.autograd.Variable(input[j]).cuda())
-            else:
-                input_var.append(torch.autograd.Variable(input[j]))
+    for epoch in epochs:
+
+        print('Epoch: ' + str(epoch) + '/' + epochs)
+
+        ### TRAIN
+        for batch_idx, (input, target) in enumerate(train_loader):
+
+            # Inputs to Variable type
+            input_var = list()
+            for j in range(len(input)):
+                if torch.cuda.is_available():
+                    input_var.append(torch.autograd.Variable(input[j]).cuda())
+                else:
+                    input_var.append(torch.autograd.Variable(input[j]))
+
+            output = model(input_var[0])
+            target = model.gen_target(input_var[0])
+            loss = criterion(output, target)
+
+            # Backpropagate loss and update weights
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            i += 1
 
 
-                
-        output = model(input_var[0].reshape([1,3,224,224]))
-        target = model.gen_target(input_var[0].reshape([1,3,224,224]))
-        loss = criterion(output, target)
-        
-        # Backpropagate loss and update weights
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        i += 1
-        if i % 500 == 0:
-            print(str(i) + 'th processed out of '+ str(train_loader.__len__()))
-    
-    # Once train is finished we generate the embeddings for all the images
+        # switch to evaluation mode
+        model.eval()
+        for batch_idx, (input, target) in enumerate(val_loader):
+
+            # Inputs to Variable type
+            input_var = list()
+            for j in range(len(input)):
+                if torch.cuda.is_available():
+                    input_var.append(torch.autograd.Variable(input[j]).cuda())
+                else:
+                    input_var.append(torch.autograd.Variable(input[j]))
+
+            # Targets to Variable type
+            target_var = list()
+            for j in range(len(target)):
+                if torch.cuda.is_available():
+                    target[j] = target[j].cuda(non_blocking=True)
+
+                target_var.append(torch.autograd.Variable(target[j]))
+
+            # Predictions
+            with torch.no_grad():
+                output = model(input_var[0])
+
+        # Once train is finished we generate the embeddings for all the images
     
 
 
