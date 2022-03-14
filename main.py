@@ -53,7 +53,7 @@ def vis_encoder_gen(args_dict):
 
     for epoch in range(epochs):
 
-        print('Epoch: ' + str(epoch) + '/' + epochs)
+        print('Epoch: ' + str(epoch) + '/' + str(epochs))
 
         ### TRAIN
         for batch_idx, (input, target) in enumerate(train_loader):
