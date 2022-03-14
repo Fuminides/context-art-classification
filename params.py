@@ -4,15 +4,16 @@ import argparse
 def get_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--mode', default='test', type=str, help='Mode (train | test)')
+    parser.add_argument('--mode', default='reduce', type=str, help='Mode (train | test)')
     parser.add_argument('--model', default='kgm', type=str, help='Model (mtl | kgm). mlt for multitask learning model. kgm for knowledge graph model.' )
     parser.add_argument('--att', default='time', type=str, help='Attribute classifier (type | school | time | author) (only kgm model).')
 
     # Directories
     parser.add_argument('--dir_data', default='Data')
-    parser.add_argument('--dir_dataset', default='')
+    parser.add_argument('--dir_dataset', default='../SemArt/')
     parser.add_argument('--dir_images', default='Images/')
     parser.add_argument('--dir_model', default='Models/')
+    parser.add_argument('--visual_cache', default='Embeds/VisReduce/')
 
     # Files
     parser.add_argument('--csvtrain', default='semart_train.csv', help='Training set data file')

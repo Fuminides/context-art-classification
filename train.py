@@ -14,7 +14,7 @@ from model_kgm import KGM
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
-from torch_geometric.loader import DataLoader
+#from torch_geometric.loader import DataLoader
 
 
 def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
@@ -422,7 +422,7 @@ def train_gcn_classifier(args_dict):
 
                 full_feature_mat[ix, :] = visual_model(image)
             else:
-
+                pass
 
 
     import pandas as pd

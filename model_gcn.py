@@ -1,7 +1,8 @@
 import numpy as np
 
-from torch_geometric.data import Data
+#from torch_geometric.data import Data
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from pygcn.layers import GraphConvolution
@@ -12,6 +13,27 @@ from torchvision import models
 NODE2VEC_OUTPUT = 1028
 VISUALENCONDING_SIZE = 2048
 
+class VisEncoder(nn.Module):
+    '''
+    Encoder that maps the visual featured from the resnet to the node2vec output size
+    '''
+    def __init__(self):
+        super(VisEncoder, self).__init__()
+        # Load pre-trained visual model
+        resnet = models.resnet50(pretrained=True)
+        self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+        self.visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT), nn.ReLU())
+        self.visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE))
+
+    def forward(self, img):
+        return self.visual_autoencoder_l2(self.visual_autoencoder_l1(self.resnet(img).reshape([1,1,1, VISUALENCONDING_SIZE])))
+
+    def reduce(self, img):
+        return self.visual_autoencoder_l1(self.visual_autoencoder_l1(self.resnet(img).reshape([1,1,1, VISUALENCONDING_SIZE])))
+    
+    def gen_target(self, img):
+        return self.resnet(img)
+    
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
     
