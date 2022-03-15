@@ -6,20 +6,30 @@ warnings.filterwarnings("ignore")
 import numpy as np
 
 from dataloader_kgm import ArtDatasetKGM
-
+from model_gcn import NODE2VEC_OUTPUT
 
 
 from params import get_parser
 from train import run_train
 from semart_test import run_test
 
+
 def vis_encoder_gen(args_dict):
-    
-    def save_model(args_dict, state, size_output):
+    '''
+    Trains the model (autoencoder) to compute the reduced visual emebeddings.
+
+    Args:
+        args_dict (TYPE): DESCRIPTION.
+
+    Returns:
+        None.
+
+    '''    
+    def save_model(args_dict, state):
         directory = args_dict.dir_model + "%s/"%(args_dict.name)
         if not os.path.exists(directory):
             os.makedirs(directory)
-        filename = directory + 'reduce_' + str(size_output) + '_best_model.pth.tar'
+        filename = directory + 'reduce_' + str(NODE2VEC_OUTPUT) + '_best_model.pth.tar'
         torch.save(state, filename)
     
     import torch
@@ -137,7 +147,7 @@ def vis_encoder_gen(args_dict):
                     'optimizer': optimizer.state_dict(),
                     'valtrack': pat_track,
                     'curr_val': best_val,
-                }, type=args_dict.att, train_feature=args_dict.embedds)
+                })
             print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, perfval, pat_track))
 
         # Once train is finished we generate the embeddings for all the images
