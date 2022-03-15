@@ -1,14 +1,27 @@
 import warnings
+import os
 import utils
 warnings.filterwarnings("ignore")
 
+import numpy as np
+
 from dataloader_kgm import ArtDatasetKGM
+
+
 
 from params import get_parser
 from train import run_train
 from semart_test import run_test
 
 def vis_encoder_gen(args_dict):
+    
+    def save_model(args_dict, state, size_output):
+        directory = args_dict.dir_model + "%s/"%(args_dict.name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        filename = directory + 'reduce_' + str(size_output) + '_best_model.pth.tar'
+        torch.save(state, filename)
+    
     import torch
     import torch.nn as nn
     import model_gcn as mgcn
@@ -50,7 +63,9 @@ def vis_encoder_gen(args_dict):
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3,
                              weight_decay=1e-5)
 
-
+    best_val = np.Inf
+    pat_track = 0
+    
     for epoch in range(epochs):
 
         print('Epoch: ' + str(epoch) + '/' + str(epochs))
@@ -99,7 +114,31 @@ def vis_encoder_gen(args_dict):
 
             # Predictions
             with torch.no_grad():
+                target = model.gen_target(input_var[0])
                 output = model(input_var[0])
+                perfval = criterion(output, target)
+
+            # check patience
+            if perfval <= best_val:
+                pat_track += 1
+            else:
+                pat_track = 0
+            if pat_track >= args_dict.patience:
+                break
+    
+            # save if it is the best model
+            is_best = perfval > best_val
+            best_val = min(perfval, best_val)
+            if is_best:
+                save_model(args_dict, {
+                    'epoch': epoch + 1,
+                    'state_dict': model.state_dict(),
+                    'best_val': best_val,
+                    'optimizer': optimizer.state_dict(),
+                    'valtrack': pat_track,
+                    'curr_val': best_val,
+                }, type=args_dict.att, train_feature=args_dict.embedds)
+            print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, perfval, pat_track))
 
         # Once train is finished we generate the embeddings for all the images
     
