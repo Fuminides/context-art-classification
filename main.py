@@ -26,7 +26,7 @@ def vis_encoder_gen(args_dict):
 
     '''    
     def save_model(args_dict, state):
-        directory = args_dict.dir_model + "%s/"%(args_dict.name)
+        directory = args_dict.dir_model + "Reduce/"
         if not os.path.exists(directory):
             os.makedirs(directory)
         filename = directory + 'reduce_' + str(NODE2VEC_OUTPUT) + '_best_model.pth.tar'
@@ -150,7 +150,6 @@ def vis_encoder_gen(args_dict):
                 })
             print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, perfval, pat_track))
 
-        # Once train is finished we generate the embeddings for all the images
     
 
 
