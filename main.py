@@ -9,7 +9,6 @@ from scipy.sparse import dok_matrix
 
 from dataloader_kgm import ArtDatasetKGM
 from model_gcn import NODE2VEC_OUTPUT
-from Data.generate_semart_node2vec_embbeds import semart_path
 
 from params import get_parser
 from train import run_train
@@ -106,7 +105,7 @@ def vis_encoder_gen(args_dict):
     semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=train_transforms)
     semart_val_loader = ArtDatasetKGM(args_dict, att_name='type', set='val', att2i=type2idx,
                                         transform=train_transforms)
-
+xrdp
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
