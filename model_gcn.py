@@ -10,7 +10,6 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch_geometric.nn import GCNConv
 
-from scipy.sparse import coo_matrix
 
 from torchvision import models
 
@@ -51,7 +50,7 @@ class VisEncoder(nn.Module):
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
     
-    def __init__(self, in_channels, hidden_channels, out_channels):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_class):
         super(GCN, self).__init__()
 
         # Load pre-trained visual model
@@ -73,7 +72,6 @@ class GCN(nn.Module):
         #GCN model
         self.gc1 = GCNConv(NODE2VEC_OUTPUT, self.hidden_channels)
         self.gc2 = GCNConv(self.hidden_size, self.final_embedding_size)
-        self.dropout = dropout
 
         # Classifiers
         self.class_type = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[0]))
@@ -83,18 +81,18 @@ class GCN(nn.Module):
 
     def _GCN_forward(self, x):
         x = F.relu(self.gc1(x, self.adj))
-        x = F.dropout(x, self.dropout, training=self.training)
+        x = F.dropout(x, training=self.training)
         x = self.gc2(x, self.adj)
 
         return x # F.log_softmax(x, dim=1) # Softmax needed?
 
-    def forward(self, img):
-
+    def forward(self, img, edge_list):
+        
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         
         if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            visual_emb = self.visual_autoencoder_l1(visual_emb)
+            visual_emb = self.vis_reducer(visual_emb)
             
         graph_emb = self._GCN_forward(visual_emb)
         

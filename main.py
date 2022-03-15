@@ -4,16 +4,62 @@ import utils
 warnings.filterwarnings("ignore")
 
 import numpy as np
+import pandas as pd
+from scipy.sparse import dok_matrix
 
 from dataloader_kgm import ArtDatasetKGM
 from model_gcn import NODE2VEC_OUTPUT
-
+from Data.generate_semart_node2vec_embbeds import semart_path
 
 from params import get_parser
 from train import run_train
 from semart_test import run_test
 
 
+def gen_embeds(args_dict):
+    '''
+    Generates the proper dataset to train the GCN model.
+        1. A file containing the embeddings for each category and painting for train, validation and test.
+        
+        
+        NOTE: remember that the pseudo-labels for validation and test are computed
+        using another classification model.
+    '''
+    transforms = transforms.Compose([
+        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),  # we get only the center of that rescaled
+        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),  # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+    
+    from PIL import Image
+    from model_gcn import VisEncoder
+    node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
+    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ')
+    dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
+    train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t')
+    n_samples = semart_edge_list.max().max()
+    
+    vis_encoder = VisEncoder()
+    vis_encoder.load_weights()
+    
+    feature_matrix = np.zeros(node2vec_emb)
+    for sample_ix in node2vec_emb.index:
+        try:
+            dict_keys[sample_ix]
+            feature_matrix[sample_ix, :] = node2vec_emb.loc[sample_ix]
+        except KeyError:
+            image_path = train_df.loc[sample_ix]['IMAGE FILE']
+            image = Image.open(imagepath).convert('RGB')
+            image = transforms(image)
+            feature_matrix[ix, :] = vis_encoder.reduce(image)
+    
+    return feature_matrix
+    
 def vis_encoder_gen(args_dict):
     '''
     Trains the model (autoencoder) to compute the reduced visual emebeddings.
@@ -173,7 +219,7 @@ if __name__ == "__main__":
     print('-----------------------------------')
 
     # Check mode and model are correct
-    assert args_dict.mode in ['train', 'test', 'reduce'], 'Incorrect mode. Please select either train or test.'
+    assert args_dict.mode in ['train', 'test', 'reduce', 'gen_graph_dataset'], 'Incorrect mode. Please select either train or test.'
     assert args_dict.model in ['mtl', 'kgm', 'gcn', 'fcm'], 'Incorrect model. Please select either mlt or kgm.'
 
     # Run process
@@ -183,3 +229,5 @@ if __name__ == "__main__":
         run_test(args_dict)
     elif args_dict.mode == 'reduce':
         vis_encoder_gen(args_dict)
+    elif args_dict.mode == 'gen_graph_dataset':
+        feature_matrix = gen_embeds(args_dict)

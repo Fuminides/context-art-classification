@@ -43,7 +43,7 @@ def generate_kg_semart(semart_path=r'/home/javier/Documents/GitHub/SemArt'):
     
     
     all_categories = np.concatenate((authors, school, timeframe, types))
-    key_dicts = {x:ix for ix, x in enumerate(all_categories)}
+    key_dicts = {x:ix+train_df.shape[0] for ix, x in enumerate(all_categories)}
     generate_connects(kg_coo, train_df, 'AUTHOR', key_dicts)
     generate_connects(kg_coo, train_df, 'SCHOOL', key_dicts)
     generate_connects(kg_coo, train_df, 'TIMEFRAME', key_dicts)
@@ -74,7 +74,7 @@ def save_keys(key_dict, res_file='kg_keys.csv'):
     
     with open(res_file, 'w') as f:
         for key, elem in key_dict.items():
-            f.write(str(key) + ' ' + str(elem) + '\n')
+            f.write(str(key.replace(' ', '_')) + ' ' + str(elem) + '\n')
     
 if __name__ == '__main__':
     kg_semart, keys_semart = generate_kg_semart()

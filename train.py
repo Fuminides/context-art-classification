@@ -410,7 +410,7 @@ def train_gcn_classifier(args_dict):
 
         samples = adj_mat.shape[0]
         full_feature_mat = np.zeros((samples, mgcn.NODE2VEC_OUTPUT))
-        node2vec_embds = dataloader.node2vac_embd_path()
+        node2vec_embds = dataloader.node2vec_embd_path()
 
         for ix in range(len(samples)):
             if ix < n_pantings:
