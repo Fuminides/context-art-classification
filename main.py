@@ -24,6 +24,8 @@ def gen_embeds(args_dict):
         NOTE: remember that the pseudo-labels for validation and test are computed
         using another classification model.
     '''
+    from torchvision import transforms
+
     transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
@@ -53,9 +55,9 @@ def gen_embeds(args_dict):
             feature_matrix[sample_ix, :] = node2vec_emb.loc[sample_ix]
         except KeyError:
             image_path = train_df.loc[sample_ix]['IMAGE FILE']
-            image = Image.open(imagepath).convert('RGB')
+            image = Image.open(image_path).convert('RGB')
             image = transforms(image)
-            feature_matrix[ix, :] = vis_encoder.reduce(image)
+            feature_matrix[sample_ix, :] = vis_encoder.reduce(image)
     
     return feature_matrix
     
