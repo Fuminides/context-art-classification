@@ -105,7 +105,7 @@ def vis_encoder_gen(args_dict):
     semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=train_transforms)
     semart_val_loader = ArtDatasetKGM(args_dict, att_name='type', set='val', att2i=type2idx,
                                         transform=train_transforms)
-xrdp
+
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
