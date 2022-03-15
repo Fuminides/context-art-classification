@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 #from torch_geometric.data import Data
@@ -5,13 +7,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pygcn.layers import GraphConvolution
+from torch import Tensor
+from torch_geometric.nn import GCNConv
+
 from scipy.sparse import coo_matrix
 
 from torchvision import models
 
 NODE2VEC_OUTPUT = 128
 VISUALENCONDING_SIZE = 2048
+
 
 class VisEncoder(nn.Module):
     '''
@@ -36,42 +41,38 @@ class VisEncoder(nn.Module):
     def gen_target(self, img):
         return self.resnet(img).squeeze()
     
+    def load_weights(self):
+        expected_path = 'Models/Reduce/reduce_' + str(NODE2VEC_OUTPUT) + '_best_model.pth.tar'
+        assert os.path.isfile(expected_path)
+       
+        checkpoint = torch.load(expected_path)
+        self.load_state_dict(checkpoint['state_dict'])
+    
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
     
-    def __init__(self, num_class, adj, dropout=True):
+    def __init__(self, in_channels, hidden_channels, out_channels):
         super(GCN, self).__init__()
 
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-
-
-        coo = coo_matrix(adj)
-        values = coo.data
-        indices = np.vstack((coo.row, coo.col))
-
-        i = torch.LongTensor(indices)
-        v = torch.FloatTensor(values)
-        shape = coo.shape
-        self.adj = torch.sparse.FloatTensor(i, v, torch.Size(shape))
-
-
-        if torch.cuda.is_available():
-                self.adj = self.adj.cuda(non_blocking=True)
         
-        
-        self.final_embedding_size = 128
-        self.hidden_size = int(NODE2VEC_OUTPUT / 2)
+        self.final_embedding_size = out_channels
+        self.hidden_size = hidden_channels
         
         # Autoencoders for visual features
         if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            self.visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT))
-            # visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE)
+            self.vis_reducer = VisEncoder()
+            # Load the model
+            if torch.cuda.is_available():
+                self.vis_reducer = self.vis_reducer.cuda()
+            self.vis_reducer.load_weights()
+
          
         #GCN model
-        self.gc1 = GraphConvolution(NODE2VEC_OUTPUT, self.hidden_size)
-        self.gc2 = GraphConvolution(self.hidden_size, self.final_embedding_size)
+        self.gc1 = GCNConv(NODE2VEC_OUTPUT, self.hidden_channels)
+        self.gc2 = GCNConv(self.hidden_size, self.final_embedding_size)
         self.dropout = dropout
 
         # Classifiers
