@@ -42,7 +42,7 @@ def gen_embeds(args_dict):
     semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
     semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ')
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
-    train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t')
+    train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
     n_samples = semart_edge_list.max().max()
     
     vis_encoder = VisEncoder()
