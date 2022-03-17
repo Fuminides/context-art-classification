@@ -49,7 +49,10 @@ def gen_embeds(args_dict):
     vis_encoder.load_weights()
     
     feature_matrix = np.zeros(node2vec_emb)
+    print('Starting the process... ')
+    i=0
     for sample_ix in node2vec_emb.index:
+        i += 1
         try:
             dict_keys[sample_ix]
             feature_matrix[sample_ix, :] = node2vec_emb.loc[sample_ix]
@@ -58,6 +61,9 @@ def gen_embeds(args_dict):
             image = Image.open(image_path).convert('RGB')
             image = transforms(image)
             feature_matrix[sample_ix, :] = vis_encoder.reduce(image)
+        
+        if i % 1000 == 0:
+            print('Sample ' + str(i) + 'th out of ' + str(len(node2vec_emb.index)))
     
     return feature_matrix
     
