@@ -35,7 +35,10 @@ class VisEncoder(nn.Module):
         return self.visual_autoencoder_l2(l1_out)
 
     def reduce(self, img):
-        return self.visual_autoencoder_l1(self.visual_autoencoder_l1(self.resnet(img).squeeze()))
+      visual_cue = self.resnet(img).squeeze()
+
+      l1_out = torch.unsqueeze(self.visual_autoencoder_l1(visual_cue), 0)
+      return l1_out
     
     def gen_target(self, img):
         return self.resnet(img).squeeze()
