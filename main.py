@@ -3,6 +3,8 @@ import os
 import utils
 warnings.filterwarnings("ignore")
 
+import torch
+
 import numpy as np
 import pandas as pd
 from scipy.sparse import dok_matrix
@@ -48,22 +50,29 @@ def gen_embeds(args_dict):
     vis_encoder = VisEncoder()
     vis_encoder.load_weights()
     
+
     feature_matrix = np.zeros(node2vec_emb)
     print('Starting the process... ')
     i=0
+
+   
     for sample_ix in node2vec_emb.index:
         i += 1
         try:
             dict_keys[sample_ix]
             feature_matrix[sample_ix, :] = node2vec_emb.loc[sample_ix]
         except KeyError:
-            image_path = train_df.loc[sample_ix]['IMAGE FILE']
+            image_path = args_dict.dir_dataset + 'Images/' + train_df.loc[sample_ix].iloc[0] # ['IMAGE FILE']
             image = Image.open(image_path).convert('RGB')
             image = transforms(image)
-            feature_matrix[sample_ix, :] = vis_encoder.reduce(image)
+
+
         
         if i % 1000 == 0:
             print('Sample ' + str(i) + 'th out of ' + str(len(node2vec_emb.index)))
+
+            feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+
     
     return feature_matrix
     
@@ -143,7 +152,6 @@ def vis_encoder_gen(args_dict):
                     input_var.append(torch.autograd.Variable(input[j]).cuda())
                 else:
                     input_var.append(torch.autograd.Variable(input[j]))
-
             target = model.gen_target(input_var[0])
             output = model(input_var[0])
             loss = criterion(output, target)
