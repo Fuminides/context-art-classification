@@ -18,7 +18,7 @@ def load_obj(filename):
     f.close()
     return obj
 
-def load_csv_as_dict(data, csv_path):
+def load_csv_as_dict(csv_path):
     with open(csv_path, mode='r') as infile:
         reader = csv.reader(infile)
         
