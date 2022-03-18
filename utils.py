@@ -1,6 +1,8 @@
 import pickle
 #from visdom import Visdom
 import numpy as np
+import csv
+import pandas as pd
 
 
 def save_obj(obj, filename):
@@ -16,6 +18,20 @@ def load_obj(filename):
     f.close()
     return obj
 
+def load_csv_as_dict(data, csv_path):
+    with open(csv_path, mode='r') as infile:
+        reader = csv.reader(infile)
+        
+        mydict = {rows[1]:rows[0] for rows in reader}
+    
+    return mydict
+
+        
+def save_att_as_csv(data, csv_path):
+    aux = pd.DataFrame.from_dict(data, orient='index')
+    aux['key'] = aux.index
+    aux.to_csv(csv_path, header=None, index=None)
+    
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

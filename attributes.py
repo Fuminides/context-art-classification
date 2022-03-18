@@ -15,9 +15,9 @@ def load_att_class(args_dict):
     assert os.path.isfile(time_file), 'File %s not found.' % time_file
     assert os.path.isfile(author_file), 'File %s not found.' % author_file
 
-    type2idx = utils.load_obj(type_file)
-    school2idx = utils.load_obj(school_file)
-    time2idx = utils.load_obj(time_file)
-    author2idx = utils.load_obj(author_file)
+    type2idx = utils.load_csv_as_dict(type_file)
+    school2idx = utils.load_csv_as_dict(school_file)
+    time2idx = utils.load_csv_as_dict(time_file)
+    author2idx = utils.load_csv_as_dict(author_file)
 
     return type2idx, school2idx, time2idx, author2idx

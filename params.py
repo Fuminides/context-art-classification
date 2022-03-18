@@ -19,10 +19,10 @@ def get_parser():
     parser.add_argument('--csvtrain', default='semart_train.csv', help='Training set data file')
     parser.add_argument('--csvval', default='semart_val.csv', help='Dataset val data file')
     parser.add_argument('--csvtest', default='semart_test.csv', help='Dataset test data file')
-    parser.add_argument('--vocab_type', default='type2ind.pckl', help='Type classes file')
-    parser.add_argument('--vocab_school', default='school2ind.pckl', help='Author classes file')
-    parser.add_argument('--vocab_time', default='time2ind.pckl', help='Timeframe classes file')
-    parser.add_argument('--vocab_author', default='author2ind.pckl', help='Author classes file')
+    parser.add_argument('--vocab_type', default='type2ind.csv', help='Type classes file')
+    parser.add_argument('--vocab_school', default='school2ind.csv', help='Author classes file')
+    parser.add_argument('--vocab_time', default='time2ind.csv', help='Timeframe classes file')
+    parser.add_argument('--vocab_author', default='author2ind.csv', help='Author classes file')
 
     # Training opts
     parser.add_argument('--seed', default=123, type=int)
