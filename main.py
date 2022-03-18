@@ -209,7 +209,7 @@ def vis_encoder_gen(args_dict):
                     'valtrack': pat_track,
                     'curr_val': best_val,
                 })
-            print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, perfval, pat_track))
+        print('** Validation: %f (best error) - %f (current error) - %d (patience)' % (best_val, perfval, pat_track))
 
     
 
