@@ -4,7 +4,7 @@ import argparse
 def get_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--mode', default='reduce', type=str, help='Mode (train | test)')
+    parser.add_argument('--mode', default='gen_graph_dataset', type=str, help='Mode (train | test)')
     parser.add_argument('--model', default='kgm', type=str, help='Model (mtl | kgm). mlt for multitask learning model. kgm for knowledge graph model.' )
     parser.add_argument('--att', default='time', type=str, help='Attribute classifier (type | school | time | author) (only kgm model).')
 
