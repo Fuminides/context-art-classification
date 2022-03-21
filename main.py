@@ -59,17 +59,17 @@ def gen_embeds(args_dict):
     vis_encoder.load_weights()
     
 
-    feature_matrix = np.zeros(node2vec_emb.shape)
+    feature_matrix = np.zeros(train_node2vec_emb.shape)
     print('Starting the process... ')
     i=0
 
    
-    for sample_ix in node2vec_emb.index:
+    for sample_ix in train_node2vec_emb.index:
         i += 1
         try:
-            dict_keys[sample_ix-1] # If not in category, is a painting
+            dict_keys[sample_ix - 1] # If not in category, is a painting
             
-            feature_matrix[sample_ix-1, :] = node2vec_emb.loc[sample_ix-1]
+            feature_matrix[sample_ix-1, :] = train_node2vec_emb.loc[sample_ix-1]
         except KeyError:
             image_path = args_dict.dir_dataset + '/Images/' + train_df.loc[sample_ix].iloc[0] # ['IMAGE FILE']
             image = Image.open(image_path).convert('RGB')
@@ -78,12 +78,46 @@ def gen_embeds(args_dict):
             feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
         
         if i % 1000 == 0:
-            print('Sample ' + str(i) + 'th out of ' + str(len(node2vec_emb.index)))
+            print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
+
+    feature_matrix_val = np.zeros(val_node2vec_emb.shape)
+    for sample_ix in val_node2vec_emb.index:
+        i += 1
+        try:
+            dict_keys[sample_ix - 1]  # If not in category, is a painting
+
+            feature_matrix[sample_ix - 1, :] = val_node2vec_emb.loc[sample_ix - 1]
+        except KeyError:
+            image_path = args_dict.dir_dataset + '/Images/' + val_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
+            image = Image.open(image_path).convert('RGB')
+            image = transforms(image)
+
+            feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+
+        if i % 1000 == 0:
+            print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
+
+    feature_matrix_test = np.zeros(test_node2vec_emb.shape)
+    for sample_ix in test_node2vec_emb.index:
+        i += 1
+        try:
+            dict_keys[sample_ix - 1]  # If not in category, is a painting
+
+            feature_matrix[sample_ix - 1, :] = test_node2vec_emb.loc[sample_ix - 1]
+        except KeyError:
+            image_path = args_dict.dir_dataset + '/Images/' + test_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
+            image = Image.open(image_path).convert('RGB')
+            image = transforms(image)
+
+            feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+
+        if i % 1000 == 0:
+            print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
 
 
-    
-    return feature_matrix
-    
+
+    return feature_matrix, feature_matrix_val, feature_matrix_test
+
 def vis_encoder_gen(args_dict):
     '''
     Trains the model (autoencoder) to compute the reduced visual emebeddings.
@@ -245,5 +279,7 @@ if __name__ == "__main__":
     elif args_dict.mode == 'reduce':
         vis_encoder_gen(args_dict)
     elif args_dict.mode == 'gen_graph_dataset':
-        feature_matrix = gen_embeds(args_dict)
-        feature_matrix.to_csv('Data/feature_128_semart.csv')
+        feature_matrix, v_mat, t_mat = gen_embeds(args_dict)
+        feature_matrix.to_csv('Data/feature_train_128_semart.csv')
+        feature_matrix.to_csv('Data/feature_val_128_semart.csv')
+        feature_matrix.to_csv('Data/feature_test_128_semart.csv')
