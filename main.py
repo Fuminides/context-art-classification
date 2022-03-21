@@ -17,6 +17,7 @@ from train import run_train
 from semart_test import run_test
 
 
+ 
 def gen_embeds(args_dict):
     '''
     Generates the proper dataset to train the GCN model.
@@ -40,6 +41,7 @@ def gen_embeds(args_dict):
     
     from PIL import Image
     from model_gcn import VisEncoder
+
     node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
     semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
     semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ')
@@ -51,7 +53,7 @@ def gen_embeds(args_dict):
     vis_encoder.load_weights()
     
 
-    feature_matrix = np.zeros(node2vec_emb)
+    feature_matrix = np.zeros(node2vec_emb.shape)
     print('Starting the process... ')
     i=0
 
@@ -59,19 +61,19 @@ def gen_embeds(args_dict):
     for sample_ix in node2vec_emb.index:
         i += 1
         try:
-            dict_keys[sample_ix]
-            feature_matrix[sample_ix, :] = node2vec_emb.loc[sample_ix]
+            dict_keys[sample_ix-1] # If not in category, is a painting
+            
+            feature_matrix[sample_ix-1, :] = node2vec_emb.loc[sample_ix-1]
         except KeyError:
-            image_path = args_dict.dir_dataset + 'Images/' + train_df.loc[sample_ix].iloc[0] # ['IMAGE FILE']
+            image_path = args_dict.dir_dataset + '/Images/' + train_df.loc[sample_ix].iloc[0] # ['IMAGE FILE']
             image = Image.open(image_path).convert('RGB')
             image = transforms(image)
 
-
+            feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
         
         if i % 1000 == 0:
             print('Sample ' + str(i) + 'th out of ' + str(len(node2vec_emb.index)))
 
-            feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
 
     
     return feature_matrix
@@ -174,14 +176,6 @@ def vis_encoder_gen(args_dict):
                     input_var.append(torch.autograd.Variable(input[j]).cuda())
                 else:
                     input_var.append(torch.autograd.Variable(input[j]))
-
-            # Targets to Variable type
-            target_var = list()
-            for j in range(len(target)):
-                if torch.cuda.is_available():
-                    target[j] = target[j].cuda(non_blocking=True)
-
-                target_var.append(torch.autograd.Variable(target[j]))
 
             # Predictions
             with torch.no_grad():

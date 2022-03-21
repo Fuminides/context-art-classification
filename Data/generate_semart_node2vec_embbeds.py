@@ -10,7 +10,7 @@ from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
 import pandas as pd
 import numpy as np
 
-def generate_kg_semart(semart_path=r'/home/javier/Documents/GitHub/SemArt'):
+def generate_kg_semart(semart_path=r'/home/javierfumanal/Documents/GitHub/SemArt'):
     '''
     Returns a sparse matrix that contains the KG for the SEMART dataset and a dict
     containing the index for each label.
@@ -29,7 +29,7 @@ def generate_kg_semart(semart_path=r'/home/javier/Documents/GitHub/SemArt'):
         
         return coo_matrix_fill
             
-    train_df = pd.read_csv(semart_path + r'/semart_train.csv', sep='\t')
+    train_df = pd.read_csv(semart_path + r'/semart_train.csv', sep='\t', encoding='latin1')
     # test_df = pd.read_csv(semart_path + r'/semart_test.csv', sep='\t')
     
     authors = np.unique(train_df['AUTHOR'])
@@ -39,7 +39,7 @@ def generate_kg_semart(semart_path=r'/home/javier/Documents/GitHub/SemArt'):
     
     extra_nodes = len(authors) + len(school) + len(timeframe) + len(types)
     
-    kg_coo = dok_matrix((train_df.shape[0] + extra_nodes, train_df.shape[0] + extra_nodes), dtype=np.int8)
+    kg_coo = dok_matrix((extra_nodes, train_df.shape[0] + extra_nodes), dtype=np.int8)
     
     
     all_categories = np.concatenate((authors, school, timeframe, types))

@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from torch_geometric.nn import GCNConv
+#from torch_geometric.nn import GCNConv
 
 
 from torchvision import models
@@ -47,8 +47,15 @@ class VisEncoder(nn.Module):
         expected_path = 'Models/Reduce/reduce_' + str(NODE2VEC_OUTPUT) + '_best_model.pth.tar'
         assert os.path.isfile(expected_path)
        
-        checkpoint = torch.load(expected_path)
+        if torch.cuda.is_available():
+            checkpoint = torch.load(expected_path)
+        else:
+            checkpoint = torch.load(expected_path, map_location=torch.device('cpu'))
+            
+        #if torch.cuda.is_available():
         self.load_state_dict(checkpoint['state_dict'])
+        #else:
+        #self.load_state_dict(checkpoint['state_dict'], map_location=torch.device('cpu'))
     
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
