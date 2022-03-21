@@ -42,11 +42,17 @@ def gen_embeds(args_dict):
     from PIL import Image
     from model_gcn import VisEncoder
 
-    node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    test_node2vec_emb = pd.read_csv('Data/semart_test.emd', skiprows=1, sep=' ', header=None, index_col=0)
+
     semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
     semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None)
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
+    val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1')
+    test_df = pd.read_csv(args_dict.dir_dataset + r'/semart_test.csv', sep='\t', encoding='latin1')
+
     n_samples = semart_edge_list.max().max()
     
     vis_encoder = VisEncoder()

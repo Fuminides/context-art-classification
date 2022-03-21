@@ -425,11 +425,13 @@ def train_gcn_classifier(args_dict):
         adj_sparse[emisor, receptor] = 1
 
     train_feature_matrix = pd.read_csv(args_dict.feature_matrix)
-
     val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix)
     test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix)
+    
+    total_samples = pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0)
+    n_samples = total_samples.shape[0]
 
-    data = Data(x=train_feature_matrix, edge_index=adj_sparse)
+    data = Data(x=total_samples, edge_index=adj_sparse)
 
     # Define model
     model = GCN(128, 64, num_classes)
@@ -452,8 +454,8 @@ def train_gcn_classifier(args_dict):
     # Dataloaders for training and validation
 
 
-    train_loader =  DataLoader(data, batch_size=args_dict.batch_size, shuffle=True) # ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
-    val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
+    # train_loader =  DataLoader(data, batch_size=args_dict.batch_size, shuffle=True) # ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
+    # val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
     print('Training loader with %d samples' % train_loader.__len__())
 
     '''val_loader = torch.utils.data.DataLoader(

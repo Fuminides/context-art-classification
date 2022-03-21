@@ -63,21 +63,10 @@ class GCN(nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels, num_class):
         super(GCN, self).__init__()
 
-        # Load pre-trained visual model
-        resnet = models.resnet50(pretrained=True)
-        self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+
         
         self.final_embedding_size = out_channels
         self.hidden_size = hidden_channels
-        
-        # Autoencoders for visual features
-        if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            self.vis_reducer = VisEncoder()
-            # Load the model
-            if torch.cuda.is_available():
-                self.vis_reducer = self.vis_reducer.cuda()
-            self.vis_reducer.load_weights()
-
          
         #GCN model
         self.gc1 = GCNConv(NODE2VEC_OUTPUT, self.hidden_channels)
@@ -96,15 +85,10 @@ class GCN(nn.Module):
 
         return x # F.log_softmax(x, dim=1) # Softmax needed?
 
-    def forward(self, img, edge_list):
+    def forward(self):
         
-        visual_emb = self.resnet(img)
-        visual_emb = visual_emb.view(visual_emb.size(0), -1)
-        
-        if NODE2VEC_OUTPUT != VISUALENCONDING_SIZE:
-            visual_emb = self.vis_reducer(visual_emb)
-            
-        graph_emb = self._GCN_forward(visual_emb)
+
+        graph_emb = self._GCN_forward(initial_emb)
         
         out_type = self.class_type(graph_emb)
         out_school = self.class_school(graph_emb)
