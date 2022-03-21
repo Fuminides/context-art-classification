@@ -5,7 +5,9 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 from torchvision import transforms
+
 import numpy as np
+import pandas as pd
 
 import utils
 #from model_gcn import GCN
@@ -403,50 +405,34 @@ def train_multitask_classifier(args_dict):
 
 
 def train_gcn_classifier(args_dict):
-
-    def gen_semart_dataset(adj_mat, n_pantings, visual_model, dataloader):
-        import model_gcn as mgcn
-        from PIL import Image
-
-        samples = adj_mat.shape[0]
-        full_feature_mat = np.zeros((samples, mgcn.NODE2VEC_OUTPUT))
-        node2vec_embds = dataloader.node2vec_embd_path()
-
-        for ix in range(len(samples)):
-            if ix < n_pantings:
-                # Load image & apply transformation
-                imagepath = dataloader.imagefolder + dataloader.imageurls[ix]
-                image = Image.open(imagepath).convert('RGB')
-                if dataloader.transform is not None:
-                    image = dataloader.transform(image)
-
-                full_feature_mat[ix, :] = visual_model(image)
-            else:
-                pass
-
-
-    import pandas as pd
+    from torch_geometric.data import Data
+    from torch_geometric.loader import DataLoader
     from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
     from model_gcn import GCN
+
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
     att2i = [type2idx, school2idx, time2idx, author2idx]
 
     # Load semart data
-    semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
-    n_samples = semart_edge_list.max().max()+1
-    
+    train_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
+    n_samples = train_edge_list.max().max()+1
     adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
-
-    for row in range(semart_edge_list.shape[0]):
-        emisor = semart_edge_list.iloc[row, 0]
-        receptor = semart_edge_list.iloc[row, 1]
+    for row in range(train_edge_list.shape[0]):
+        emisor = train_edge_list.iloc[row, 0]
+        receptor = train_edge_list.iloc[row, 1]
         adj_sparse[emisor, receptor] = 1
 
+    train_feature_matrix = pd.read_csv(args_dict.feature_matrix)
+
+    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix)
+    test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix)
+
+    data = Data(x=train_feature_matrix, edge_index=adj_sparse)
 
     # Define model
-    model = GCN(num_classes, adj_sparse)
+    model = GCN(128, 64, num_classes)
     if torch.cuda.is_available():
         model.cuda()
 
@@ -463,38 +449,17 @@ def train_gcn_classifier(args_dict):
     # Resume training if needed
     best_val, model, optimizer = resume(args_dict, model, optimizer)
 
-    # Data transformation for training (with data augmentation) and validation
-    train_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-    val_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(224),  # we get only the center of that rescaled
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-    data = Data(x=x, edge_index=indices)
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
-    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % semart_train_loader.__len__())
 
-    val_loader = torch.utils.data.DataLoader(
+
+    train_loader =  DataLoader(data, batch_size=args_dict.batch_size, shuffle=True) # ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
+    val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
+    print('Training loader with %d samples' % train_loader.__len__())
+
+    '''val_loader = torch.utils.data.DataLoader(
         semart_val_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % semart_val_loader.__len__())
+    print('Validation loader with %d samples' % semart_val_loader.__len__())'''
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
@@ -503,7 +468,11 @@ def train_gcn_classifier(args_dict):
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
         # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch)
+        optimizer.zero_grad()
+        out = model(data)
+        loss = torch.nn.functional.nll_loss(out[data.train_mask], data.y[data.train_mask])
+        loss.backward()
+        optimizer.step()
 
         # Compute a validation epoch
         accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)

@@ -240,3 +240,4 @@ if __name__ == "__main__":
         vis_encoder_gen(args_dict)
     elif args_dict.mode == 'gen_graph_dataset':
         feature_matrix = gen_embeds(args_dict)
+        feature_matrix.to_csv('Data/feature_128_semart.csv')
