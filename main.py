@@ -29,7 +29,7 @@ def gen_embeds(args_dict):
     '''
     from torchvision import transforms
 
-    transforms = transforms.Compose([
+    transform = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
         transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
@@ -38,13 +38,12 @@ def gen_embeds(args_dict):
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
-    
+
     from PIL import Image
     from model_gcn import VisEncoder
 
     train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
-    semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
     semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None)
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
@@ -94,8 +93,7 @@ def val_test_gen_embeds(args_dict):
     val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0)
     test_node2vec_emb = pd.read_csv('Data/semart_test.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
-    semart_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
-    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None)
+    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None, encoding='latin1')
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
 
     val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1')
