@@ -93,24 +93,23 @@ def val_test_gen_embeds(args_dict):
     val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0) # Just for the shape
     test_node2vec_emb = pd.read_csv('Data/semart_test.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
-    val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1')
-    test_df = pd.read_csv(args_dict.dir_dataset + r'/semart_test.csv', sep='\t', encoding='latin1')
+    val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1', header=0)
+    test_df = pd.read_csv(args_dict.dir_dataset + r'/semart_test.csv', sep='\t', encoding='latin1', header=0)
 
     vis_encoder = VisEncoder()
     vis_encoder.load_weights()
 
     feature_matrix_val = np.zeros(val_node2vec_emb.shape)
     for sample_ix in range(feature_matrix_val.shape[0]):
-        image_path = args_dict.dir_dataset + '/Images/' + val_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
+        image_path = args_dict.dir_dataset + '/Images/' + val_df.iloc[sample_ix].iloc[0]  # ['IMAGE FILE']
         image = Image.open(image_path).convert('RGB')
         image = transforms(image)
 
         feature_matrix_val[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
 
-
     feature_matrix_test = np.zeros(test_node2vec_emb.shape)
     for sample_ix in range(feature_matrix_test.shape[0]):
-        image_path = args_dict.dir_dataset + '/Images/' + test_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
+        image_path = args_dict.dir_dataset + '/Images/' + test_df.iloc[sample_ix].iloc[0]  # ['IMAGE FILE']
         image = Image.open(image_path).convert('RGB')
         image = transforms(image)
 

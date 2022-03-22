@@ -417,6 +417,8 @@ def train_gcn_classifier(args_dict):
 
     # Load semart data
     train_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
+    val_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
+    test_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
     n_samples = train_edge_list.max().max()+1
     adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
     for row in range(train_edge_list.shape[0]):
@@ -456,7 +458,6 @@ def train_gcn_classifier(args_dict):
 
     # train_loader =  DataLoader(data, batch_size=args_dict.batch_size, shuffle=True) # ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
     # val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
-    print('Training loader with %d samples' % train_loader.__len__())
 
     '''val_loader = torch.utils.data.DataLoader(
         semart_val_loader,
