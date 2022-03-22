@@ -404,6 +404,28 @@ def train_multitask_classifier(args_dict):
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 
+def _load_labels(df_path, att2i):
+    
+    df = pd.read_csv(df_path, delimiter='\t', encoding='Cp1252')
+    
+    type_vocab = att2i[0]
+    school_vocab = att2i[1]
+    time_vocab = att2i[2]
+    author_vocab = att2i[3]
+    
+    tipe = list(df['TYPE'])
+    school = list(df['SCHOOL'])
+    time = list(df['TIMEFRAME'])
+    author = list(df['AUTHOR'])
+    
+    tipei = np.array([type_vocab[x] for x in tipe])
+    schooli = np.array([school_vocab[x] for x in school])
+    timei = np.array([time_vocab[x] for x in time])
+    authori = np.array([author_vocab[x] for x in author])
+    
+    return tipei, schooli, timei, authori
+    
+
 def train_gcn_classifier(args_dict):
     from torch_geometric.data import Data
     from torch_geometric.loader import DataLoader
@@ -413,20 +435,13 @@ def train_gcn_classifier(args_dict):
     
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    if args_dict.att == 'type':
-        att2i = type2idx
-    elif args_dict.att == 'school':
-        att2i = school2idx
-    elif args_dict.att == 'time':
-        att2i = time2idx
-    elif args_dict.att == 'author':
-        att2i = author2idx
-    
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    att2i = [type2idx, school2idx, time2idx, author2idx]
     
     # Load semart knowledge graphs
-    train_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
-    val_edge_list = pd.read_csv('Data/kg_semart_val.csv', index_col=None, sep=' ')
-    test_edge_list = pd.read_csv('Data/kg_semart_test.csv', index_col=None, sep=' ')
+    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ')
+    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ')
+    test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ')
     
     # Use the kgs to generate a sparse matrix
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
@@ -473,9 +488,9 @@ def train_gcn_classifier(args_dict):
 
     # Loss and optimizer
     if torch.cuda.is_available():
-        class_loss = nn.CrossEntropyLoss().cuda()
+        criterion = nn.CrossEntropyLoss().cuda()
     else:
-        class_loss = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss()
 
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
@@ -483,34 +498,68 @@ def train_gcn_classifier(args_dict):
 
     # Resume training if needed
     best_val, model, optimizer = resume(args_dict, model, optimizer)
-
+    # Loss and optimizer
+    if torch.cuda.is_available():
+        class_loss = nn.CrossEntropyLoss().cuda()
+    else:
+        class_loss = nn.CrossEntropyLoss()
     # Dataloaders for training and validation
+    target_var_train = _load_labels(args_dict.dir_dataset + 'train.csv', att2i)
+    target_var_val = _load_labels(args_dict.dir_dataset + 'train.csv', att2i)
+    target_var_test = _load_labels(args_dict.dir_dataset + 'train.csv', att2i)
 
-
-    # train_loader =  DataLoader(data, batch_size=args_dict.batch_size, shuffle=True) # ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
-    # val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
-
-    '''val_loader = torch.utils.data.DataLoader(
-        semart_val_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % semart_val_loader.__len__())'''
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
+    losses = utils.AverageMeter()
     print('Start training GCN model...')
     pat_track = 0
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
         # Compute a training epoch
         optimizer.zero_grad()
-        out = model(data)
-        loss = torch.nn.functional.nll_loss(out[data.train_mask], data.y[data.train_mask])
-        loss.backward()
+        output = model(data.x[data.train_mask])
+        train_loss = 0.25 * criterion(output[0], target_var_train[0]) + \
+                     0.25 * criterion(output[1], target_var_train[1]) + \
+                     0.25 * criterion(output[2], target_var_train[2]) + \
+                     0.25 * criterion(output[3], target_var_train[3])
+        losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
+        train_loss.backward()
         optimizer.step()
 
         # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
+        # accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
+        output = model(data.x[data.val_mask])
+        _, pred_type = torch.max(output[0], 1)
+        _, pred_school = torch.max(output[1], 1)
+        _, pred_time = torch.max(output[2], 1)
+        _, pred_author = torch.max(output[3], 1)
 
+        # Save predictions to compute accuracy
+        if epoch == 0:
+            out_type = pred_type.data.cpu().numpy()
+            out_school = pred_school.data.cpu().numpy()
+            out_time = pred_time.data.cpu().numpy()
+            out_author = pred_author.data.cpu().numpy()
+            label_type = target_var_train[0].cpu().numpy()
+            label_school = target_var_train[1].cpu().numpy()
+            label_tf = target_var_train[2].cpu().numpy()
+            label_author = target_var_train[3].cpu().numpy()
+        else:
+            out_type = np.concatenate((out_type, pred_type.data.cpu().numpy()), axis=0)
+            out_school = np.concatenate((out_school, pred_school.data.cpu().numpy()), axis=0)
+            out_time = np.concatenate((out_time, pred_time.data.cpu().numpy()), axis=0)
+            out_author = np.concatenate((out_author, pred_author.data.cpu().numpy()), axis=0)
+            label_type = np.concatenate((label_type, target_var_train[0].cpu().numpy()), axis=0)
+            label_school = np.concatenate((label_school, target_var_train[1].cpu().numpy()), axis=0)
+            label_tf = np.concatenate((label_tf, target_var_train[2].cpu().numpy()), axis=0)
+            label_author = np.concatenate((label_author, target_var_train[3].cpu().numpy()), axis=0)
+            
+        acc_type = np.sum(out_type == label_type)/len(out_type)
+        acc_school = np.sum(out_school == label_school) / len(out_school)
+        acc_tf = np.sum(out_time == label_tf) / len(out_time)
+        acc_author = np.sum(out_author == label_author) / len(out_author)
+        accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
         # check patience
         if accval <= best_val:
             pat_track += 1

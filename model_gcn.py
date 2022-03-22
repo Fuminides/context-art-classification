@@ -55,10 +55,11 @@ class VisEncoder(nn.Module):
         else:
             checkpoint = torch.load(expected_path, map_location=torch.device('cpu'))
             
-        #if torch.cuda.is_available():
-        self.load_state_dict(checkpoint['state_dict'])
-        #else:
-        #self.load_state_dict(checkpoint['state_dict'], map_location=torch.device('cpu'))
+        if torch.cuda.is_available():
+            self.load_state_dict(checkpoint['state_dict'])
+        else:
+            self.load_state_dict(checkpoint['state_dict'], map_location=torch.device('cpu'))
+    
     
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
