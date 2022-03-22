@@ -29,11 +29,11 @@ def gen_embeds(args_dict):
     '''
     from torchvision import transforms
 
-    transform = transforms.Compose([
+    transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
         transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        #transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
         transforms.ToTensor(),  # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
@@ -44,7 +44,7 @@ def gen_embeds(args_dict):
 
     train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
-    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None)
+    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None, encoding='latin1')
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
 
@@ -90,11 +90,8 @@ def val_test_gen_embeds(args_dict):
     from PIL import Image
     from model_gcn import VisEncoder
 
-    val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0) # Just for the shape
     test_node2vec_emb = pd.read_csv('Data/semart_test.emd', skiprows=1, sep=' ', header=None, index_col=0)
-
-    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None, encoding='latin1')
-    dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
 
     val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1')
     test_df = pd.read_csv(args_dict.dir_dataset + r'/semart_test.csv', sep='\t', encoding='latin1')
@@ -103,33 +100,21 @@ def val_test_gen_embeds(args_dict):
     vis_encoder.load_weights()
 
     feature_matrix_val = np.zeros(val_node2vec_emb.shape)
-    for sample_ix in val_node2vec_emb.index:
+    for sample_ix in range(feature_matrix_val.shape[0]):
+        image_path = args_dict.dir_dataset + '/Images/' + val_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
+        image = Image.open(image_path).convert('RGB')
+        image = transforms(image)
 
-        try:
-            dict_keys[sample_ix - 1]  # If not in category, is a painting
-
-            feature_matrix_val[sample_ix - 1, :] = val_node2vec_emb.loc[sample_ix - 1]
-        except KeyError:
-            image_path = args_dict.dir_dataset + '/Images/' + val_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
-            image = Image.open(image_path).convert('RGB')
-            image = transforms(image)
-
-            feature_matrix_val[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+        feature_matrix_val[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
 
 
     feature_matrix_test = np.zeros(test_node2vec_emb.shape)
-    for sample_ix in test_node2vec_emb.index:
+    for sample_ix in range(feature_matrix_test.shape[0]):
+        image_path = args_dict.dir_dataset + '/Images/' + test_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
+        image = Image.open(image_path).convert('RGB')
+        image = transforms(image)
 
-        try:
-            dict_keys[sample_ix - 1]  # If not in category, is a painting
-
-            feature_matrix_test[sample_ix - 1, :] = test_node2vec_emb.loc[sample_ix - 1]
-        except KeyError:
-            image_path = args_dict.dir_dataset + '/Images/' + test_df.loc[sample_ix].iloc[0]  # ['IMAGE FILE']
-            image = Image.open(image_path).convert('RGB')
-            image = transforms(image)
-
-            feature_matrix_test[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+        feature_matrix_test[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
 
     return feature_matrix_val, feature_matrix_test
 
