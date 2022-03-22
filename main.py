@@ -63,7 +63,7 @@ def gen_embeds(args_dict):
             
             feature_matrix[sample_ix, :] = train_node2vec_emb.iloc[sample_ix]
         except KeyError:
-            image_path = args_dict.dir_dataset + '/Images/' + train_df.loc[sample_ix].iloc[0] # ['IMAGE FILE']
+            image_path = args_dict.dir_dataset + '/Images/' + train_df.iloc[sample_ix].iloc[0] # ['IMAGE FILE']
             image = Image.open(image_path).convert('RGB')
             image = transforms(image)
 
