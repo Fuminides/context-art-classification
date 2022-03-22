@@ -46,7 +46,10 @@ def get_parser():
     parser.add_argument('--clusters', default=150, type=int)
 
     # GCN model
-    parser.add_argument('--feature_matrix', default='Data/feature_128_semart.csv', type=str)
+    parser.add_argument('--feature_matrix', default='Data/semart.emd', type=str)
+    parser.add_argument('--feature_matrix_val', default='Data/semart_val.emd', type=str)
+    parser.add_argument('--feature_matrix_test', default='Data/semart_test.csv', type=str)
+    
     # Test
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
     parser.add_argument('--no_cuda', action='store_true')

@@ -8,7 +8,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-#from torch_geometric.nn import GCNConv
+if torch.cuda.is_available():
+    from torch_geometric.nn import GCNConv
+else:
+    print('Unable to import Pytorch geometric (CPU only not supported)')
 
 
 from torchvision import models
@@ -62,8 +65,6 @@ class GCN(nn.Module):
     
     def __init__(self, in_channels, hidden_channels, out_channels, num_class):
         super(GCN, self).__init__()
-
-
         
         self.final_embedding_size = out_channels
         self.hidden_size = hidden_channels
@@ -79,16 +80,15 @@ class GCN(nn.Module):
         self.class_author = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[3]))
 
     def _GCN_forward(self, x):
-        x = F.relu(self.gc1(x, self.adj))
+        x = F.relu(self.gc1(x))
         x = F.dropout(x, training=self.training)
-        x = self.gc2(x, self.adj)
+        x = self.gc2(x)
 
         return x # F.log_softmax(x, dim=1) # Softmax needed?
 
-    def forward(self):
-        
+    def forward(self, x):
 
-        graph_emb = self._GCN_forward(initial_emb)
+        graph_emb = self._GCN_forward(x)
         
         out_type = self.class_type(graph_emb)
         out_school = self.class_school(graph_emb)

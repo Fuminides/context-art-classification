@@ -56,12 +56,12 @@ def gen_embeds(args_dict):
     i=0
 
    
-    for sample_ix in train_node2vec_emb.index:
+    for sample_ix in range(train_node2vec_emb.shape[0]):
         i += 1
         try:
-            dict_keys[sample_ix - 1] # If not in category, is a painting
+            dict_keys[sample_ix] # If not in category, its a painting
             
-            feature_matrix[sample_ix-1, :] = train_node2vec_emb.loc[sample_ix-1]
+            feature_matrix[sample_ix, :] = train_node2vec_emb.iloc[sample_ix]
         except KeyError:
             image_path = args_dict.dir_dataset + '/Images/' + train_df.loc[sample_ix].iloc[0] # ['IMAGE FILE']
             image = Image.open(image_path).convert('RGB')
@@ -71,6 +71,7 @@ def gen_embeds(args_dict):
         
         if i % 1000 == 0:
             print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
+            
     return feature_matrix
 
 

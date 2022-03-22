@@ -408,24 +408,36 @@ def train_gcn_classifier(args_dict):
     from torch_geometric.data import Data
     from torch_geometric.loader import DataLoader
     from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
-    from model_gcn import GCN
+    from model_gcn import GCN, NODE2VEC_OUTPUT
 
+    
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-    att2i = [type2idx, school2idx, time2idx, author2idx]
-
-    # Load semart data
+    if args_dict.att == 'type':
+        att2i = type2idx
+    elif args_dict.att == 'school':
+        att2i = school2idx
+    elif args_dict.att == 'time':
+        att2i = time2idx
+    elif args_dict.att == 'author':
+        att2i = author2idx
+    
+    
+    # Load semart knowledge graphs
     train_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
-    val_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
-    test_edge_list = pd.read_csv('Data/kg_semart.csv', index_col=None, sep=' ')
-    n_samples = train_edge_list.max().max()+1
+    val_edge_list = pd.read_csv('Data/kg_semart_val.csv', index_col=None, sep=' ')
+    test_edge_list = pd.read_csv('Data/kg_semart_test.csv', index_col=None, sep=' ')
+    
+    # Use the kgs to generate a sparse matrix
+    total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
+    n_samples = total_edge_list.max().max()+1
     adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
     for row in range(train_edge_list.shape[0]):
-        emisor = train_edge_list.iloc[row, 0]
-        receptor = train_edge_list.iloc[row, 1]
+        emisor = total_edge_list.iloc[row, 0]
+        receptor = total_edge_list.iloc[row, 1]
         adj_sparse[emisor, receptor] = 1
 
+    # Load the feature matrix from the vis+node2vec representations
     train_feature_matrix = pd.read_csv(args_dict.feature_matrix)
     val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix)
     test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix)
@@ -433,10 +445,29 @@ def train_gcn_classifier(args_dict):
     total_samples = pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0)
     n_samples = total_samples.shape[0]
 
-    data = Data(x=total_samples, edge_index=adj_sparse)
+    # Gen the train/val/test indexes
+    train_mask = np.array([0] * n_samples)
+    train_mask[0:train_feature_matrix.shape[0]] = 1
+    train_mask = torch.tensor(train_mask, dtype=torch.uint8)
+    
+    val_mask = np.array([0] * n_samples)
+    val_mask[train_feature_matrix.shape[0]:train_feature_matrix.shape[0]+val_feature_matrix.shape[0]] = 1
+    val_mask = torch.tensor(val_mask, dtype=torch.uint8)
+    
+    test_mask = np.array([0] * n_samples)
+    test_mask[-test_feature_matrix.shape[0]:] = 1
+    test_mask = torch.tensor(test_mask, dtype=torch.uint8)
 
+    #Load labels
+    
+    #Load all the data as Data object for pytorch geometric
+    data = Data(x=total_samples, edge_index=total_edge_list)
+    data.train_mask = train_mask
+    data.val_mask = val_mask
+    data.test_mask = test_mask
+    
     # Define model
-    model = GCN(128, 64, num_classes)
+    model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), num_classes)
     if torch.cuda.is_available():
         model.cuda()
 
