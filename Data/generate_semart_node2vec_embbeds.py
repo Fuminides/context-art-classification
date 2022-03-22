@@ -10,13 +10,13 @@ from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
 import pandas as pd
 import numpy as np
 
-def generate_kg_semart(semart_path=r'G:/Mi unidad/Code/SemArt'):
+def generate_kg_semart(semart_path=r'/home/javierfumanal/Documents/GitHub/SemArt'):
     '''
     Returns a sparse matrix that contains the KG for the SEMART dataset and a dict
     containing the index for each label.
     '''
     # Generate connections category
-    def generate_connects(coo_matrix_fill, df, category, key_dict):
+    def generate_connects(coo_matrix_fill, df, category, key_dict, start):
         unique_elems = np.unique(train_df[category])
         
         for element in unique_elems:
@@ -24,19 +24,17 @@ def generate_kg_semart(semart_path=r'G:/Mi unidad/Code/SemArt'):
              indexes_nonzero = np.nonzero(np.array(connected))[0]
              
              for idx_nz in indexes_nonzero:
-                 coo_matrix_fill[key_dict[element], idx_nz] = 1
-                 coo_matrix_fill[idx_nz, key_dict[element]] = 1
+                 coo_matrix_fill[key_dict[element], idx_nz + start] = 1
+                 coo_matrix_fill[idx_nz + start, key_dict[element]] = 1
         
         return coo_matrix_fill
 
-    def gen_key_adj_grap(authors, extra_nodes, school, timeframe, studied_df, types):
-        kg_coo = dok_matrix((extra_nodes, studied_df.shape[0] + extra_nodes), dtype=np.int8)
-        all_categories = np.concatenate((authors, school, timeframe, types))
-        key_dicts = {x: ix + studied_df.shape[0] for ix, x in enumerate(all_categories)}
-        generate_connects(kg_coo, studied_df, 'AUTHOR', key_dicts)
-        generate_connects(kg_coo, studied_df, 'SCHOOL', key_dicts)
-        generate_connects(kg_coo, studied_df, 'TIMEFRAME', key_dicts)
-        generate_connects(kg_coo, studied_df, 'TYPE', key_dicts)
+    def gen_key_adj_grap(authors, total_nodes, school, timeframe, studied_df, types, key_dicts, start):
+        kg_coo = dok_matrix((total_nodes, total_nodes), dtype=np.int8)
+        generate_connects(kg_coo, studied_df, 'AUTHOR', key_dicts, start)
+        generate_connects(kg_coo, studied_df, 'SCHOOL', key_dicts, start)
+        generate_connects(kg_coo, studied_df, 'TIMEFRAME', key_dicts, start)
+        generate_connects(kg_coo, studied_df, 'TYPE', key_dicts, start)
 
         return key_dicts, kg_coo
 
@@ -51,9 +49,12 @@ def generate_kg_semart(semart_path=r'G:/Mi unidad/Code/SemArt'):
     
     extra_nodes = len(authors) + len(school) + len(timeframe) + len(types)
 
-    key_dicts, kg_coo = gen_key_adj_grap(authors, train_df.shape[0] + extra_nodes, school, timeframe, train_df, types)
-    val_key_dicts, val_kg_coo = gen_key_adj_grap(authors, val_df.shape[0] + extra_nodes, school, timeframe, val_df, types)
-    test_key_dicts, test_kg_coo = gen_key_adj_grap(authors, test_df.shape[0] + extra_nodes, school, timeframe, test_df, types)
+    all_categories = np.concatenate((authors, school, timeframe, types))
+    key_dicts = {x: ix + train_df.shape[0] for ix, x in enumerate(all_categories)}
+
+    key_dicts, kg_coo = gen_key_adj_grap(authors, train_df.shape[0] + extra_nodes, school, timeframe, train_df, types, key_dicts, start=0)
+    val_key_dicts, val_kg_coo = gen_key_adj_grap(authors, kg_coo.shape[0] + val_df.shape[0], school, timeframe, val_df, types, key_dicts, start=train_df.shape[0] + extra_nodes)
+    test_key_dicts, test_kg_coo = gen_key_adj_grap(authors, val_kg_coo.shape[0] + test_df.shape[0], school, timeframe, test_df, types, key_dicts, train_df.shape[0] + val_df.shape[0] + extra_nodes)
 
     return [kg_coo, key_dicts], [val_kg_coo, val_key_dicts], [test_kg_coo, test_key_dicts]
 

@@ -5,3 +5,4 @@
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/context-art-classification.iml
 .idea/workspace.xml
+*.pyc
