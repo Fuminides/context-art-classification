@@ -536,25 +536,16 @@ def train_gcn_classifier(args_dict):
         _, pred_author = torch.max(output[3], 1)
 
         # Save predictions to compute accuracy
-        if epoch == 0:
-            out_type = pred_type.data.cpu().numpy()
-            out_school = pred_school.data.cpu().numpy()
-            out_time = pred_time.data.cpu().numpy()
-            out_author = pred_author.data.cpu().numpy()
-            label_type = target_var_train[0].cpu().numpy()
-            label_school = target_var_train[1].cpu().numpy()
-            label_tf = target_var_train[2].cpu().numpy()
-            label_author = target_var_train[3].cpu().numpy()
-        else:
-            out_type = np.concatenate((out_type, pred_type.data.cpu().numpy()), axis=0)
-            out_school = np.concatenate((out_school, pred_school.data.cpu().numpy()), axis=0)
-            out_time = np.concatenate((out_time, pred_time.data.cpu().numpy()), axis=0)
-            out_author = np.concatenate((out_author, pred_author.data.cpu().numpy()), axis=0)
-            label_type = np.concatenate((label_type, target_var_train[0].cpu().numpy()), axis=0)
-            label_school = np.concatenate((label_school, target_var_train[1].cpu().numpy()), axis=0)
-            label_tf = np.concatenate((label_tf, target_var_train[2].cpu().numpy()), axis=0)
-            label_author = np.concatenate((label_author, target_var_train[3].cpu().numpy()), axis=0)
-            
+   
+        out_type = pred_type.data.cpu().numpy()
+        out_school = pred_school.data.cpu().numpy()
+        out_time = pred_time.data.cpu().numpy()
+        out_author = pred_author.data.cpu().numpy()
+        label_type = target_var_val[0].cpu().numpy()
+        label_school = target_var_val[1].cpu().numpy()
+        label_tf = target_var_val[2].cpu().numpy()
+        label_author = target_var_val[3].cpu().numpy()
+   
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
         acc_tf = np.sum(out_time == label_tf) / len(out_time)
