@@ -58,7 +58,7 @@ class VisEncoder(nn.Module):
         if torch.cuda.is_available():
             self.load_state_dict(checkpoint['state_dict'])
         else:
-            self.load_state_dict(checkpoint['state_dict'], map_location=torch.device('cpu'))
+            self.load_state_dict(checkpoint['state_dict']) # Does not reqquire anything else
     
     
 class GCN(nn.Module):

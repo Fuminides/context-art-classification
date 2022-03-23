@@ -58,16 +58,20 @@ def gen_embeds(args_dict):
    
     for sample_ix in range(train_node2vec_emb.shape[0]):
         i += 1
+        
         try:
             dict_keys[sample_ix] # If not in category, its a painting
             
             feature_matrix[sample_ix, :] = train_node2vec_emb.iloc[sample_ix]
         except KeyError:
-            image_path = args_dict.dir_dataset + '/Images/' + train_df.iloc[sample_ix].iloc[0] # ['IMAGE FILE']
-            image = Image.open(image_path).convert('RGB')
-            image = transforms(image)
-
-            feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+            try:
+                image_path = args_dict.dir_dataset + '/Images/' + train_df.iloc[sample_ix].iloc[0] # ['IMAGE FILE']
+                image = Image.open(image_path).convert('RGB')
+                image = transforms(image)
+    
+                feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+            except IndexError:
+                print('Error in index' + str(sample_ix))
         
         if i % 1000 == 0:
             print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
