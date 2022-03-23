@@ -287,5 +287,5 @@ if __name__ == "__main__":
         #feature_matrix.to_csv('Data/feature_train_128_semart.csv')
 
         v_mat, t_mat = val_test_gen_embeds(args_dict)
-        v_mat.to_csv('Data/feature_val_128_semart.csv')
-        t_mat.to_csv('Data/feature_test_128_semart.csv')
+        pd.DataFrame(v_mat).to_csv('Data/feature_val_128_semart.csv')
+        pd.DataFrame(t_mat).to_csv('Data/feature_test_128_semart.csv')
