@@ -283,8 +283,8 @@ if __name__ == "__main__":
     elif args_dict.mode == 'reduce':
         vis_encoder_gen(args_dict)
     elif args_dict.mode == 'gen_graph_dataset':
-        #feature_matrix = gen_embeds(args_dict)
-        #feature_matrix.to_csv('Data/feature_train_128_semart.csv')
+        feature_matrix = gen_embeds(args_dict)
+        feature_matrix.to_csv('Data/feature_train_128_semart.csv')
 
         v_mat, t_mat = val_test_gen_embeds(args_dict)
         pd.DataFrame(v_mat).to_csv('Data/feature_val_128_semart.csv')
