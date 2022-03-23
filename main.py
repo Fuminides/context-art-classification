@@ -104,7 +104,7 @@ def val_test_gen_embeds(args_dict):
     vis_encoder = VisEncoder()
     vis_encoder.load_weights()
 
-    feature_matrix_val = np.zeros(val_node2vec_emb.shape)
+    feature_matrix_val = np.zeros((val_df.shape[0], val_node2vec_emb.shape[1]))
     for sample_ix in range(feature_matrix_val.shape[0]):
         image_path = args_dict.dir_dataset + '/Images/' + val_df.iloc[sample_ix].iloc[0]  # ['IMAGE FILE']
         image = Image.open(image_path).convert('RGB')
@@ -112,7 +112,7 @@ def val_test_gen_embeds(args_dict):
 
         feature_matrix_val[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
 
-    feature_matrix_test = np.zeros(test_node2vec_emb.shape)
+    feature_matrix_test = np.zeros((test_df.shape[0], test_node2vec_emb.shape[1]))
     for sample_ix in range(feature_matrix_test.shape[0]):
         image_path = args_dict.dir_dataset + '/Images/' + test_df.iloc[sample_ix].iloc[0]  # ['IMAGE FILE']
         image = Image.open(image_path).convert('RGB')
@@ -283,8 +283,9 @@ if __name__ == "__main__":
     elif args_dict.mode == 'reduce':
         vis_encoder_gen(args_dict)
     elif args_dict.mode == 'gen_graph_dataset':
-        feature_matrix = gen_embeds(args_dict)
+        #feature_matrix = gen_embeds(args_dict)
+        #feature_matrix.to_csv('Data/feature_train_128_semart.csv')
+
         v_mat, t_mat = val_test_gen_embeds(args_dict)
-        feature_matrix.to_csv('Data/feature_train_128_semart.csv')
         v_mat.to_csv('Data/feature_val_128_semart.csv')
         t_mat.to_csv('Data/feature_test_128_semart.csv')
