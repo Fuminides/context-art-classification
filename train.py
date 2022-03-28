@@ -454,10 +454,7 @@ def train_gcn_classifier(args_dict):
     
     # Use the kgs to generate a sparse matrix
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
-    n_samples = int(total_edge_list.max().max()+1)
-   
-
-    tensor_total_edge_list = torch.tensor(np.array(total_edge_list).T, dtype=torch.long)
+    tensor_total_edge_list = torch.tensor(np.array(total_edge_list).reshape((2, total_edge_list.shape[0])), dtype=torch.long)
     
 
     # Load the feature matrix from the vis+node2vec representations
@@ -494,6 +491,7 @@ def train_gcn_classifier(args_dict):
     data.val_mask = val_mask
     data.test_mask = test_mask
     
+    print(data.total_samples.shape, tensor_total_edge_list.shape)
     # Define model
     model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), int(NODE2VEC_OUTPUT / 4), num_classes)
     if torch.cuda.is_available():
