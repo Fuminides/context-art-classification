@@ -480,7 +480,7 @@ def train_gcn_classifier(args_dict):
    
     if torch.cuda.is_available():
         total_samples = total_samples.cuda()
-        train_edge_list = torch.tensor(np.array(train_edge_list)).cuda()
+        train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
         tensor_total_edge_list = tensor_total_edge_list.cuda()
         train_mask = train_mask.cuda()
         val_mask = val_mask.cuda()
