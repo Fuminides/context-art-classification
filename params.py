@@ -48,7 +48,7 @@ def get_parser():
     # GCN model
     parser.add_argument('--feature_matrix', default='Data/semart.emd', type=str)
     parser.add_argument('--val_feature_matrix', default='Data/semart_val.emd', type=str)
-    parser.add_argument('--test_feature_matrix', default='Data/semart_test.csv', type=str)
+    parser.add_argument('--test_feature_matrix', default='Data/semart_test.emd', type=str)
     parser.add_argument('--edge_list_train', default='Data/kg_semart.csv', type=str)
     parser.add_argument('--edge_list_val', default='Data/kg_semart_val.csv', type=str)
     parser.add_argument('--edge_list_test', default='Data/kg_semart_test.csv', type=str)
