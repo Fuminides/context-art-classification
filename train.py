@@ -545,13 +545,12 @@ def train_gcn_classifier(args_dict):
                      0.25 * criterion(output[2][0:19244], target_var[2]) + \
                      0.25 * criterion(output[3][0:19244], target_var[3])
         print('Loss computed')
-        losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
         train_loss.backward()
         optimizer.step()
 
         # Compute a validation epoch
         # accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
-        output = model(data.x[data.val_mask])
+        output = model(data.x[data.val_mask, data.val_edge_index])
         _, pred_type = torch.max(output[0], 1)
         _, pred_school = torch.max(output[1], 1)
         _, pred_time = torch.max(output[2], 1)
