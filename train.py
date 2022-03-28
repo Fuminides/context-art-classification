@@ -461,7 +461,7 @@ def train_gcn_classifier(args_dict):
         receptor = total_edge_list.iloc[row, 1]
         adj_sparse[emisor, receptor] = 1'''
 
-    tensor_total_edge_list = torch.tensor(np.array(total_edge_list))
+    tensor_total_edge_list = torch.tensor(np.array(total_edge_list), dtype=torch.long)
     
 
     # Load the feature matrix from the vis+node2vec representations
