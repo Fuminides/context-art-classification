@@ -266,6 +266,7 @@ def train_knowledgegraph_classifier(args_dict):
     # Dataloaders for training and validation
     semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, transform=train_transforms, embedds=args_dict.embedds, clusters=N_CLUSTERS, k=k)
     semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, embedds=args_dict.embedds, clusters=N_CLUSTERS, k=k)
+
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
@@ -405,7 +406,15 @@ def train_multitask_classifier(args_dict):
 
 
 def _load_labels(df_path, att2i):
-    
+    def class_from_name(vocab, name):
+
+        if name in vocab:
+            idclass= vocab[name]
+        else:
+            idclass = vocab['UNK']
+
+        return idclass
+
     df = pd.read_csv(df_path, delimiter='\t', encoding='Cp1252')
     
     type_vocab = att2i[0]
@@ -418,10 +427,10 @@ def _load_labels(df_path, att2i):
     time = list(df['TIMEFRAME'])
     author = list(df['AUTHOR'])
     
-    tipei = np.array([type_vocab[x] for x in tipe])
-    schooli = np.array([school_vocab[x] for x in school])
-    timei = np.array([time_vocab[x] for x in time])
-    authori = np.array([author_vocab[x] for x in author])
+    tipei = np.array([class_from_name(x, type_vocab) for x in tipe])
+    schooli = np.array([class_from_name(x, school_vocab) for x in school])
+    timei = np.array([class_from_name(x, time_vocab) for x in time])
+    authori = np.array([class_from_name(x, author_vocab) for x in author])
     
     return tipei, schooli, timei, authori
     
