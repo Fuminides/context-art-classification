@@ -516,8 +516,8 @@ def train_gcn_classifier(args_dict):
         class_loss = nn.CrossEntropyLoss()
 
     # Dataloaders for training and validation
-    target_var_train = torch.tensor(_load_labels(args_dict.dir_dataset + '/semart_train.csv', att2i))
-    target_var_val = torch.tensor(_load_labels(args_dict.dir_dataset + '/semart_val.csv', att2i))
+    target_var_train = _load_labels(args_dict.dir_dataset + '/semart_train.csv', att2i)
+    target_var_val = _load_labels(args_dict.dir_dataset + '/semart_val.csv', att2i)
     target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
 
 
@@ -529,14 +529,22 @@ def train_gcn_classifier(args_dict):
 
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
         print(epoch)
+        # Targets to Variable type
+        target_var = list()
+        for j in range(len(target_var_train)):
+            if torch.cuda.is_available():
+                target_var_train[j] = target_var_train[j].cuda(non_blocking=True)
+
+            target_var.append(torch.autograd.Variable(target_var_train[j]))
+            
         # Compute a training epoch
         optimizer.zero_grad()
         output = model(data.x[data.train_mask], data.edge_index)
         print('Output computed')
-        train_loss = 0.25 * criterion(output[0], target_var_train[0]) + \
-                     0.25 * criterion(output[1], target_var_train[1]) + \
-                     0.25 * criterion(output[2], target_var_train[2]) + \
-                     0.25 * criterion(output[3], target_var_train[3])
+        train_loss = 0.25 * criterion(output[0], target_var[0]) + \
+                     0.25 * criterion(output[1], target_var[1]) + \
+                     0.25 * criterion(output[2], target_var[2]) + \
+                     0.25 * criterion(output[3], target_var[3])
         print('Loss computed')
         losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
         train_loss.backward()
