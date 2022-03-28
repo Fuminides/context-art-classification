@@ -482,7 +482,7 @@ def train_gcn_classifier(args_dict):
     data.test_mask = test_mask
     
     # Define model
-    model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), num_classes)
+    model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), int(NODE2VEC_OUTPUT / 4), num_classes)
     if torch.cuda.is_available():
         model.cuda()
 
