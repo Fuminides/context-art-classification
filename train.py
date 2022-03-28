@@ -528,7 +528,7 @@ def train_gcn_classifier(args_dict):
 
         # Compute a training epoch
         optimizer.zero_grad()
-        output = model(data.x[data.train_mask])
+        output = model(data.x[data.train_mask], data.edge_index)
         train_loss = 0.25 * criterion(output[0], target_var_train[0]) + \
                      0.25 * criterion(output[1], target_var_train[1]) + \
                      0.25 * criterion(output[2], target_var_train[2]) + \

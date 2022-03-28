@@ -80,16 +80,16 @@ class GCN(nn.Module):
         self.class_tf = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[2]))
         self.class_author = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[3]))
 
-    def _GCN_forward(self, x):
-        x = F.relu(self.gc1(x))
+    def _GCN_forward(self, x, edge_index):
+        x = F.relu(self.gc1(x, edge_index))
         x = F.dropout(x, training=self.training)
-        x = self.gc2(x)
+        x = self.gc2(x, edge_index)
 
         return x # F.log_softmax(x, dim=1) # Softmax needed?
 
-    def forward(self, x):
+    def forward(self, x, edge_index):
 
-        graph_emb = self._GCN_forward(x)
+        graph_emb = self._GCN_forward(x, edge_index)
         
         out_type = self.class_type(graph_emb)
         out_school = self.class_school(graph_emb)
