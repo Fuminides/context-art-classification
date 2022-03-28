@@ -527,15 +527,18 @@ def train_gcn_classifier(args_dict):
     losses = utils.AverageMeter()
     print('Start training GCN model...')
     pat_track = 0
-    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
+    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
+        print(epoch)
         # Compute a training epoch
         optimizer.zero_grad()
         output = model(data.x[data.train_mask], data.edge_index)
+        print('Output computed')
         train_loss = 0.25 * criterion(output[0], target_var_train[0]) + \
                      0.25 * criterion(output[1], target_var_train[1]) + \
                      0.25 * criterion(output[2], target_var_train[2]) + \
                      0.25 * criterion(output[3], target_var_train[3])
+        print('Loss computed')
         losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
         train_loss.backward()
         optimizer.step()
