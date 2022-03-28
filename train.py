@@ -503,10 +503,11 @@ def train_gcn_classifier(args_dict):
         class_loss = nn.CrossEntropyLoss().cuda()
     else:
         class_loss = nn.CrossEntropyLoss()
+
     # Dataloaders for training and validation
-    target_var_train = _load_labels(args_dict.dir_dataset + 'train.csv', att2i)
-    target_var_val = _load_labels(args_dict.dir_dataset + 'train.csv', att2i)
-    target_var_test = _load_labels(args_dict.dir_dataset + 'train.csv', att2i)
+    target_var_train = _load_labels(args_dict.dir_dataset + '/semart_train.csv', att2i)
+    target_var_val = _load_labels(args_dict.dir_dataset + '/semart_val.csv', att2i)
+    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
 
 
     # Now, let's start the training process!
