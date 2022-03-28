@@ -406,7 +406,7 @@ def train_multitask_classifier(args_dict):
 
 
 def _load_labels(df_path, att2i):
-    def class_from_name(vocab, name):
+    def class_from_name(name, vocab):
 
         if name in vocab:
             idclass= vocab[name]
