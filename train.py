@@ -448,12 +448,13 @@ def train_gcn_classifier(args_dict):
     att2i = [type2idx, school2idx, time2idx, author2idx]
     
     # Load semart knowledge graphs
-    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ')
-    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ')
-    test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ')
+    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
+    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
+    test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ', header=None)
     
     # Use the kgs to generate a sparse matrix
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
+    print(total_edge_list.shape)
     tensor_total_edge_list = torch.tensor(np.array(total_edge_list).reshape((2, total_edge_list.shape[0])), dtype=torch.long)
     
 
