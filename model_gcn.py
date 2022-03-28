@@ -71,7 +71,7 @@ class GCN(nn.Module):
         self.hidden_size = hidden_channels
          
         #GCN model
-        self.gc1 = GCNConv(in_channels, self.hidden_channels)
+        self.gc1 = GCNConv(in_channels, self.hidden_size)
         self.gc2 = GCNConv(self.hidden_size, self.final_embedding_size)
 
         # Classifiers
