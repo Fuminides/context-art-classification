@@ -455,11 +455,14 @@ def train_gcn_classifier(args_dict):
     # Use the kgs to generate a sparse matrix
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
     n_samples = int(total_edge_list.max().max()+1)
-    adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
+    '''adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
     for row in range(train_edge_list.shape[0]):
         emisor = total_edge_list.iloc[row, 0]
         receptor = total_edge_list.iloc[row, 1]
-        adj_sparse[emisor, receptor] = 1
+        adj_sparse[emisor, receptor] = 1'''
+
+    tensor_total_edge_list = torch.tensor(np.array(total_edge_list))
+    
 
     # Load the feature matrix from the vis+node2vec representations
     train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=' ')
@@ -485,7 +488,7 @@ def train_gcn_classifier(args_dict):
     #Load labels
     
     #Load all the data as Data object for pytorch geometric
-    data = Data(x=total_samples, edge_index=total_edge_list)
+    data = Data(x=total_samples, edge_index=tensor_total_edge_list)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
