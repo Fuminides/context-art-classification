@@ -462,9 +462,9 @@ def train_gcn_classifier(args_dict):
         adj_sparse[emisor, receptor] = 1
 
     # Load the feature matrix from the vis+node2vec representations
-    train_feature_matrix = pd.read_csv(args_dict.feature_matrix)
-    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix)
-    test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix)
+    train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=' ')
+    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=' ')
+    test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix, sep=' ')
     
     total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0)))
     n_samples = total_samples.shape[0]
