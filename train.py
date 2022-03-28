@@ -413,7 +413,7 @@ def _load_labels(df_path, att2i):
         else:
             idclass = vocab['UNK']
 
-        return idclass
+        return int(idclass)
 
     df = pd.read_csv(df_path, delimiter='\t', encoding='Cp1252')
     
