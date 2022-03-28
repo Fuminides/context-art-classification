@@ -463,7 +463,7 @@ def train_gcn_classifier(args_dict):
     val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
     test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
     
-    total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0)))
+    total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0))).float()
     n_samples = total_samples.shape[0]
 
     # Gen the train/val/test indexes
