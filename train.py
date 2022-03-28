@@ -533,10 +533,10 @@ def train_gcn_classifier(args_dict):
         target_var = list()
         for j in range(len(target_var_train)):
             if torch.cuda.is_available():
-                target_var_train[j] = target_var_train[j].cuda(non_blocking=True)
+                target_var_train[j] = torch.tensor(target_var_train[j]).cuda(non_blocking=True)
 
             target_var.append(torch.autograd.Variable(target_var_train[j]))
-            
+
         # Compute a training epoch
         optimizer.zero_grad()
         output = model(data.x[data.train_mask], data.edge_index)
