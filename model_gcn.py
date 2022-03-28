@@ -81,6 +81,7 @@ class GCN(nn.Module):
         self.class_author = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[3]))
 
     def _GCN_forward(self, x, edge_index):
+        print(x.shape, edge_index.shape)
         x = F.relu(self.gc1(x, edge_index))
         x = F.dropout(x, training=self.training)
         x = self.gc2(x, edge_index)
