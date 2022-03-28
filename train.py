@@ -452,7 +452,7 @@ def train_gcn_classifier(args_dict):
     val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
     test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ', header=None)
     
-    # Use the kgs to generate a sparse matrix
+    # Use the kgs to generate a edge matrix
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
     tensor_total_edge_list = torch.tensor(np.array(total_edge_list).reshape((2, total_edge_list.shape[0])), dtype=torch.long)
     
@@ -467,7 +467,7 @@ def train_gcn_classifier(args_dict):
 
     # Gen the train/val/test indexes
     train_mask = np.array([0] * n_samples)
-    train_mask[0:train_feature_matrix.shape[0]] = 1
+    train_mask[0:19244] = 1 #Number of paintings
     train_mask = torch.tensor(train_mask, dtype=torch.uint8)
     
     val_mask = np.array([0] * n_samples)
