@@ -6,3 +6,4 @@
 .idea/context-art-classification.iml
 .idea/workspace.xml
 *.pyc
+Models/Reduce/reduce_128_best_model.pth.tar

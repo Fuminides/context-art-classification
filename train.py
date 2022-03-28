@@ -445,7 +445,7 @@ def train_gcn_classifier(args_dict):
     
     # Use the kgs to generate a sparse matrix
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
-    n_samples = total_edge_list.max().max()+1
+    n_samples = int(total_edge_list.max().max()+1)
     adj_sparse = dok_matrix((n_samples, n_samples), dtype=np.int8)
     for row in range(train_edge_list.shape[0]):
         emisor = total_edge_list.iloc[row, 0]
