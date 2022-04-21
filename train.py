@@ -447,18 +447,30 @@ def train_gcn_classifier(args_dict):
     num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
     att2i = [type2idx, school2idx, time2idx, author2idx]
     
+    # Dataloaders for training and validation
+    target_var_train = _load_labels(args_dict.dir_dataset + '/semart_train.csv', att2i)
+    target_var_val = _load_labels(args_dict.dir_dataset + '/semart_val.csv', att2i)
+    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
+    og_train_size = len(target_var_train[0])
+    val_size = len(target_var_val[0])
+    test_size = len(target_var_test[0])
+
     # Load semart knowledge graphs
     train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
     val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
     test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ', header=None)
     
     # Use the kgs to generate a sparse matrix
+    val_edge_list = pd.concat([train_edge_list, val_edge_list], axis=0)
+    tensor_val_edge_list = torch.tensor(np.array(val_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
     tensor_total_edge_list = torch.tensor(np.array(total_edge_list).reshape((2, total_edge_list.shape[0])), dtype=torch.long)
     
 
     # Load the feature matrix from the vis+node2vec representations
     train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=' ', header=None, skiprows=1, index_col=0)
+    train_size = train_feature_matrix.shape[0]
+
     val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
     test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
     
@@ -467,27 +479,31 @@ def train_gcn_classifier(args_dict):
 
     # Gen the train/val/test indexes
     train_mask = np.array([0] * n_samples)
-    train_mask[0:train_feature_matrix.shape[0]] = 1
+    train_mask[0:train_size] = 1
     train_mask = torch.tensor(train_mask, dtype=torch.uint8)
-    
+
     val_mask = np.array([0] * n_samples)
-    val_mask[train_feature_matrix.shape[0]:train_feature_matrix.shape[0]+val_feature_matrix.shape[0]] = 1
+    val_mask[train_size:train_size+val_size] = 1
     val_mask = torch.tensor(val_mask, dtype=torch.uint8)
-    
+    val_mask = torch.logical_or(train_mask, val_mask)
+
     test_mask = np.array([0] * n_samples)
-    test_mask[-test_feature_matrix.shape[0]:] = 1
+    test_mask[-(train_size + val_size):] = 1
     test_mask = torch.tensor(test_mask, dtype=torch.uint8)
    
     if torch.cuda.is_available():
         total_samples = total_samples.cuda()
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
+        val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
+        test_edge_list = torch.tensor(np.array(test_edge_list).reshape(2, test_edge_list.shape[0])).cuda()
         tensor_total_edge_list = tensor_total_edge_list.cuda()
+        tensor_val_edge_list = tensor_val_edge_list.cuda()
         train_mask = train_mask.cuda()
         val_mask = val_mask.cuda()
         test_mask = test_mask.cuda()
 
     #Load all the data as Data object for pytorch geometric
-    data = Data(x=total_samples, edge_index=train_edge_list)
+    data = Data(x=total_samples, edge_index=train_edge_list, val_edge_index=tensor_val_edge_list, total_index=tensor_total_edge_list)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
@@ -502,10 +518,11 @@ def train_gcn_classifier(args_dict):
         criterion = nn.CrossEntropyLoss().cuda()
     else:
         criterion = nn.CrossEntropyLoss()
-
+    
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
                                 momentum=args_dict.momentum)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 100)
 
     # Resume training if needed
     best_val, model, optimizer = resume(args_dict, model, optimizer)
@@ -515,18 +532,13 @@ def train_gcn_classifier(args_dict):
     else:
         class_loss = nn.CrossEntropyLoss()
 
-    # Dataloaders for training and validation
-    target_var_train = _load_labels(args_dict.dir_dataset + '/semart_train.csv', att2i)
-    target_var_val = _load_labels(args_dict.dir_dataset + '/semart_val.csv', att2i)
-    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
-
+    
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
     losses = utils.AverageMeter()
     print('Start training GCN model...')
     pat_track = 0
-
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
         print(epoch)
         # Targets to Variable type
@@ -539,18 +551,16 @@ def train_gcn_classifier(args_dict):
         # Compute a training epoch
         optimizer.zero_grad()
         output = model(data.x[data.train_mask], data.edge_index)
-        print('Output computed')
-        train_loss = 0.25 * criterion(output[0][0:19244], target_var[0]) + \
-                     0.25 * criterion(output[1][0:19244], target_var[1]) + \
-                     0.25 * criterion(output[2][0:19244], target_var[2]) + \
-                     0.25 * criterion(output[3][0:19244], target_var[3])
-        print('Loss computed')
+        train_loss = 0.25 * criterion(output[0][0:og_train_size], target_var[0]) + \
+                     0.25 * criterion(output[1][0:og_train_size], target_var[1]) + \
+                     0.25 * criterion(output[2][0:og_train_size], target_var[2]) + \
+                     0.25 * criterion(output[3][0:og_train_size], target_var[3])
         train_loss.backward()
         optimizer.step()
-
+        scheduler.step()
         # Compute a validation epoch
         # accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
-        output = model(data.x[data.val_mask, data.val_edge_index])
+        output = model(data.x[data.val_mask], data.val_edge_index)
         _, pred_type = torch.max(output[0], 1)
         _, pred_school = torch.max(output[1], 1)
         _, pred_time = torch.max(output[2], 1)
@@ -558,19 +568,19 @@ def train_gcn_classifier(args_dict):
 
         # Save predictions to compute accuracy
    
-        out_type = pred_type.data.cpu().numpy()
-        out_school = pred_school.data.cpu().numpy()
-        out_time = pred_time.data.cpu().numpy()
-        out_author = pred_author.data.cpu().numpy()
-        label_type = target_var_val[0].cpu().numpy()
-        label_school = target_var_val[1].cpu().numpy()
-        label_tf = target_var_val[2].cpu().numpy()
-        label_author = target_var_val[3].cpu().numpy()
-   
-        acc_type = np.sum(out_type == label_type)/len(out_type)
-        acc_school = np.sum(out_school == label_school) / len(out_school)
-        acc_tf = np.sum(out_time == label_tf) / len(out_time)
-        acc_author = np.sum(out_author == label_author) / len(out_author)
+        out_type = pred_type.data.cpu().numpy()[-val_size:]
+        out_school = pred_school.data.cpu().numpy()[-val_size:]
+        out_time = pred_time.data.cpu().numpy()[-val_size:]
+        out_author = pred_author.data.cpu().numpy()[-val_size:]
+        label_type = target_var_val[0]#.cpu().numpy()
+        label_school = target_var_val[1]#.cpu().numpy()
+        label_tf = target_var_val[2]#.cpu().numpy()
+        label_author = target_var_val[3]#.cpu().numpy()
+
+        acc_type = np.sum(np.equal(out_type, label_type))/len(out_type)
+        acc_school = np.sum(np.equal(out_school, label_school)) / len(out_school)
+        acc_tf = np.sum(np.equal(out_time, label_tf)) / len(out_time)
+        acc_author = np.sum(np.equal(out_author, label_author)) / len(out_author)
         accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
         # check patience
         if accval <= best_val:
