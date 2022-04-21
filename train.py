@@ -31,6 +31,7 @@ def save_model(args_dict, state, type='school', train_feature='kgm'):
     if not os.path.exists(directory):
         os.makedirs(directory)
     filename = directory + train_feature + '_' + type + '_best_model.pth.tar'
+    print('Model saved in ' + filename)
     torch.save(state, filename)
 
 
