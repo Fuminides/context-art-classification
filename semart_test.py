@@ -10,6 +10,7 @@ from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 
+from model_gcn import GCN, NODE2VEC_OUTPUT
 
 def test_knowledgegraph(args_dict):
 
@@ -308,6 +309,133 @@ def test_gcn(args_dict):
     print('Timeframe Accuracy %.03f' % acc_tf)
     print('Author Accuracy %.03f' % acc_author)
     print('----------------------------------------')
+
+def test_gcn(args_dict):
+    from torch_geometric.data import Data
+    import pandas as pd
+
+    # Load classes
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    att2i = [type2idx, school2idx, time2idx, author2idx]
+
+    model = MTL(num_classes)
+    if torch.cuda.is_available():
+        model.cuda()
+
+    # Load best model
+    print("=> loading checkpoint '{}'".format(args_dict.model_path))
+    checkpoint = torch.load(args_dict.model_path)
+    args_dict.start_epoch = checkpoint['epoch']
+    model.load_state_dict(checkpoint['state_dict'])
+    print("=> loaded checkpoint '{}' (epoch {})"
+          .format(args_dict.model_path, checkpoint['epoch']))
+
+    # Data transformation for test
+    test_transforms = transforms.Compose([
+        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(224),                         # we get only the center of that rescaled
+        transforms.ToTensor(),                              # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+    # Data Loaders for test
+    test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ', header=None)
+    
+    # Load semart knowledge graphs
+    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
+    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
+    test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ', header=None)
+
+    total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
+    tensor_total_edge_list = torch.tensor(np.array(total_edge_list).reshape((2, total_edge_list.shape[0])), dtype=torch.long)
+
+    #  Load the feature matrix from the vis+node2vec representations
+    train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=' ', header=None, skiprows=1, index_col=0)
+    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
+    test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
+
+    total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0))).float()
+    n_samples = total_samples.shape[0]
+
+    # Gen the train/val/test indexes
+    train_mask = np.array([0] * n_samples)
+    train_mask[0:train_feature_matrix.shape[0]] = 1
+    train_mask = torch.tensor(train_mask, dtype=torch.uint8)
+    
+    val_mask = np.array([0] * n_samples)
+    val_mask[train_feature_matrix.shape[0]:train_feature_matrix.shape[0]+val_feature_matrix.shape[0]] = 1
+    val_mask = torch.tensor(val_mask, dtype=torch.uint8)
+    
+    test_mask = np.array([0] * n_samples)
+    test_mask[-test_feature_matrix.shape[0]:] = 1
+    test_mask = torch.tensor(test_mask, dtype=torch.uint8)
+
+    if torch.cuda.is_available():
+        total_samples = total_samples.cuda()
+        train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
+        tensor_total_edge_list = tensor_total_edge_list.cuda()
+        train_mask = train_mask.cuda()
+        val_mask = val_mask.cuda()
+        test_mask = test_mask.cuda()
+
+    #Load all the data as Data object for pytorch geometric
+    data = Data(x=total_samples, edge_index=train_edge_list)
+    data.train_mask = train_mask
+    data.val_mask = val_mask
+    data.test_mask = test_mask
+    
+    # Define model
+    model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), int(NODE2VEC_OUTPUT / 4), num_classes)
+    if torch.cuda.is_available():
+        model.cuda()
+    
+    # Load best model
+    print("=> loading checkpoint '{}'".format(args_dict.model_path))
+    checkpoint = torch.load(args_dict.model_path)
+    args_dict.start_epoch = checkpoint['epoch']
+    model.load_state_dict(checkpoint['state_dict'])
+    print("=> loaded checkpoint '{}' (epoch {})"
+          .format(args_dict.model_path, checkpoint['epoch']))
+
+
+    # Dataloaders for training and validation
+    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
+
+    # Switch to evaluation mode & compute test
+    model.eval()
+    output = model(data.x[data.val_mask, data.val_edge_index])
+    _, pred_type = torch.max(output[0], 1)
+    _, pred_school = torch.max(output[1], 1)
+    _, pred_time = torch.max(output[2], 1)
+    _, pred_author = torch.max(output[3], 1)
+
+    # Save predictions to compute accuracy
+    out_type = pred_type.data.cpu().numpy()
+    out_school = pred_school.data.cpu().numpy()
+    out_time = pred_time.data.cpu().numpy()
+    out_author = pred_author.data.cpu().numpy()
+    label_type = target_var_test[0].cpu().numpy()
+    label_school = target_var_test[1].cpu().numpy()
+    label_tf = target_var_test[2].cpu().numpy()
+    label_author = target_var_test[3].cpu().numpy()
+
+    acc_type = np.sum(np.equal(out_type, label_type))/len(out_type)
+    acc_school = np.sum(np.equal(out_school, label_school)) / len(out_school)
+    acc_tf = np.sum(np.equal(out_time, label_tf)) / len(out_time)
+    acc_author = np.sum(np.equal(out_author, label_author)) / len(out_author)
+    accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
+
+    # Print test accuracy
+    print('------------ Test Accuracy -------------')
+    print('Type Accuracy %.03f' % acc_type)
+    print('School Accuracy %.03f' % acc_school)
+    print('Timeframe Accuracy %.03f' % acc_tf)
+    print('Author Accuracy %.03f' % acc_author)
+    print('Average accuracy %.03f' % accval)
+    print('----------------------------------------')
+
 
 
 def run_test(args_dict):
