@@ -311,6 +311,7 @@ def test_gcn(args_dict):
     print('----------------------------------------')
 
 def test_gcn(args_dict):
+    from train import _load_labels
     from torch_geometric.data import Data
     import pandas as pd
 
