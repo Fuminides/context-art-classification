@@ -208,7 +208,7 @@ def test_multitask(args_dict):
     print('Timeframe Accuracy %.03f' % acc_tf)
     print('Author Accuracy %.03f' % acc_author)
     print('----------------------------------------')
-
+  
 def test_gcn(args_dict):
     from train import _load_labels
     from torch_geometric.data import Data
@@ -219,17 +219,7 @@ def test_gcn(args_dict):
     num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
     att2i = [type2idx, school2idx, time2idx, author2idx]
 
-    model = MTL(num_classes)
-    if torch.cuda.is_available():
-        model.cuda()
-
-    # Load best model
-    print("=> loading checkpoint '{}'".format(args_dict.model_path))
-    checkpoint = torch.load(args_dict.model_path)
-    args_dict.start_epoch = checkpoint['epoch']
-    model.load_state_dict(checkpoint['state_dict'])
-    print("=> loaded checkpoint '{}' (epoch {})"
-          .format(args_dict.model_path, checkpoint['epoch']))
+    
 
     # Data transformation for test
     test_transforms = transforms.Compose([
@@ -248,6 +238,8 @@ def test_gcn(args_dict):
     val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
     test_edge_list = pd.read_csv(args_dict.edge_list_test, index_col=None, sep=' ', header=None)
 
+    #test_edge_list = pd.concat([train_edge_list, test_edge_list], axis=0)
+    tensor_test_edge_list = torch.tensor(np.array(test_edge_list).reshape((2, test_edge_list.shape[0])), dtype=torch.long)
     total_edge_list = pd.concat([train_edge_list, val_edge_list, test_edge_list], axis=0)
     tensor_total_edge_list = torch.tensor(np.array(total_edge_list).reshape((2, total_edge_list.shape[0])), dtype=torch.long)
 
@@ -259,6 +251,8 @@ def test_gcn(args_dict):
     total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix, test_feature_matrix], axis=0))).float()
     n_samples = total_samples.shape[0]
 
+    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
+
     # Gen the train/val/test indexes
     train_mask = np.array([0] * n_samples)
     train_mask[0:train_feature_matrix.shape[0]] = 1
@@ -269,7 +263,7 @@ def test_gcn(args_dict):
     val_mask = torch.tensor(val_mask, dtype=torch.uint8)
     
     test_mask = np.array([0] * n_samples)
-    test_mask[-test_feature_matrix.shape[0]:] = 1
+    test_mask[-len(target_var_test[0]):] = 1
     test_mask = torch.tensor(test_mask, dtype=torch.uint8)
 
     if torch.cuda.is_available():
@@ -281,13 +275,13 @@ def test_gcn(args_dict):
         test_mask = test_mask.cuda()
 
     #Load all the data as Data object for pytorch geometric
-    data = Data(x=total_samples, edge_index=train_edge_list)
+    data = Data(x=total_samples, edge_index=tensor_total_edge_list)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
     
     # Define model
-    model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), int(NODE2VEC_OUTPUT / 4), num_classes)
+    model = GCN(NODE2VEC_OUTPUT, 16, num_classes)
     if torch.cuda.is_available():
         model.cuda()
     
@@ -301,30 +295,29 @@ def test_gcn(args_dict):
 
 
     # Dataloaders for training and validation
-    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
 
     # Switch to evaluation mode & compute test
     model.eval()
-    output = model(data.x[data.val_mask, data.val_edge_index])
-    _, pred_type = torch.max(output[0], 1)
-    _, pred_school = torch.max(output[1], 1)
-    _, pred_time = torch.max(output[2], 1)
-    _, pred_author = torch.max(output[3], 1)
-
+    output = model(data.x, data.edge_index)
+    pred_type = torch.argmax(output[0][data.test_mask], 1)
+    pred_school = torch.argmax(output[1][data.test_mask], 1)
+    pred_time = torch.argmax(output[2][data.test_mask], 1)
+    pred_author = torch.argmax(output[3][data.test_mask], 1)
+    
     # Save predictions to compute accuracy
     out_type = pred_type.data.cpu().numpy()
     out_school = pred_school.data.cpu().numpy()
     out_time = pred_time.data.cpu().numpy()
     out_author = pred_author.data.cpu().numpy()
-    label_type = target_var_test[0].cpu().numpy()
-    label_school = target_var_test[1].cpu().numpy()
-    label_tf = target_var_test[2].cpu().numpy()
-    label_author = target_var_test[3].cpu().numpy()
+    label_type = target_var_test[0]#.cpu().numpy()
+    label_school = target_var_test[1]#.cpu().numpy()
+    label_tf = target_var_test[2]#.cpu().numpy()
+    label_author = target_var_test[3]#.cpu().numpy()
 
-    acc_type = np.sum(np.equal(out_type, label_type))/len(out_type)
-    acc_school = np.sum(np.equal(out_school, label_school)) / len(out_school)
-    acc_tf = np.sum(np.equal(out_time, label_tf)) / len(out_time)
-    acc_author = np.sum(np.equal(out_author, label_author)) / len(out_author)
+    acc_type = np.mean(np.equal(out_type, label_type))
+    acc_school = np.mean(np.equal(out_school, label_school))
+    acc_tf = np.mean(np.equal(out_time, label_tf))
+    acc_author = np.mean(np.equal(out_author, label_author)) 
     accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
 
     # Print test accuracy
@@ -342,6 +335,8 @@ def run_test(args_dict):
 
     if args_dict.model == 'mtl':
         test_multitask(args_dict)
+    if args_dict.model == 'gcn':
+        test_gcn(args_dict)
     elif args_dict.model == 'kgm':
         test_knowledgegraph(args_dict)
     else:
