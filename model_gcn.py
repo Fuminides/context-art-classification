@@ -71,6 +71,7 @@ class GCN(nn.Module):
         ntype, nschool, ntime, nauthor = num_class
          
         #GCN model
+<<<<<<< HEAD
         if torch.cuda.is_available():
             self.gc1 = GCNConv(in_channels, self.hidden_size)
 
@@ -125,4 +126,58 @@ class GCN(nn.Module):
             graph_emb = self.gc_nauthor(x, edge_index)
             out_author = self.class_author(graph_emb)
 
+=======
+        self.gc1 = GCNConv(in_channels, self.hidden_size)
+
+        # GCN convs
+        self.gc_type = GCNConv(self.hidden_size, ntype)
+        self.gc_nschool = GCNConv(self.hidden_size, nschool)
+        self.gc_ntime = GCNConv(self.hidden_size, ntime)
+        self.gc_nauthor = GCNConv(self.hidden_size, nauthor)
+
+        # Classifiers
+        self.class_type = nn.Sequential(nn.Linear(ntype, num_class[0]), nn.Softmax())
+        self.class_school = nn.Sequential(nn.Linear(nschool, num_class[1]), nn.Softmax())
+        self.class_tf = nn.Sequential(nn.Linear(ntime, num_class[2]), nn.Softmax())
+        self.class_author = nn.Sequential(nn.Linear(nauthor, num_class[3]), nn.Softmax())
+
+        self.target_class = target_class
+
+    def forward(self, x, edge_index):
+        x = F.relu(self.gc1(x, edge_index))
+        x = F.dropout(x, training=self.training)
+
+        if self.target_class == 'type':
+            graph_emb = self.gc_type(x, edge_index)
+            out_type = self.class_type(graph_emb)
+
+            return out_type
+        elif self.target_class == 'school':
+            graph_emb = self.gc_nschool(x, edge_index)
+            out_school = self.class_school(graph_emb)
+
+            return out_school
+
+        elif self.target_class == 'time':
+            graph_emb = self.gc_ntime(x, edge_index)
+            out_time = self.class_tf(graph_emb)
+
+            return out_time
+        elif self.target_class == 'author':
+            graph_emb = self.gc_nauthor(x, edge_index)
+            out_author = self.class_author(graph_emb)
+
+            return out_author
+
+        elif self.target_class == 'all':
+            graph_emb = self.gc_type(x, edge_index)
+            out_type = self.class_type(graph_emb)
+            graph_emb = self.gc_nschool(x, edge_index)
+            out_school = self.class_school(graph_emb)
+            graph_emb = self.gc_ntime(x, edge_index)
+            out_time = self.class_tf(graph_emb)
+            graph_emb = self.gc_nauthor(x, edge_index)
+            out_author = self.class_author(graph_emb)
+
+>>>>>>> 9ef8f6dab7f4a800920d72a5d4cc6e6193da88eb
             return [out_type, out_school, out_time, out_author]

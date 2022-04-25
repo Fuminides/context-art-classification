@@ -299,10 +299,11 @@ def test_gcn(args_dict):
     # Switch to evaluation mode & compute test
     model.eval()
     output = model(data.x, data.edge_index)
-    _, pred_type = torch.max(output[0][data.test_mask], 1)
-    _, pred_school = torch.max(output[1][data.test_mask], 1)
-    _, pred_time = torch.max(output[2][data.test_mask], 1)
-    _, pred_author = torch.max(output[3][data.test_mask], 1)
+    pred_type = torch.argmax(output[0][data.test_mask], 1)
+    pred_school = torch.argmax(output[1][data.test_mask], 1)
+    pred_time = torch.argmax(output[2][data.test_mask], 1)
+    pred_author = torch.argmax(output[3][data.test_mask], 1)
+    
     # Save predictions to compute accuracy
     out_type = pred_type.data.cpu().numpy()
     out_school = pred_school.data.cpu().numpy()
@@ -313,10 +314,10 @@ def test_gcn(args_dict):
     label_tf = target_var_test[2]#.cpu().numpy()
     label_author = target_var_test[3]#.cpu().numpy()
 
-    acc_type = np.sum(np.equal(out_type, label_type))/len(out_type)
-    acc_school = np.sum(np.equal(out_school, label_school)) / len(out_school)
-    acc_tf = np.sum(np.equal(out_time, label_tf)) / len(out_time)
-    acc_author = np.sum(np.equal(out_author, label_author)) / len(out_author)
+    acc_type = np.mean(np.equal(out_type, label_type))
+    acc_school = np.mean(np.equal(out_school, label_school))
+    acc_tf = np.mean(np.equal(out_time, label_tf))
+    acc_author = np.mean(np.equal(out_author, label_author)) 
     accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
 
     # Print test accuracy
