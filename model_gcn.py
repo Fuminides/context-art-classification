@@ -64,36 +64,65 @@ class VisEncoder(nn.Module):
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
     
-    def __init__(self, in_channels, hidden_channels, out_channels, num_class):
+    def __init__(self, in_channels, hidden_channels, num_class, target_class='all'):
         super(GCN, self).__init__()
         
-        self.final_embedding_size = out_channels
         self.hidden_size = hidden_channels
+        ntype, nschool, ntime, nauthor = num_class
          
         #GCN model
-        self.gc1 = GCNConv(in_channels, self.hidden_size)
-        self.gc2 = GCNConv(self.hidden_size, self.final_embedding_size)
+        if torch.cuda.is_available():
+            self.gc1 = GCNConv(in_channels, self.hidden_size)
+
+            # GCN convs
+            self.gc_type = GCNConv(self.hidden_size, ntype)
+            self.gc_nschool = GCNConv(self.hidden_size, nschool)
+            self.gc_ntime = GCNConv(self.hidden_size, ntime)
+            self.gc_nauthor = GCNConv(self.hidden_size, nauthor)
 
         # Classifiers
-        self.class_type = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[0]))
-        self.class_school = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[1]))
-        self.class_tf = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[2]))
-        self.class_author = nn.Sequential(nn.Linear(self.final_embedding_size, num_class[3]))
+        self.class_type = nn.Sequential(nn.Linear(ntype, ntype), nn.Softmax())
+        self.class_school = nn.Sequential(nn.Linear(nschool, nschool), nn.Softmax())
+        self.class_tf = nn.Sequential(nn.Linear(in_channels, ntime), nn.Softmax())
+        self.class_author = nn.Sequential(nn.Linear(nauthor, nauthor), nn.Softmax())
 
-    def _GCN_forward(self, x, edge_index):
-        x = F.relu(self.gc1(x, edge_index))
-        x = F.dropout(x, training=self.training)
-        x = self.gc2(x, edge_index)
+        self.target_class = target_class
 
-        return x # F.log_softmax(x, dim=1) # Softmax needed?
+    def forward(self, x0, edge_index):
+        if torch.cuda.is_available():
+            x = F.relu(self.gc1(x0, edge_index))
+            x = F.dropout(x, training=self.training)
 
-    def forward(self, x, edge_index):
+        if self.target_class == 'type':
+            out_type = self.gc_type(x, edge_index)
+            out_type = self.class_type(out_type)
 
-        graph_emb = self._GCN_forward(x, edge_index)
-        
-        out_type = self.class_type(graph_emb)
-        out_school = self.class_school(graph_emb)
-        out_time = self.class_tf(graph_emb)
-        out_author = self.class_author(graph_emb)
+            return out_type
+        elif self.target_class == 'school':
+            out_school = self.gc_nschool(x, edge_index)
+            out_school = self.class_school(out_school)
 
-        return [out_type, out_school, out_time, out_author]
+            return out_school
+
+        elif self.target_class == 'time':
+            #out_time = self.gc_ntime(x, edge_index)
+            out_time = self.class_tf(x0)
+
+            return out_time
+        elif self.target_class == 'author':
+            out_author = self.gc_nauthor(x, edge_index)
+            out_author = self.class_author(out_author)
+
+            return out_author
+
+        elif self.target_class == 'all':
+            graph_emb = self.gc_type(x, edge_index)
+            out_type = self.class_type(graph_emb)
+            graph_emb = self.gc_nschool(x, edge_index)
+            out_school = self.class_school(graph_emb)
+            graph_emb = self.gc_ntime(x, edge_index)
+            out_time = self.class_tf(x0)
+            graph_emb = self.gc_nauthor(x, edge_index)
+            out_author = self.class_author(graph_emb)
+
+            return [out_type, out_school, out_time, out_author]

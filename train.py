@@ -13,11 +13,21 @@ import utils
 #from model_gcn import GCN
 from model_mtl import MTL
 from model_kgm import KGM
+from reconstruct_mtl import RMTL
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 #from torch_geometric.loader import DataLoader
+if torch.cuda.is_available():
+    from torch_geometric.data import Data
+    from torch_geometric.loader import DataLoader
+else:
+    #from dataclasses import dataclass
 
+    class Data(dict):
+        def __init__(self, *args, **kwargs):
+            super(Data, self).__init__(*args, **kwargs)
+            self.__dict__ = self
 
 def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
     print('Att type\t %d classes' % len(type2idx))
@@ -78,7 +88,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
         for j in range(len(target)):
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
-
+            else:
+                target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
@@ -97,6 +108,17 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
         elif args_dict.model == 'kgm':
             class_loss = criterion[0](output[0], target_var[0])
             encoder_loss = criterion[1](output[1], target_var[1])
+            train_loss = args_dict.lambda_c * class_loss + \
+                         args_dict.lambda_e * encoder_loss
+            losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
+
+        elif args_dict.model == 'rmtl':
+            class_loss = 0.25 * criterion(output[0], target_var[0]) + \
+                         0.25 * criterion(output[1], target_var[1]) + \
+                         0.25 * criterion(output[2], target_var[2]) + \
+                         0.25 * criterion(output[3], target_var[3])
+            
+            encoder_loss = criterion[1](output[4], output[5])
             train_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
@@ -405,6 +427,98 @@ def train_multitask_classifier(args_dict):
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
+def vis_encoder_train(args_dict):
+
+    # Load classes
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    att2i = [type2idx, school2idx, time2idx, author2idx]
+
+    # Define model
+    model = RMTL(num_classes)
+    if torch.cuda.is_available():
+        model.cuda()
+
+    # Loss and optimizer
+    if torch.cuda.is_available():
+        class_loss = nn.CrossEntropyLoss().cuda()
+    else:
+        class_loss = nn.CrossEntropyLoss()
+
+    optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
+                                lr=args_dict.lr,
+                                momentum=args_dict.momentum)
+
+    # Resume training if needed
+    best_val, model, optimizer = resume(args_dict, model, optimizer)
+
+    # Data transformation for training (with data augmentation) and validation
+    train_transforms = transforms.Compose([
+        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),  # we get only the center of that rescaled
+        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),  # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+    val_transforms = transforms.Compose([
+        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(224),  # we get only the center of that rescaled
+        transforms.ToTensor(),  # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+
+    # Dataloaders for training and validation
+    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
+    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
+    train_loader = torch.utils.data.DataLoader(
+        semart_train_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
+    print('Training loader with %d samples' % semart_train_loader.__len__())
+
+    val_loader = torch.utils.data.DataLoader(
+        semart_val_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
+    print('Validation loader with %d samples' % semart_val_loader.__len__())
+
+    # Now, let's start the training process!
+    print_classes(type2idx, school2idx, time2idx, author2idx)
+    print('Start training RMTL model...')
+    pat_track = 0
+    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
+
+        # Compute a training epoch
+        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch)
+
+        # Compute a validation epoch
+        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
+
+        # check patience
+        if accval <= best_val:
+            pat_track += 1
+        else:
+            pat_track = 0
+        if pat_track >= args_dict.patience:
+            break
+
+        # save if it is the best validation accuracy
+        is_best = accval > best_val
+        best_val = max(accval, best_val)
+        if is_best:
+            save_model(args_dict, {
+                'epoch': epoch + 1,
+                'state_dict': model.state_dict(),
+                'best_val': best_val,
+                'optimizer': optimizer.state_dict(),
+                'valtrack': pat_track,
+                'curr_val': accval,
+            }, type=args_dict.att, train_feature=args_dict.embedds)
+
+        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 def _load_labels(df_path, att2i):
     def class_from_name(name, vocab):
@@ -436,13 +550,10 @@ def _load_labels(df_path, att2i):
     return tipei, schooli, timei, authori
     
 
-def train_gcn_classifier(args_dict):
-    from torch_geometric.data import Data
-    from torch_geometric.loader import DataLoader
-    from scipy.sparse import coo_matrix, csr_matrix, dok_matrix
+def train_gcn_classifier(args_dict):    
     from model_gcn import GCN, NODE2VEC_OUTPUT
 
-    
+    target = 'time'
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
@@ -483,6 +594,10 @@ def train_gcn_classifier(args_dict):
     train_mask[0:train_size] = 1
     train_mask = torch.tensor(train_mask, dtype=torch.uint8)
 
+    og_train_mask = np.array([0] * n_samples)
+    og_train_mask[0:og_train_size] = 1
+    og_train_mask = torch.tensor(og_train_mask, dtype=torch.uint8)
+
     val_mask = np.array([0] * n_samples)
     val_mask[train_size:train_size+val_size] = 1
     val_mask = torch.tensor(val_mask, dtype=torch.uint8)
@@ -508,9 +623,10 @@ def train_gcn_classifier(args_dict):
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
-    
+    data.og_train_mask = og_train_mask
+
     # Define model
-    model = GCN(NODE2VEC_OUTPUT, int(NODE2VEC_OUTPUT / 2), int(NODE2VEC_OUTPUT / 4), num_classes)
+    model = GCN(NODE2VEC_OUTPUT, 16, num_classes,target_class=target)
     if torch.cuda.is_available():
         model.cuda()
 
@@ -527,12 +643,8 @@ def train_gcn_classifier(args_dict):
 
     # Resume training if needed
     best_val, model, optimizer = resume(args_dict, model, optimizer)
-    # Loss and optimizer
-    if torch.cuda.is_available():
-        class_loss = nn.CrossEntropyLoss().cuda()
-    else:
-        class_loss = nn.CrossEntropyLoss()
 
+    column_key = {'type':0, 'school':1, 'time':2, 'author':3}
     
 
     # Now, let's start the training process!
@@ -540,49 +652,90 @@ def train_gcn_classifier(args_dict):
     losses = utils.AverageMeter()
     print('Start training GCN model...')
     pat_track = 0
+    #print(model)
+    print([parameter.shape for parameter in model.parameters()])
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
         print(epoch)
         # Targets to Variable type
         target_var = list()
-        for j in range(len(target_var_train)):    
-            aux = torch.tensor(target_var_train[j]).cuda(non_blocking=True)
+        for j in range(len(target_var_train)):
+            if torch.cuda.is_available():
+                aux = torch.tensor(target_var_train[j]).cuda(non_blocking=True)
+            else:
+                aux = torch.tensor(target_var_train[j])
 
             target_var.append(torch.autograd.Variable(aux))
 
         # Compute a training epoch
         optimizer.zero_grad()
-        output = model(data.x[data.train_mask], data.edge_index)
-        train_loss = 0.25 * criterion(output[0][0:og_train_size], target_var[0]) + \
-                     0.25 * criterion(output[1][0:og_train_size], target_var[1]) + \
-                     0.25 * criterion(output[2][0:og_train_size], target_var[2]) + \
-                     0.25 * criterion(output[3][0:og_train_size], target_var[3])
+        #output = model(data.x[data.train_mask], data.edge_index)
+        output = model(data.x[data.og_train_mask], data.edge_index)
+        if target == 'all':
+          train_loss = 0.25 * criterion(output[0][0:og_train_size], target_var[0]) + \
+                      0.25 * criterion(output[1][0:og_train_size], target_var[1]) + \
+                      0.25 * criterion(output[2][0:og_train_size], target_var[2]) + \
+                      0.25 * criterion(output[3][0:og_train_size], target_var[3])
+        else:
+          train_loss = criterion(output, target_var[column_key[target]])
+          #print(train_loss)
         train_loss.backward()
         optimizer.step()
         scheduler.step()
-        # Compute a validation epoch
-        # accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
-        output = model(data.x[data.val_mask], data.val_edge_index)
-        _, pred_type = torch.max(output[0], 1)
-        _, pred_school = torch.max(output[1], 1)
-        _, pred_time = torch.max(output[2], 1)
-        _, pred_author = torch.max(output[3], 1)
 
-        # Save predictions to compute accuracy
-   
-        out_type = pred_type.data.cpu().numpy()[-val_size:]
-        out_school = pred_school.data.cpu().numpy()[-val_size:]
-        out_time = pred_time.data.cpu().numpy()[-val_size:]
-        out_author = pred_author.data.cpu().numpy()[-val_size:]
+        print('************')
+        if target == 'all' or target == 'type':
+          acc_type = np.mean(np.equal(torch.argmax(output[0][0:og_train_size]).data.cpu().numpy(), target_var_train[0]))
+          print('Train Type: ' + str(acc_type))
+
+        elif target == 'all' or target == 'school':
+          acc_school = np.mean(np.equal(torch.argmax(output[1][0:og_train_size]).data.cpu().numpy(), target_var_train[1]))
+          print('Train School: ' + str(acc_school))
+
+        elif target == 'all' or target == 'time':
+          acc_tf = np.mean(np.equal(torch.argmax(output[2][0:og_train_size]).data.cpu().numpy(), target_var_train[2])) 
+          print('Train TimeFrame: ' + str(acc_tf))
+
+        elif target == 'all' or target == 'author':
+          acc_author = np.mean(np.equal(torch.argmax(output[3][0:og_train_size]).data.cpu().numpy(), target_var_train[3])) 
+          print('Train Author: ' + str(acc_author))
+
+        if target == 'all':
+          accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
+          print('Train: ' + str(accval))
+        print('************')
+        
+        # Compute a validation epoch
         label_type = target_var_val[0]#.cpu().numpy()
         label_school = target_var_val[1]#.cpu().numpy()
         label_tf = target_var_val[2]#.cpu().numpy()
         label_author = target_var_val[3]#.cpu().numpy()
 
-        acc_type = np.sum(np.equal(out_type, label_type))/len(out_type)
-        acc_school = np.sum(np.equal(out_school, label_school)) / len(out_school)
-        acc_tf = np.sum(np.equal(out_time, label_tf)) / len(out_time)
-        acc_author = np.sum(np.equal(out_author, label_author)) / len(out_author)
-        accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
+        # accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
+        output = model(data.x[data.val_mask], data.val_edge_index)
+        if target == 'all' or target == 'type':
+          pred_type = torch.argmax(output[0], 1) if target == 'all' else torch.argmax(output, 1)
+          out_type = pred_type.data.cpu().numpy()[-val_size:]
+          acc_type = np.mean(np.equal(out_type, label_type))
+          accval = acc_type
+        elif target == 'all' or target == 'school':
+          pred_school = torch.argmax(output[1], 1) if target == 'all' else torch.argmax(output, 1)
+          out_school = pred_school.data.cpu().numpy()[-val_size:]
+          acc_school = np.mean(np.equal(out_school, label_school)) 
+          accval = acc_school
+        elif target == 'all' or target == 'time':
+          pred_time = torch.argmax(output[2], 1) if target == 'all' else torch.argmax(output, 1)
+          out_time = pred_time.data.cpu().numpy()[-val_size:]
+          acc_tf = np.mean(np.equal(out_time, label_tf))
+          accval = acc_tf
+        elif target == 'all' or target == 'author':  
+          pred_author = torch.argmax(output[3], 1) if target == 'all' else torch.argmax(output, 1)
+          out_author = pred_author.data.cpu().numpy()[-val_size:]
+          acc_author = np.mean(np.equal(out_author, label_author))
+          accval = acc_author
+
+        if target == 'all':
+          accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
+
         # check patience
         if accval <= best_val:
             pat_track += 1
@@ -622,6 +775,8 @@ def run_train(args_dict):
         train_multitask_classifier(args_dict)
     elif args_dict.model == 'kgm':
         train_knowledgegraph_classifier(args_dict)
+    elif args_dict.model == 'rmtl':
+        vis_encoder_train(args_dict)
     elif args_dict.model == 'gcn':
         train_gcn_classifier(args_dict)
     else:
