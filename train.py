@@ -446,6 +446,9 @@ def vis_encoder_train(args_dict):
     else:
         class_loss = nn.CrossEntropyLoss()
 
+    encoder_loss = nn.SmoothL1Loss()
+    loss = [class_loss, encoder_loss]
+
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
                                 momentum=args_dict.momentum)
@@ -493,10 +496,10 @@ def vis_encoder_train(args_dict):
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
         # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch)
+        trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch)
 
         # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
+        accval = valEpoch(args_dict, val_loader, model, loss, epoch)
 
         # check patience
         if accval <= best_val:
