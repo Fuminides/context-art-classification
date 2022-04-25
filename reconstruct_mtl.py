@@ -30,6 +30,6 @@ class RMTL(nn.Module):
         out_time = self.class_tf(visual_emb)
         out_author = self.class_author(visual_emb)
 
-        reconstructed_visual = self.decoder(self.encoder(img))
+        reconstructed_visual = self.decoder(self.encoder(visual_emb))
 
         return [out_type, out_school, out_time, out_author, reconstructed_visual, visual_emb]

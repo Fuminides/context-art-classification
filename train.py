@@ -86,10 +86,11 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
+            target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
+
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
-            else:
-                target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
+                
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
