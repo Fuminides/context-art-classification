@@ -106,20 +106,14 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
             if args_dict.att == 'all':
                 if args_dict.model == 'rmtl':
-                    class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
-                            0.25 * criterion[0](output[1], target_var[1].long()) + \
-                            0.25 * criterion[0](output[2], target_var[2].long()) + \
-                            0.25 * criterion[0](output[3], target_var[3].long())
+                    class_loss = multi_class_loss(criterion, target_var, output)
             
                     encoder_loss = criterion[1](output[4], output[5])
               
                     train_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
                 else:
-                    train_loss = 0.25 * criterion(output[0], target_var[0].long()) + \
-                                0.25 * criterion(output[1], target_var[1].long()) + \
-                                0.25 * criterion(output[2], target_var[2].long()) + \
-                                0.25 * criterion(output[3], target_var[3].long())
+                    train_loss = multi_class_loss(criterion, target_var, output)
             else:
                 train_loss = criterion(output, target_var)
 
@@ -127,10 +121,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
         else:
             if args_dict.att == 'all':
-                class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
-                            0.25 * criterion[0](output[1], target_var[1].long()) + \
-                            0.25 * criterion[0](output[2], target_var[2].long()) + \
-                            0.25 * criterion[0](output[3], target_var[3].long())
+                class_loss = multi_class_loss(criterion, target_var, output)
                 
                 encoder_loss = criterion[1](output[4], output[5])
             else:
@@ -190,30 +181,21 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
             
             if args_dict.att == 'all':
                 if args_dict.model == 'rmtl':
-                    class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
-                            0.25 * criterion[0](output[1], target_var[1].long()) + \
-                            0.25 * criterion[0](output[2], target_var[2].long()) + \
-                            0.25 * criterion[0](output[3], target_var[3].long())
+                    class_loss = multi_class_loss(criterion, target_var, output)
             
                     encoder_loss = criterion[1](output[4], output[5])
               
                     val_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
                 else:
-                    val_loss = 0.25 * criterion(output[0], target_var[0].long()) + \
-                                0.25 * criterion(output[1], target_var[1].long()) + \
-                                0.25 * criterion(output[2], target_var[2].long()) + \
-                                0.25 * criterion(output[3], target_var[3].long())
+                    val_loss = multi_class_loss(criterion, target_var, output)
             else:
                 val_loss = criterion(output, target_var)
 
 
         else:
             if args_dict.att == 'all':
-                class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
-                            0.25 * criterion[0](output[1], target_var[1].long()) + \
-                            0.25 * criterion[0](output[2], target_var[2].long()) + \
-                            0.25 * criterion[0](output[3], target_var[3].long())
+                class_loss = multi_class_loss(criterion, target_var, output)
                 
                 encoder_loss = criterion[1](output[4], output[5])
             else:
@@ -289,6 +271,12 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
 
     # Return acc
     return acc
+
+def multi_class_loss(criterion, target_var, output):
+    return 0.25 * criterion[0](output[0], target_var[0].long()) + \
+                            0.25 * criterion[0](output[1], target_var[1].long()) + \
+                            0.25 * criterion[0](output[2], target_var[2].long()) + \
+                            0.25 * criterion[0](output[3], target_var[3].long())
 
 
 def train_knowledgegraph_classifier(args_dict):
