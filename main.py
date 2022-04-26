@@ -13,7 +13,7 @@ from dataloader_kgm import ArtDatasetKGM
 from model_gcn import NODE2VEC_OUTPUT
 
 from params import get_parser
-from train import run_train
+from train import run_train, load_att_class
 from semart_test import run_test
 
 
@@ -38,9 +38,10 @@ def gen_embeds(args_dict):
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
 
     from PIL import Image
-    from model_gcn import VisEncoder
+    from model_rmtl import RMTL
 
     train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
@@ -48,34 +49,29 @@ def gen_embeds(args_dict):
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
 
-    vis_encoder = VisEncoder()
+    vis_encoder = RMTL()
     vis_encoder.load_weights()
 
-    feature_matrix = np.zeros(train_node2vec_emb.shape)
+    #feature_matrix = np.zeros(train_node2vec_emb.shape)
     print('Starting the process... ')
     i=0
+    semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=transforms)
 
-   
-    for sample_ix in range(train_node2vec_emb.shape[0]):
-        i += 1
-        
-        try:
-            dict_keys[sample_ix] # If not in category, its a painting
-            
-            feature_matrix[sample_ix, :] = train_node2vec_emb.iloc[sample_ix]
-        except KeyError:
-            try:
-                image_path = args_dict.dir_dataset + '/Images/' + train_df.iloc[sample_ix].iloc[0] # ['IMAGE FILE']
-                image = Image.open(image_path).convert('RGB')
-                image = transforms(image)
-    
-                feature_matrix[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
-            except IndexError:
-                print('Error in index' + str(sample_ix))
-        
+    train_loader = torch.utils.data.DataLoader(
+        semart_train_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
+
+    for batch_idx, (input, target) in enumerate(train_loader):
+
+        if batch_idx == 0:
+            features_matrix = vis_encoder.reduce(torch.unsqueeze(torch.tensor(input), 0)).data.cpu().numpy()
+        else:
+            features_matrix = np.append(features_matrix, vis_encoder.encode(torch.unsqueeze(torch.tensor(input), 0)).data.cpu().numpy())
+               
         if i % 1000 == 0:
             print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
-            
+
+         
     return feature_matrix
 
 

@@ -1,5 +1,9 @@
+import os
+
+import torch
 import torch.nn as nn
 from torchvision import models
+
 
 class RMTL(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
@@ -36,3 +40,23 @@ class RMTL(nn.Module):
 
 
         return [out_type, out_school, out_time, out_author, reconstructed_visual, visual_emb0]
+
+    def encode(self, img):
+        visual_emb0 = self.resnet(img)
+        visual_emb0 = visual_emb0.view(visual_emb0.size(0), -1)
+        visual_emb = self.encoder(visual_emb0)
+
+        return visual_emb
+
+    def load_weights(self, expected_path):
+        assert os.path.isfile(expected_path)
+       
+        if torch.cuda.is_available():
+            checkpoint = torch.load(expected_path)
+        else:
+            checkpoint = torch.load(expected_path, map_location=torch.device('cpu'))
+            
+        if torch.cuda.is_available():
+            self.load_state_dict(checkpoint['state_dict'])
+        else:
+            self.load_state_dict(checkpoint['state_dict']) # Does not reqquire anything else

@@ -23,46 +23,7 @@ NODE2VEC_OUTPUT = 128
 VISUALENCONDING_SIZE = 2048
 
 
-class VisEncoder(nn.Module):
-    '''
-    Encoder that maps the visual featured from the resnet to the node2vec output size
-    '''
-    def __init__(self):
-        super(VisEncoder, self).__init__()
-        # Load pre-trained visual model
-        resnet = models.resnet50(pretrained=True)
-        self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-        self.visual_autoencoder_l1 = nn.Sequential(nn.Linear(VISUALENCONDING_SIZE, NODE2VEC_OUTPUT), nn.ReLU())
-        self.visual_autoencoder_l2 = nn.Sequential(nn.Linear(NODE2VEC_OUTPUT, VISUALENCONDING_SIZE))
-
-    def forward(self, img):
-        visual_cue = self.resnet(img).squeeze()
-        l1_out = self.visual_autoencoder_l1(visual_cue)
-        return self.visual_autoencoder_l2(l1_out)
-
-    def reduce(self, img):
-      visual_cue = self.resnet(img).squeeze()
-
-      l1_out = torch.unsqueeze(self.visual_autoencoder_l1(visual_cue), 0)
-      return l1_out
-    
-    def gen_target(self, img):
-        return self.resnet(img).squeeze()
-    
-    def load_weights(self):
-        expected_path = 'Models/Reduce/reduce_' + str(NODE2VEC_OUTPUT) + '_best_model.pth.tar'
-        assert os.path.isfile(expected_path)
-       
-        if torch.cuda.is_available():
-            checkpoint = torch.load(expected_path)
-        else:
-            checkpoint = torch.load(expected_path, map_location=torch.device('cpu'))
-            
-        if torch.cuda.is_available():
-            self.load_state_dict(checkpoint['state_dict'])
-        else:
-            self.load_state_dict(checkpoint['state_dict']) # Does not reqquire anything else
-    
+  
     
 class GCN(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
