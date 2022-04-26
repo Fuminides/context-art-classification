@@ -23,13 +23,16 @@ class RMTL(nn.Module):
 
     def forward(self, img):
 
-        visual_emb = self.resnet(img)
-        visual_emb = visual_emb.view(visual_emb.size(0), -1)
+        visual_emb0 = self.resnet(img)
+        visual_emb0 = visual_emb0.view(visual_emb.size(0), -1)
+        visual_emb = self.encoder(visual_emb0)
+
         out_type = self.class_type(visual_emb)
         out_school = self.class_school(visual_emb)
         out_time = self.class_tf(visual_emb)
         out_author = self.class_author(visual_emb)
 
-        reconstructed_visual = self.decoder(self.encoder(visual_emb))
+        reconstructed_visual = self.decoder(visual_emb)
+
 
         return [out_type, out_school, out_time, out_author, reconstructed_visual, visual_emb]
