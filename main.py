@@ -50,12 +50,14 @@ def gen_embeds(args_dict):
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
 
     vis_encoder = RMTL()
-    vis_encoder.load_weights()
+    vis_encoder.load_weights(args_dict.dir_model)
 
     #feature_matrix = np.zeros(train_node2vec_emb.shape)
     print('Starting the process... ')
     i=0
     semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=transforms)
+
+        
 
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
@@ -98,7 +100,7 @@ def val_test_gen_embeds(args_dict):
     test_df = pd.read_csv(args_dict.dir_dataset + r'/semart_test.csv', sep='\t', encoding='latin1', header=0)
 
     vis_encoder = VisEncoder()
-    vis_encoder.load_weights()
+    vis_encoder.load_weights(args_dict.dir_model)
 
     feature_matrix_val = np.zeros((val_df.shape[0], val_node2vec_emb.shape[1]))
     for sample_ix in range(feature_matrix_val.shape[0]):
