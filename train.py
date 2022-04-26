@@ -117,9 +117,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
 
         elif args_dict.model == 'rmtl':
+            
             class_loss = 0.25 * criterion[0](output[0], target_var[0]) + \
                          0.25 * criterion[0](output[1], target_var[1]) + \
-                         0.25 * criterion[0](output[2], target_var[2]) + \
+                         0.25 * criterion[0](output[2], torch.argmax(target_var[2], axis=1)) + \
                          0.25 * criterion[0](output[3], target_var[3])
             
             encoder_loss = criterion[1](output[4], output[5])
