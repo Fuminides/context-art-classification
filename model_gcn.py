@@ -71,62 +71,6 @@ class GCN(nn.Module):
         ntype, nschool, ntime, nauthor = num_class
          
         #GCN model
-<<<<<<< HEAD
-        if torch.cuda.is_available():
-            self.gc1 = GCNConv(in_channels, self.hidden_size)
-
-            # GCN convs
-            self.gc_type = GCNConv(self.hidden_size, ntype)
-            self.gc_nschool = GCNConv(self.hidden_size, nschool)
-            self.gc_ntime = GCNConv(self.hidden_size, ntime)
-            self.gc_nauthor = GCNConv(self.hidden_size, nauthor)
-
-        # Classifiers
-        self.class_type = nn.Sequential(nn.Linear(ntype, ntype), nn.Softmax())
-        self.class_school = nn.Sequential(nn.Linear(nschool, nschool), nn.Softmax())
-        self.class_tf = nn.Sequential(nn.Linear(in_channels, ntime), nn.Softmax())
-        self.class_author = nn.Sequential(nn.Linear(nauthor, nauthor), nn.Softmax())
-
-        self.target_class = target_class
-
-    def forward(self, x0, edge_index):
-        if torch.cuda.is_available():
-            x = F.relu(self.gc1(x0, edge_index))
-            x = F.dropout(x, training=self.training)
-
-        if self.target_class == 'type':
-            out_type = self.gc_type(x, edge_index)
-            out_type = self.class_type(out_type)
-
-            return out_type
-        elif self.target_class == 'school':
-            out_school = self.gc_nschool(x, edge_index)
-            out_school = self.class_school(out_school)
-
-            return out_school
-
-        elif self.target_class == 'time':
-            #out_time = self.gc_ntime(x, edge_index)
-            out_time = self.class_tf(x0)
-
-            return out_time
-        elif self.target_class == 'author':
-            out_author = self.gc_nauthor(x, edge_index)
-            out_author = self.class_author(out_author)
-
-            return out_author
-
-        elif self.target_class == 'all':
-            graph_emb = self.gc_type(x, edge_index)
-            out_type = self.class_type(graph_emb)
-            graph_emb = self.gc_nschool(x, edge_index)
-            out_school = self.class_school(graph_emb)
-            graph_emb = self.gc_ntime(x, edge_index)
-            out_time = self.class_tf(x0)
-            graph_emb = self.gc_nauthor(x, edge_index)
-            out_author = self.class_author(graph_emb)
-
-=======
         self.gc1 = GCNConv(in_channels, self.hidden_size)
 
         # GCN convs
@@ -179,5 +123,4 @@ class GCN(nn.Module):
             graph_emb = self.gc_nauthor(x, edge_index)
             out_author = self.class_author(graph_emb)
 
->>>>>>> 9ef8f6dab7f4a800920d72a5d4cc6e6193da88eb
             return [out_type, out_school, out_time, out_author]
