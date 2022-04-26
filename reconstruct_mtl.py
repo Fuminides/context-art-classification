@@ -24,7 +24,7 @@ class RMTL(nn.Module):
     def forward(self, img):
 
         visual_emb0 = self.resnet(img)
-        visual_emb0 = visual_emb0.view(visual_emb.size(0), -1)
+        visual_emb0 = visual_emb0.view(visual_emb0.size(0), -1)
         visual_emb = self.encoder(visual_emb0)
 
         out_type = self.class_type(visual_emb)
