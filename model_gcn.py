@@ -9,7 +9,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 if torch.cuda.is_available():
-    from torch_geometric.nn import GCNConv
+    try:
+        from torch_geometric.nn import GCNConv
+    except ModuleNotFoundError:
+        print('Pytorch geometric not found, proceeding...')
 else:
     print('Unable to import Pytorch geometric (CPU only not supported)')
 

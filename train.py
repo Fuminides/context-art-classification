@@ -20,8 +20,11 @@ from attributes import load_att_class
 
 #from torch_geometric.loader import DataLoader
 if torch.cuda.is_available():
-    from torch_geometric.data import Data
-    from torch_geometric.loader import DataLoader
+    try:
+        from torch_geometric.data import Data
+        from torch_geometric.loader import DataLoader
+    except ModuleNotFoundError:
+        print('Pytorch geometric not found, proceeding...')
 else:
     #from dataclasses import dataclass
 
