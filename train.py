@@ -716,7 +716,7 @@ def train_gcn_classifier(args_dict):
                       0.25 * criterion(output[2][0:og_train_size], target_var[2]) + \
                       0.25 * criterion(output[3][0:og_train_size], target_var[3])
         else:
-          train_loss = criterion(output, target_var[column_key[target]])
+          train_loss = criterion(output[0:og_train_size], target_var[column_key[target]])
           #print(train_loss)
         train_loss.backward()
         optimizer.step()
