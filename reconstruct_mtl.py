@@ -12,10 +12,10 @@ class RMTL(nn.Module):
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
 
         # Classifiers
-        self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))
-        self.class_school = nn.Sequential(nn.Linear(2048, num_class[1]))
-        self.class_tf = nn.Sequential(nn.Linear(2048, num_class[2]))
-        self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))
+        self.class_type = nn.Sequential(nn.Linear(128, num_class[0]))
+        self.class_school = nn.Sequential(nn.Linear(128, num_class[1]))
+        self.class_tf = nn.Sequential(nn.Linear(128, num_class[2]))
+        self.class_author = nn.Sequential(nn.Linear(128, num_class[3]))
 
         # Encoder and decoder
         self.encoder = nn.Linear(2048, 128)
