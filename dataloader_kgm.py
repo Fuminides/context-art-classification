@@ -79,6 +79,13 @@ class ArtDatasetKGM(data.Dataset):
         # Attribute class
         idclass = self.class_from_name(self.att2i, self.att[index])
 
+        # Attribute class
+        type_idclass = self.class_from_name(self.type_vocab, self.type[index])
+        school_idclass = self.class_from_name(self.school_vocab, self.school[index])
+        time_idclass = self.class_from_name(self.time_vocab, self.time[index])
+        author_idclass = self.class_from_name(self.author_vocab, self.author[index])
+
+        
         # Graph embedding (only training samples)
         if self.set == 'train':
             if self.embedds == 'graph':
@@ -88,7 +95,10 @@ class ArtDatasetKGM(data.Dataset):
 
             graph_emb = torch.FloatTensor(graph_emb)
 
-            return [image], [idclass, graph_emb]
+            if self.args_dict.att == 'all':
+                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+            else:
+                return [image], [idclass, graph_emb]
 
 
         else:

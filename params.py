@@ -6,7 +6,7 @@ def get_parser():
 
     parser.add_argument('--mode', default='gen_graph_dataset', type=str, help='Mode (train | test)')
     parser.add_argument('--model', default='kgm', type=str, help='Model (mtl | kgm). mlt for multitask learning model. kgm for knowledge graph model.' )
-    parser.add_argument('--att', default='time', type=str, help='Attribute classifier (type | school | time | author) (only kgm model).')
+    parser.add_argument('--att', default='time', type=str, help='Attribute classifier (type | school | time | author| all) (only kgm model).')
 
     # Directories
     parser.add_argument('--dir_data', default='Data')

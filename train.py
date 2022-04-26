@@ -13,7 +13,7 @@ import utils
 #from model_gcn import GCN
 from model_mtl import MTL
 from model_kgm import KGM
-from reconstruct_mtl import RMTL
+from model_rmtl import RMTL
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
@@ -102,30 +102,44 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
         else:
             output = model(input_var[0], extra_params)
 
-        if args_dict.model == 'mtl':
-            train_loss = 0.25 * criterion(output[0], target_var[0]) + \
-                         0.25 * criterion(output[1], target_var[1]) + \
-                         0.25 * criterion(output[2], target_var[2]) + \
-                         0.25 * criterion(output[3], target_var[3])
+        if args_dict.model != 'kgm':
+
+            if args_dict.att == 'all':
+                if args_dict.model == 'rmtl':
+                    class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
+                            0.25 * criterion[0](output[1], target_var[1].long()) + \
+                            0.25 * criterion[0](output[2], target_var[2].long()) + \
+                            0.25 * criterion[0](output[3], target_var[3].long())
+            
+                    encoder_loss = criterion[1](output[4], output[5])
+              
+                    train_loss = args_dict.lambda_c * class_loss + \
+                         args_dict.lambda_e * encoder_loss
+                else:
+                    train_loss = 0.25 * criterion(output[0], target_var[0].long()) + \
+                                0.25 * criterion(output[1], target_var[1].long()) + \
+                                0.25 * criterion(output[2], target_var[2].long()) + \
+                                0.25 * criterion(output[3], target_var[3].long())
+            else:
+                train_loss = criterion(output, target_var)
+
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
 
-        elif args_dict.model == 'kgm':
-            class_loss = criterion[0](output[0], target_var[0])
-            encoder_loss = criterion[1](output[1], target_var[1])
-            train_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
-            losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
+        else:
+            if args_dict.att == 'all':
+                class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
+                            0.25 * criterion[0](output[1], target_var[1].long()) + \
+                            0.25 * criterion[0](output[2], target_var[2].long()) + \
+                            0.25 * criterion[0](output[3], target_var[3].long())
+                
+                encoder_loss = criterion[1](output[4], output[5])
+            else:
+                class_loss = criterion[0](output, target_var[0].long())
+                encoder_loss = criterion[1](output[1], target_var[1].long())
 
-        elif args_dict.model == 'rmtl':
-            
-            class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
-                         0.25 * criterion[0](output[1], target_var[1].long()) + \
-                         0.25 * criterion[0](output[2], target_var[2].long()) + \
-                         0.25 * criterion[0](output[3], target_var[3].long())
-            
-            encoder_loss = criterion[1](output[4], output[5])
             train_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
+
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
 
         # Backpropagate loss and update weights
@@ -172,29 +186,51 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         with torch.no_grad():
             output = model(input_var[0])
 
-        if args_dict.model == 'mtl' or args_dict.model == 'rmtl':
-            _, pred_type = torch.max(output[0], 1)
-            _, pred_school = torch.max(output[1], 1)
-            _, pred_time = torch.max(output[2], 1)
-            _, pred_author = torch.max(output[3], 1)
-
-            if args_dict.model == 'mtl':
-              val_loss = 0.25 * criterion(output[0], target_var[0]) + \
-                          0.25 * criterion(output[1], target_var[1]) + \
-                          0.25 * criterion(output[2], target_var[2]) + \
-                          0.25 * criterion(output[3], target_var[3])
-            elif args_dict.model == 'rmtl':    
-                class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
+        if args_dict.model != 'kgm':
+            
+            if args_dict.att == 'all':
+                if args_dict.model == 'rmtl':
+                    class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
                             0.25 * criterion[0](output[1], target_var[1].long()) + \
                             0.25 * criterion[0](output[2], target_var[2].long()) + \
                             0.25 * criterion[0](output[3], target_var[3].long())
             
-                encoder_loss = criterion[1](output[4], output[5])
+                    encoder_loss = criterion[1](output[4], output[5])
               
-                val_loss = args_dict.lambda_c * class_loss + \
+                    val_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
-                         
-            losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
+                else:
+                    val_loss = 0.25 * criterion(output[0], target_var[0].long()) + \
+                                0.25 * criterion(output[1], target_var[1].long()) + \
+                                0.25 * criterion(output[2], target_var[2].long()) + \
+                                0.25 * criterion(output[3], target_var[3].long())
+            else:
+                val_loss = criterion(output, target_var)
+
+
+        else:
+            if args_dict.att == 'all':
+                class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
+                            0.25 * criterion[0](output[1], target_var[1].long()) + \
+                            0.25 * criterion[0](output[2], target_var[2].long()) + \
+                            0.25 * criterion[0](output[3], target_var[3].long())
+                
+                encoder_loss = criterion[1](output[4], output[5])
+            else:
+                class_loss = criterion[0](output, target_var[0].long())
+                encoder_loss = criterion[1](output[1], target_var[1].long())
+
+            val_loss = args_dict.lambda_c * class_loss + \
+                         args_dict.lambda_e * encoder_loss
+                            
+        
+        losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
+
+        if args_dict.att == 'all':
+            pred_type = torch.argmax(output[0], 1)
+            pred_school = torch.argmax(output[1], 1)
+            pred_time = torch.argmax(output[2], 1)
+            pred_author = torch.argmax(output[3], 1)
 
             # Save predictions to compute accuracy
             if batch_idx == 0:
@@ -215,27 +251,33 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
                 label_school = np.concatenate((label_school, target[1].cpu().numpy()), axis=0)
                 label_tf = np.concatenate((label_tf, target[2].cpu().numpy()), axis=0)
                 label_author = np.concatenate((label_author, target[3].cpu().numpy()), axis=0)
-
-        elif args_dict.model == 'kgm':
-            _, predicted = torch.max(output[0], 1)
-            train_loss = criterion[0](output[0], target_var[0])
-            losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
-
-            # Save predictions to compute accuracy
-            if batch_idx==0:
-                out = predicted.data.cpu().numpy()
+        
+        else:
+            if args_dict.model == 'kgm':
+                out = torch.argmax(output[0], 1)
                 label = target[0].cpu().numpy()
             else:
-                out = np.concatenate((out,predicted.data.cpu().numpy()),axis=0)
-                label = np.concatenate((label,target[0].cpu().numpy()),axis=0)
+                pred = torch.argmax(output, 1)
+                label_actual = target.cpu().numpy()
 
+             
+            # Save predictions to compute accuracy
+            if batch_idx == 0:
+                out = pred.data.cpu().numpy()
+                label = label_actual
+                
+            else:
+                out = np.concatenate((out, pred), axis=0)
+                label = np.concatenate((label, label_actual), axis=0)
+                
     # Accuracy
-    if args_dict.model == 'mtl' or args_dict.model == 'rmtl':
+    if args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
         acc_tf = np.sum(out_time == label_tf) / len(out_time)
         acc_author = np.sum(out_author == label_author) / len(out_author)
         acc = np.mean((acc_type, acc_school, acc_tf, acc_author))
+
     elif args_dict.model == 'kgm':
         acc = np.sum(out == label) / len(out)
 
