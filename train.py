@@ -657,7 +657,6 @@ def train_gcn_classifier(args_dict):
         total_samples = total_samples.cuda()
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
         val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
-        test_edge_list = torch.tensor(np.array(test_edge_list).reshape(2, test_edge_list.shape[0])).cuda()
         tensor_total_edge_list = tensor_total_edge_list.cuda()
         tensor_val_edge_list = tensor_val_edge_list.cuda()
         train_mask = train_mask.cuda()
@@ -693,7 +692,6 @@ def train_gcn_classifier(args_dict):
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
-    losses = utils.AverageMeter()
 
     print('Start training GCN model...')
     pat_track = 0
