@@ -35,4 +35,4 @@ class RMTL(nn.Module):
         reconstructed_visual = self.decoder(visual_emb)
 
 
-        return [out_type, out_school, out_time, out_author, reconstructed_visual, visual_emb]
+        return [out_type, out_school, out_time, out_author, reconstructed_visual, visual_emb0]
