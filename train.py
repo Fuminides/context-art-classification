@@ -661,7 +661,7 @@ def train_gcn_classifier(args_dict):
         train_mask = train_mask.cuda()
 
     #Load all the data as Data object for pytorch geometric
-    data = Data(x=total_samples, edge_index=train_edge_list, val_edge_index=tensor_val_edge_list, total_index=tensor_total_edge_list)
+    data = Data(x=total_samples, edge_index=train_edge_list, val_edge_index=tensor_val_edge_list)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
