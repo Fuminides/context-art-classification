@@ -183,15 +183,17 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
                           0.25 * criterion(output[1], target_var[1]) + \
                           0.25 * criterion(output[2], target_var[2]) + \
                           0.25 * criterion(output[3], target_var[3])
-            else :
-              class_loss = 0.25 * criterion[0](output[0], target_var[0]) + \
-                          0.25 * criterion[0](output[1], target_var[1]) + \
-                          0.25 * criterion[0](output[2], target_var[2]) + \
-                          0.25 * criterion[0](output[3], target_var[3])
-
-              encoder_loss = criterion[1](output[4], output[5])
-              val_loss = args_dict.lambda_c * class_loss + \
+            elif args_dict.model == 'rmtl':    
+                class_loss = 0.25 * criterion[0](output[0], target_var[0].long()) + \
+                            0.25 * criterion[0](output[1], target_var[1].long()) + \
+                            0.25 * criterion[0](output[2], target_var[2].long()) + \
+                            0.25 * criterion[0](output[3], target_var[3].long())
+            
+                encoder_loss = criterion[1](output[4], output[5])
+              
+                val_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
+                         
             losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
 
             # Save predictions to compute accuracy
