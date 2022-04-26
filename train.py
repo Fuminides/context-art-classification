@@ -90,7 +90,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
-                
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
@@ -114,10 +113,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
 
         elif args_dict.model == 'rmtl':
-            class_loss = 0.25 * criterion(output[0], target_var[0]) + \
-                         0.25 * criterion(output[1], target_var[1]) + \
-                         0.25 * criterion(output[2], target_var[2]) + \
-                         0.25 * criterion(output[3], target_var[3])
+            class_loss = 0.25 * criterion[0](output[0], target_var[0]) + \
+                         0.25 * criterion[0](output[1], target_var[1]) + \
+                         0.25 * criterion[0](output[2], target_var[2]) + \
+                         0.25 * criterion[0](output[3], target_var[3])
             
             encoder_loss = criterion[1](output[4], output[5])
             train_loss = args_dict.lambda_c * class_loss + \
@@ -158,6 +157,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
+            target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
 
@@ -167,7 +167,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         with torch.no_grad():
             output = model(input_var[0])
 
-        if args_dict.model == 'mtl':
+        if args_dict.model == 'mtl' or args_dict.model == 'rmtl':
             _, pred_type = torch.max(output[0], 1)
             _, pred_school = torch.max(output[1], 1)
             _, pred_time = torch.max(output[2], 1)
@@ -213,7 +213,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
                 label = np.concatenate((label,target[0].cpu().numpy()),axis=0)
 
     # Accuracy
-    if args_dict.model == 'mtl':
+    if args_dict.model == 'mtl' or args_dict.model == 'rmtl':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
         acc_tf = np.sum(out_time == label_tf) / len(out_time)
