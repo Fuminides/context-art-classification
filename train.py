@@ -709,7 +709,7 @@ def train_gcn_classifier(args_dict):
         # Compute a training epoch
         optimizer.zero_grad()
         #output = model(data.x[data.train_mask], data.edge_index)
-        output = model(data.x[data.og_train_mask], data.edge_index)
+        output = model(data.x[data.train_mask], data.edge_index)
         if target == 'all':
           train_loss = 0.25 * criterion(output[0][0:og_train_size], target_var[0]) + \
                       0.25 * criterion(output[1][0:og_train_size], target_var[1]) + \
