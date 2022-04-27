@@ -81,9 +81,10 @@ def gen_embeds(args_dict):
         print(
             'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
 
-    features_matrix = np.append(features_matrix, train_node2vec_emb.iloc[features_matrix.shape[0]:])
-
-    return features_matrix
+    features_matrix_end = np.append(features_matrix, train_node2vec_emb.iloc[features_matrix.shape[0]:])
+    assert features_matrix.shape == features_matrix_end.shape
+    
+    return features_matrix_end
 
 
 def val_test_gen_embeds(args_dict):
