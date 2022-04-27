@@ -1,6 +1,7 @@
 import warnings
 import os
 import utils
+
 warnings.filterwarnings("ignore")
 
 import torch
@@ -17,7 +18,6 @@ from train import run_train, load_att_class
 from semart_test import run_test
 
 
- 
 def gen_embeds(args_dict):
     '''
     Generates the proper dataset to train the GCN model.
@@ -33,7 +33,7 @@ def gen_embeds(args_dict):
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
         transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        #transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        # transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
         transforms.ToTensor(),  # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
@@ -48,30 +48,23 @@ def gen_embeds(args_dict):
 
     train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
-    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None, encoding='latin1')
-    dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
-    train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
-
-  
     vis_encoder = RMTL(num_classes)
     vis_encoder.load_weights(args_dict.resume)
+    vis_encoder.eval()
+    if torch.cuda.is_available():
+        vis_encoder = vis_encoder.cuda()
 
-    #feature_matrix = np.zeros(train_node2vec_emb.shape)
+    # feature_matrix = np.zeros(train_node2vec_emb.shape)
     print('Starting the process... ')
-    i=0
-    
     semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=transforms)
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    vis_encoder.eval()
-    if torch.cuda.is_available():
-      vis_encoder = vis_encoder.cuda()
+
     for batch_idx, (input, target) in enumerate(train_loader):
 
         # Inputs to Variable type
         input_var = list()
-        
 
         for j in range(len(input)):
             if torch.cuda.is_available():
@@ -80,16 +73,16 @@ def gen_embeds(args_dict):
                 input_var.append(torch.autograd.Variable(input[j]))
 
         if batch_idx == 0:
-          features_matrix = vis_encoder.reduce(input_var[0])
-          features_matrix = features_matrix.data.cpu().numpy()
+            features_matrix = vis_encoder.reduce(input_var[0])
+            features_matrix = features_matrix.data.cpu().numpy()
         else:
-#         # print(len(input), [x.shape for x in input])
-          features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
-        
-      
-        print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
+            features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
 
-         
+        print(
+            'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
+
+    features_matrix = np.append(features_matrix, train_node2vec_emb.iloc[features_matrix.shape[0]:])
+
     return features_matrix
 
 
@@ -108,7 +101,7 @@ def val_test_gen_embeds(args_dict):
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
         transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        #transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        # transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
         transforms.ToTensor(),  # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
@@ -121,7 +114,8 @@ def val_test_gen_embeds(args_dict):
     from PIL import Image
     from model_rmtl import RMTL
 
-    val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0) # Just for the shape
+    val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None,
+                                   index_col=0)  # Just for the shape
     test_node2vec_emb = pd.read_csv('Data/semart_test.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
     val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1', header=0)
@@ -131,14 +125,13 @@ def val_test_gen_embeds(args_dict):
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
 
-  
     vis_encoder = RMTL(num_classes)
     vis_encoder.load_weights(args_dict.resume)
 
-    #feature_matrix = np.zeros(train_node2vec_emb.shape)
+    # feature_matrix = np.zeros(train_node2vec_emb.shape)
     print('Starting the process... ')
-    i=0
-    
+    i = 0
+
     semart_val_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=transforms)
     val_loader = torch.utils.data.DataLoader(
         semart_val_loader,
@@ -150,12 +143,12 @@ def val_test_gen_embeds(args_dict):
 
     vis_encoder.eval()
     if torch.cuda.is_available():
-      vis_encoder = vis_encoder.cuda()
+        vis_encoder = vis_encoder.cuda()
+
     for batch_idx, (input, target) in enumerate(val_loader):
 
         # Inputs to Variable type
         input_var = list()
-        
 
         for j in range(len(input)):
             if torch.cuda.is_available():
@@ -164,20 +157,17 @@ def val_test_gen_embeds(args_dict):
                 input_var.append(torch.autograd.Variable(input[j]))
 
         if batch_idx == 0:
-          feature_matrix_val = vis_encoder.reduce(input_var[0])
-          feature_matrix_val = feature_matrix_val.data.cpu().numpy()
+            feature_matrix_val = vis_encoder.reduce(input_var[0])
+            feature_matrix_val = feature_matrix_val.data.cpu().numpy()
         else:
-#         # print(len(input), [x.shape for x in input])
-          feature_matrix_val = np.append(feature_matrix_val, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
-        
-      
-        print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(val_node2vec_emb.index)))
+            feature_matrix_val = np.append(feature_matrix_val, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+
+        print('Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(val_node2vec_emb.index)))
 
     for batch_idx, (input, target) in enumerate(test_loader):
 
         # Inputs to Variable type
         input_var = list()
-        
 
         for j in range(len(input)):
             if torch.cuda.is_available():
@@ -186,19 +176,15 @@ def val_test_gen_embeds(args_dict):
                 input_var.append(torch.autograd.Variable(input[j]))
 
         if batch_idx == 0:
-          feature_matrix_test = vis_encoder.reduce(input_var[0])
-          feature_matrix_test = features_matrix.data.cpu().numpy()
+            feature_matrix_test = vis_encoder.reduce(input_var[0])
+            feature_matrix_test = feature_matrix_test.data.cpu().numpy()
         else:
-#         # print(len(input), [x.shape for x in input])
-          feature_matrix_test = np.append(feature_matrix_test, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
-        
-      
-        print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(test_node2vec_emb.index)))
+            feature_matrix_test = np.append(feature_matrix_test, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
 
-         
+        print('Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(test_node2vec_emb.index)))
 
-    
     return feature_matrix_val, feature_matrix_test
+
 
 def vis_encoder_gen(args_dict):
     '''
@@ -210,14 +196,15 @@ def vis_encoder_gen(args_dict):
     Returns:
         None.
 
-    '''    
+    '''
+
     def save_model(args_dict, state):
         directory = args_dict.dir_model + "Reduce/"
         if not os.path.exists(directory):
             os.makedirs(directory)
         filename = directory + 'reduce_' + str(NODE2VEC_OUTPUT) + '_best_model.pth.tar'
         torch.save(state, filename)
-    
+
     import torch
     import torch.nn as nn
     import model_gcn as mgcn
@@ -230,22 +217,23 @@ def vis_encoder_gen(args_dict):
     # Load the model
     if torch.cuda.is_available():
         model = model.cuda()
-    
+
     # Load transforms and data loader
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     train_transforms = transforms.Compose([
-        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),                         # we get only the center of that rescaled
-        transforms.RandomCrop(224),                         # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),                  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),                              # to pytorch tensor
+        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),  # we get only the center of that rescaled
+        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),  # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
-    
-    semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=train_transforms)
-    semart_val_loader = ArtDatasetKGM(args_dict, att_name='type', set='val', att2i=type2idx,
+
+    semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx,
                                         transform=train_transforms)
+    semart_val_loader = ArtDatasetKGM(args_dict, att_name='type', set='val', att2i=type2idx,
+                                      transform=train_transforms)
 
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
@@ -257,11 +245,11 @@ def vis_encoder_gen(args_dict):
     model.train()
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3,
-                             weight_decay=1e-5)
+                                 weight_decay=1e-5)
 
     best_val = np.Inf
     pat_track = 0
-    
+
     for epoch in range(epochs):
 
         print('Epoch: ' + str(epoch) + '/' + str(epochs))
@@ -284,8 +272,6 @@ def vis_encoder_gen(args_dict):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
-
 
         # EVAL
         model.eval()
@@ -312,7 +298,7 @@ def vis_encoder_gen(args_dict):
                 pat_track = 0
             if pat_track >= args_dict.patience:
                 break
-    
+
             # save if it is the best model
             is_best = perfval > best_val
             best_val = min(perfval, best_val)
@@ -326,8 +312,6 @@ def vis_encoder_gen(args_dict):
                     'curr_val': best_val,
                 })
         print('** Validation: %f (best error) - %f (current error) - %d (patience)' % (best_val, perfval, pat_track))
-
-    
 
 
 if __name__ == "__main__":
@@ -350,8 +334,10 @@ if __name__ == "__main__":
     print('-----------------------------------')
 
     # Check mode and model are correct
-    assert args_dict.mode in ['train', 'test', 'gen_graph_dataset'], 'Incorrect mode. Please select either train or test.'
-    assert args_dict.model in ['mtl', 'kgm', 'gcn', 'gat', 'rmtl', 'fcm'], 'Incorrect model. Please select either mlt, kgm, gcn or fcm.'
+    assert args_dict.mode in ['train', 'test',
+                              'gen_graph_dataset'], 'Incorrect mode. Please select either train or test.'
+    assert args_dict.model in ['mtl', 'kgm', 'gcn', 'gat', 'rmtl',
+                               'fcm'], 'Incorrect model. Please select either mlt, kgm, gcn or fcm.'
 
     # Run process
     if args_dict.mode == 'train':
