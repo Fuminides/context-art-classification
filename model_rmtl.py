@@ -41,7 +41,7 @@ class RMTL(nn.Module):
 
         return [out_type, out_school, out_time, out_author, reconstructed_visual, visual_emb0]
 
-    def encode(self, img):
+    def reduce(self, img):
         visual_emb0 = self.resnet(img)
         visual_emb0 = visual_emb0.view(visual_emb0.size(0), -1)
         visual_emb = self.encoder(visual_emb0)

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import dok_matrix
 
-from dataloader_kgm import ArtDatasetKGM
+from dataloader_mtl import ArtDatasetMTL
 from model_gcn import NODE2VEC_OUTPUT
 
 from params import get_parser
@@ -38,7 +38,10 @@ def gen_embeds(args_dict):
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
+    # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    att2i = [type2idx, school2idx, time2idx, author2idx]
 
     from PIL import Image
     from model_rmtl import RMTL
@@ -49,29 +52,44 @@ def gen_embeds(args_dict):
     dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
     train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
 
-    vis_encoder = RMTL()
-    vis_encoder.load_weights(args_dict.dir_model)
+  
+    vis_encoder = RMTL(num_classes)
+    vis_encoder.load_weights(args_dict.resume)
 
     #feature_matrix = np.zeros(train_node2vec_emb.shape)
     print('Starting the process... ')
     i=0
-    semart_train_loader = ArtDatasetKGM(args_dict, att_name='type', set='train', att2i=type2idx, transform=transforms)
-
-        
-
+    
+    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=transforms)
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-
+    vis_encoder.eval()
+    if torch.cuda.is_available():
+      vis_encoder = vis_encoder.cuda()
     for batch_idx, (input, target) in enumerate(train_loader):
 
+        # Inputs to Variable type
+        input_var = list()
+        
+
+        for j in range(len(input)):
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
+
         if batch_idx == 0:
-            features_matrix = vis_encoder.reduce(torch.unsqueeze(torch.tensor(input), 0)).data.cpu().numpy()
+          aux = torch.tensor(input_var[0])
+          features_matrix = vis_encoder.reduce(input_var[0])
+          features_matrix = features_matrix.data.cpu().numpy()
         else:
-            features_matrix = np.append(features_matrix, vis_encoder.encode(torch.unsqueeze(torch.tensor(input), 0)).data.cpu().numpy())
-               
-        if i % 1000 == 0:
-            print('Sample ' + str(i) + 'th out of ' + str(len(train_node2vec_emb.index)))
+          aux = torch.tensor(input_var[0])
+#         # print(len(input), [x.shape for x in input])
+          features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+        
+      
+        print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
 
          
     return feature_matrix
@@ -256,8 +274,8 @@ if __name__ == "__main__":
     parser = get_parser()
     args_dict, unknown = parser.parse_known_args()
 
-    assert args_dict.att in ['type', 'school', 'time', 'author'], \
-        'Incorrect classifier. Please select type, school, time, or author.'
+    assert args_dict.att in ['type', 'school', 'time', 'author', 'all'], \
+        'Incorrect classifier. Please select type, school, time, author or all.'
 
     if args_dict.model == 'mtl':
         args_dict.att = 'all'
