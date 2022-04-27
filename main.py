@@ -80,11 +80,9 @@ def gen_embeds(args_dict):
                 input_var.append(torch.autograd.Variable(input[j]))
 
         if batch_idx == 0:
-          aux = torch.tensor(input_var[0])
           features_matrix = vis_encoder.reduce(input_var[0])
           features_matrix = features_matrix.data.cpu().numpy()
         else:
-          aux = torch.tensor(input_var[0])
 #         # print(len(input), [x.shape for x in input])
           features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
         
@@ -92,24 +90,36 @@ def gen_embeds(args_dict):
         print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
 
          
-    return feature_matrix
+    return features_matrix
 
 
 def val_test_gen_embeds(args_dict):
+    f'''
+    Generates the proper dataset to train the GCN model.
+        1. A file containing the embeddings for each category and painting for train, validation and test.
+        
+        
+        NOTE: remember that the pseudo-labels for validation and test are computed
+        using another classification model.
+    '''
     from torchvision import transforms
 
     transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
         transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        #transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
         transforms.ToTensor(),  # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
+    # Load classes
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    att2i = [type2idx, school2idx, time2idx, author2idx]
 
     from PIL import Image
-    from model_gcn import VisEncoder
+    from model_rmtl import RMTL
 
     val_node2vec_emb = pd.read_csv('Data/semart_val.emd', skiprows=1, sep=' ', header=None, index_col=0) # Just for the shape
     test_node2vec_emb = pd.read_csv('Data/semart_test.emd', skiprows=1, sep=' ', header=None, index_col=0)
@@ -117,25 +127,77 @@ def val_test_gen_embeds(args_dict):
     val_df = pd.read_csv(args_dict.dir_dataset + r'/semart_val.csv', sep='\t', encoding='latin1', header=0)
     test_df = pd.read_csv(args_dict.dir_dataset + r'/semart_test.csv', sep='\t', encoding='latin1', header=0)
 
-    vis_encoder = VisEncoder()
-    vis_encoder.load_weights(args_dict.dir_model)
+    semart_categories_keys = pd.read_csv('Data/kg_keys.csv', index_col=None, sep=' ', header=None, encoding='latin1')
+    dict_keys = {x: y for _, (y, x) in semart_categories_keys.iterrows()}
+    train_df = pd.read_csv(args_dict.dir_dataset + r'/semart_train.csv', sep='\t', encoding='latin1')
 
-    feature_matrix_val = np.zeros((val_df.shape[0], val_node2vec_emb.shape[1]))
-    for sample_ix in range(feature_matrix_val.shape[0]):
-        image_path = args_dict.dir_dataset + '/Images/' + val_df.iloc[sample_ix].iloc[0]  # ['IMAGE FILE']
-        image = Image.open(image_path).convert('RGB')
-        image = transforms(image)
+  
+    vis_encoder = RMTL(num_classes)
+    vis_encoder.load_weights(args_dict.resume)
 
-        feature_matrix_val[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+    #feature_matrix = np.zeros(train_node2vec_emb.shape)
+    print('Starting the process... ')
+    i=0
+    
+    semart_val_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=transforms)
+    val_loader = torch.utils.data.DataLoader(
+        semart_val_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
+    semart_test_loader = ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=transforms)
+    test_loader = torch.utils.data.DataLoader(
+        semart_test_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
 
-    feature_matrix_test = np.zeros((test_df.shape[0], test_node2vec_emb.shape[1]))
-    for sample_ix in range(feature_matrix_test.shape[0]):
-        image_path = args_dict.dir_dataset + '/Images/' + test_df.iloc[sample_ix].iloc[0]  # ['IMAGE FILE']
-        image = Image.open(image_path).convert('RGB')
-        image = transforms(image)
+    vis_encoder.eval()
+    if torch.cuda.is_available():
+      vis_encoder = vis_encoder.cuda()
+    for batch_idx, (input, target) in enumerate(val_loader):
 
-        feature_matrix_test[sample_ix, :] = vis_encoder.reduce(torch.unsqueeze(torch.tensor(image), 0)).detach().numpy()
+        # Inputs to Variable type
+        input_var = list()
+        
 
+        for j in range(len(input)):
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
+
+        if batch_idx == 0:
+          feature_matrix_val = vis_encoder.reduce(input_var[0])
+          feature_matrix_val = feature_matrix_val.data.cpu().numpy()
+        else:
+#         # print(len(input), [x.shape for x in input])
+          feature_matrix_val = np.append(feature_matrix_val, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+        
+      
+        print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(val_node2vec_emb.index)))
+
+    for batch_idx, (input, target) in enumerate(test_loader):
+
+        # Inputs to Variable type
+        input_var = list()
+        
+
+        for j in range(len(input)):
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
+
+        if batch_idx == 0:
+          feature_matrix_test = vis_encoder.reduce(input_var[0])
+          feature_matrix_test = features_matrix.data.cpu().numpy()
+        else:
+#         # print(len(input), [x.shape for x in input])
+          feature_matrix_test = np.append(feature_matrix_test, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+        
+      
+        print('Sample ' + str(batch_idx*int(args_dict.batch_size)) + 'th out of ' + str(len(test_node2vec_emb.index)))
+
+         
+
+    
     return feature_matrix_val, feature_matrix_test
 
 def vis_encoder_gen(args_dict):
