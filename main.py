@@ -76,13 +76,15 @@ def gen_embeds(args_dict):
             features_matrix = vis_encoder.reduce(input_var[0])
             features_matrix = features_matrix.data.cpu().numpy()
         else:
-            features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+            features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
 
         print(
             'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
 
-    features_matrix_end = np.append(features_matrix, train_node2vec_emb.iloc[features_matrix.shape[0]:])
-    assert features_matrix.shape == features_matrix_end.shape
+    features_matrix_end = np.append(features_matrix, train_node2vec_emb.iloc[features_matrix.shape[0]:], axis=0)
+    print(train_node2vec_emb.shape, features_matrix_end.shape)
+    
+    assert train_node2vec_emb.shape == features_matrix_end.shape
     
     return features_matrix_end
 
