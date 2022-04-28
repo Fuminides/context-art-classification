@@ -46,10 +46,10 @@ def get_parser():
     parser.add_argument('--clusters', default=150, type=int)
 
     # GCN model
-    parser.add_argument('--feature_matrix', default='Data/feature_train_128_semart.emd', type=str)
-    parser.add_argument('--val_feature_matrix', default='Data/feature_val_128_semart.emd', type=str)
-    parser.add_argument('--test_feature_matrix', default='Data/feature_test_128_semart.emd', type=str)
-    
+    parser.add_argument('--feature_matrix', default='Data/feature_train_128_semart.csv', type=str)
+    parser.add_argument('--val_feature_matrix', default='Data/feature_val_128_semart.csv', type=str)
+    parser.add_argument('--test_feature_matrix', default='Data/feature_test_128_semart.csv', type=str)
+
     parser.add_argument('--edge_list_train', default='Data/kg_semart.csv', type=str)
     parser.add_argument('--edge_list_val', default='Data/kg_semart_val.csv', type=str)
     parser.add_argument('--edge_list_test', default='Data/kg_semart_test.csv', type=str)
