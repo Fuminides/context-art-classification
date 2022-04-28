@@ -133,7 +133,7 @@ def val_test_gen_embeds(args_dict):
     print('Starting the process... ')
     i = 0
 
-    semart_val_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=transforms)
+    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=transforms)
     val_loader = torch.utils.data.DataLoader(
         semart_val_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
