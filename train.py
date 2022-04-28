@@ -280,10 +280,10 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
     return acc
 
 def multi_class_loss(criterion, target_var, output):
-    return 0.25 * criterion[0](output[0], target_var[0].long()) + \
-                            0.25 * criterion[0](output[1], target_var[1].long()) + \
-                            0.25 * criterion[0](output[2], target_var[2].long()) + \
-                            0.25 * criterion[0](output[3], target_var[3].long())
+    return 0.25 * criterion(output[0], target_var[0].long()) + \
+                            0.25 * criterion(output[1], target_var[1].long()) + \
+                            0.25 * criterion(output[2], target_var[2].long()) + \
+                            0.25 * criterion(output[3], target_var[3].long())
 
 
 def train_knowledgegraph_classifier(args_dict):
