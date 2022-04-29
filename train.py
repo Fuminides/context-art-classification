@@ -557,14 +557,14 @@ def gen_embeds(args_dict, vis_encoder, data_partition='train'):
         print(
             'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(semart_train_loader)))
 
-    if args_dict.embedds == 'graph':
-        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
-    elif args_dict.embedds == 'avg':
+    #if args_dict.embedds == 'graph':
+    features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
+    '''elif args_dict.embedds == 'avg':
         # Gen the feature for each category using the avg of all their representatives
         additional_entities = np.zeros((train_node2vec_emb - len(semart_train_loader), train_node2vec_emb.shape[1]))
         for entity in range(additional_entities.shape[0]):
             entity
-        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
+        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)'''
     
     assert train_node2vec_emb.shape == features_matrix_end.shape
     

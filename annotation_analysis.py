@@ -4,6 +4,7 @@ import pickle
 import pandas as pd
 import numpy as np
 
+import params
 ## FUNCTIONS RELATED TO THE ORIGINAL DATASET
 def load_dictionary_definitions():
     with open('Data/validated_symbol_definitions.pckl', 'rb') as f:
@@ -45,4 +46,11 @@ def load_semart_symbols(args_dict):
 
 def symbol_connectivity():
     from Data import symbol_graph
-    
+
+    trial = symbol_graph.generate_adjacency_df_symbol(symmetry=True)
+
+    return trial
+
+if __name__ == '__main__':
+    args_dict = params.get_parser()
+    aux = load_semart_symbols(args_dict)
