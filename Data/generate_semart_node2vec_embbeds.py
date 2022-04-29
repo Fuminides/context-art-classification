@@ -59,9 +59,6 @@ def generate_kg_semart(semart_path=r'/home/javierfumanal/Documents/GitHub/SemArt
     return [kg_coo, key_dicts], [val_kg_coo, val_key_dicts], [test_kg_coo, test_key_dicts]
 
 
-
-
-
 def save_edges(matrix_to_save, res_file='kg_semart.csv'):
     '''
     Saves semart kg graph in a file format ready for node2vec.

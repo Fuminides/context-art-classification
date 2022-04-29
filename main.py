@@ -33,7 +33,7 @@ def gen_embeds(args_dict):
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(256),  # we get only the center of that rescaled
         transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        # transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
         transforms.ToTensor(),  # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
@@ -46,7 +46,10 @@ def gen_embeds(args_dict):
     from PIL import Image
     from model_rmtl import RMTL
 
+    #if args_dict.embedds == 'graph':
     train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    
+
 
     vis_encoder = RMTL(num_classes)
     vis_encoder.load_weights(args_dict.resume)
@@ -61,10 +64,19 @@ def gen_embeds(args_dict):
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
 
+    type_label = []
+    school_label = []
+    time_label = []
+    author_label = []
+
     for batch_idx, (input, target) in enumerate(train_loader):
 
         # Inputs to Variable type
         input_var = list()
+        type_label.append(target[0])
+        school_label.append(target[0])
+        time_label.append(target[0])
+        author_label.append(target[0])
 
         for j in range(len(input)):
             if torch.cuda.is_available():
@@ -79,10 +91,16 @@ def gen_embeds(args_dict):
             features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
 
         print(
-            'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(train_node2vec_emb.index)))
+            'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(semart_train_loader)))
 
-    features_matrix_end = np.append(features_matrix, train_node2vec_emb.iloc[features_matrix.shape[0]:], axis=0)
-    print(train_node2vec_emb.shape, features_matrix_end.shape)
+    if args_dict.embedds:
+        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
+    else:
+        # Gen the feature for each category using the avg of all their representatives
+        additional_entities = np.zeros((train_node2vec_emb - len(semart_train_loader), train_node2vec_emb.shape[1]))
+        for entity in range(additional_entities.shape[0]):
+            entity
+        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
     
     assert train_node2vec_emb.shape == features_matrix_end.shape
     
@@ -163,7 +181,7 @@ def val_test_gen_embeds(args_dict):
             feature_matrix_val = vis_encoder.reduce(input_var[0])
             feature_matrix_val = feature_matrix_val.data.cpu().numpy()
         else:
-            feature_matrix_val = np.append(feature_matrix_val, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+            feature_matrix_val = np.append(feature_matrix_val, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
 
         print('Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(val_node2vec_emb.index)))
 
@@ -182,7 +200,7 @@ def val_test_gen_embeds(args_dict):
             feature_matrix_test = vis_encoder.reduce(input_var[0])
             feature_matrix_test = feature_matrix_test.data.cpu().numpy()
         else:
-            feature_matrix_test = np.append(feature_matrix_test, vis_encoder.reduce(input_var[0]).data.cpu().numpy())
+            feature_matrix_test = np.append(feature_matrix_test, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
 
         print('Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(test_node2vec_emb.index)))
 
@@ -348,8 +366,8 @@ if __name__ == "__main__":
     elif args_dict.mode == 'test':
         run_test(args_dict)
     elif args_dict.mode == 'gen_graph_dataset':
-        feature_matrix = gen_embeds(args_dict)
-        pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
+        #feature_matrix = gen_embeds(args_dict)
+        #pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
 
         v_mat, t_mat = val_test_gen_embeds(args_dict)
         pd.DataFrame(v_mat).to_csv('Data/feature_val_128_semart.csv')
