@@ -482,6 +482,94 @@ def train_multitask_classifier(args_dict):
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
+def gen_embeds(args_dict, vis_encoder, data_partition='train'):
+    '''
+    Generates the proper dataset to train the GCN model.
+        1. A file containing the embeddings for each category and painting for train, validation and test.
+        
+        
+        NOTE: remember that the pseudo-labels for validation and test are computed
+        using another classification model.
+    '''
+    from torchvision import transforms
+
+    transforms = transforms.Compose([
+        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),  # we get only the center of that rescaled
+        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),  # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+    # Load classes
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    att2i = [type2idx, school2idx, time2idx, author2idx]
+
+    from PIL import Image
+    from model_rmtl import RMTL
+
+    #if args_dict.embedds == 'graph':
+    if data_partition == 'train':
+        train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
+    else:
+        train_node2vec_emb = pd.read_csv('Data/semart' + data_partition + '.emd', skiprows=1, sep=' ', header=None, index_col=0)
+
+
+    vis_encoder.eval()
+    if torch.cuda.is_available():
+        vis_encoder = vis_encoder.cuda()
+
+    # feature_matrix = np.zeros(train_node2vec_emb.shape)
+    print('Starting the process... ')
+    semart_train_loader = ArtDatasetMTL(args_dict, set=data_partition, att2i=att2i, transform=transforms)
+    train_loader = torch.utils.data.DataLoader(
+        semart_train_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
+
+    type_label = []
+    school_label = []
+    time_label = []
+    author_label = []
+
+    for batch_idx, (input, target) in enumerate(train_loader):
+
+        # Inputs to Variable type
+        input_var = list()
+        type_label.append(target[0])
+        school_label.append(target[0])
+        time_label.append(target[0])
+        author_label.append(target[0])
+
+        for j in range(len(input)):
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
+
+        if batch_idx == 0:
+            features_matrix = vis_encoder.reduce(input_var[0])
+            features_matrix = features_matrix.data.cpu().numpy()
+        else:
+            features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
+
+        print(
+            'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(semart_train_loader)))
+
+    if args_dict.embedds == 'graph':
+        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
+    elif args_dict.embedds == 'avg':
+        # Gen the feature for each category using the avg of all their representatives
+        additional_entities = np.zeros((train_node2vec_emb - len(semart_train_loader), train_node2vec_emb.shape[1]))
+        for entity in range(additional_entities.shape[0]):
+            entity
+        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
+    
+    assert train_node2vec_emb.shape == features_matrix_end.shape
+    
+    return features_matrix_end
+
 def vis_encoder_train(args_dict):
 
     # Load classes
@@ -576,6 +664,19 @@ def vis_encoder_train(args_dict):
                 'curr_val': accval,
             }, type=args_dict.att, train_feature=args_dict.embedds)
 
+            feature_matrix = gen_embeds(args_dict, model, 'train')
+            pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
+
+            feature_matrix = gen_embeds(args_dict, model, 'val')
+            pd.DataFrame(feature_matrix).to_csv('Data/feature_val_128_semart.csv')
+
+            feature_matrix = gen_embeds(args_dict, model, 'test')
+            pd.DataFrame(feature_matrix).to_csv('Data/feature_test_128_semart.csv')
+
+
+
+
+
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 def _load_labels(df_path, att2i):
@@ -610,6 +711,7 @@ def _load_labels(df_path, att2i):
 
 def train_gcn_classifier(args_dict):    
     from model_gcn import GCN, NODE2VEC_OUTPUT
+    from model_gat import GAT
 
     target = 'time'
     # Load classes
@@ -623,42 +725,8 @@ def train_gcn_classifier(args_dict):
     target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
     og_train_size = len(target_var_train[0])
     val_size = len(target_var_val[0])
-    test_size = len(target_var_test[0])
 
-    # Load semart knowledge graphs
-    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
-    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
-    
-    # Use the kgs to generate a sparse matrix
-    val_edge_list = pd.concat([train_edge_list, val_edge_list], axis=0)
-    tensor_val_edge_list = torch.tensor(np.array(val_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
-    
-
-    # Load the feature matrix from the vis+node2vec representations
-    train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=' ', header=None, skiprows=1, index_col=0)
-    train_size = train_feature_matrix.shape[0]
-    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=' ',  header=None, skiprows=1, index_col=0)
-    
-    total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix], axis=0))).float()
-    n_samples = total_samples.shape[0]
-
-    # Gen the train/val/test indexes
-    train_mask = np.array([0] * n_samples)
-    train_mask[0:train_size] = 1
-    train_mask = torch.tensor(train_mask, dtype=torch.uint8)
-
-    og_train_mask = np.array([0] * n_samples)
-    og_train_mask[0:og_train_size] = 1
-    og_train_mask = torch.tensor(og_train_mask, dtype=torch.uint8)
-
-    val_mask = np.array([0] * n_samples)
-    val_mask[train_size:train_size+val_size] = 1
-    val_mask = torch.tensor(val_mask, dtype=torch.uint8)
-    val_mask = torch.logical_or(train_mask, val_mask)
-
-    test_mask = np.array([0] * n_samples)
-    test_mask[-(train_size + val_size):] = 1
-    test_mask = torch.tensor(test_mask, dtype=torch.uint8)
+    data = load_gcn_data(args_dict, og_train_size, val_size)
    
     if torch.cuda.is_available():
         total_samples = total_samples.cuda()
@@ -667,15 +735,12 @@ def train_gcn_classifier(args_dict):
         tensor_val_edge_list = tensor_val_edge_list.cuda()
         train_mask = train_mask.cuda()
 
-    #Load all the data as Data object for pytorch geometric
-    data = Data(x=total_samples, edge_index=train_edge_list, val_edge_index=tensor_val_edge_list)
-    data.train_mask = train_mask
-    data.val_mask = val_mask
-    data.test_mask = test_mask
-    data.og_train_mask = og_train_mask
-
     # Define model
-    model = GCN(NODE2VEC_OUTPUT, 16, num_classes,target_class=target)
+    if args_dict.model == 'gcn':
+      model = GCN(NODE2VEC_OUTPUT, 16, num_classes,target_class=target)
+    elif args_dict.model == 'gat':
+      model = GAT(NODE2VEC_OUTPUT, 16, num_classes,target_class=target)
+
     if torch.cuda.is_available():
         model.cuda()
 
@@ -715,13 +780,10 @@ def train_gcn_classifier(args_dict):
 
         # Compute a training epoch
         optimizer.zero_grad()
-        #output = model(data.x[data.train_mask], data.edge_index)
+
         output = model(data.x[data.train_mask], data.edge_index)
         if target == 'all':
-          train_loss = 0.25 * criterion(output[0][0:og_train_size], target_var[0]) + \
-                      0.25 * criterion(output[1][0:og_train_size], target_var[1]) + \
-                      0.25 * criterion(output[2][0:og_train_size], target_var[2]) + \
-                      0.25 * criterion(output[3][0:og_train_size], target_var[3])
+          train_loss = multi_class_loss(criterion, target_var, output)
         else:
           train_loss = criterion(output[0:og_train_size], target_var[column_key[target]])
           #print(train_loss)
@@ -808,6 +870,51 @@ def train_gcn_classifier(args_dict):
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
+def load_gcn_data(args_dict, og_train_size, val_size):
+    # Load semart knowledge graphs
+    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
+    tensor_train_edge_list = torch.tensor(np.array(train_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
+    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
+    
+    # Use the kgs to generate a sparse matrix
+    val_edge_list = pd.concat([train_edge_list, val_edge_list], axis=0)
+    tensor_val_edge_list = torch.tensor(np.array(val_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
+    
+    # Load the feature matrix from the vis+node2vec representations
+    train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=',', header=None, skiprows=1, index_col=0)
+    train_size = train_feature_matrix.shape[0]
+    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=',',  header=None, skiprows=1, index_col=0)
+    
+    total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix], axis=0))).float()
+    n_samples = total_samples.shape[0]
+
+    # Gen the train/val/test indexes
+    train_mask = np.array([0] * n_samples)
+    train_mask[0:train_size] = 1
+    train_mask = torch.tensor(train_mask, dtype=torch.uint8)
+
+    og_train_mask = np.array([0] * n_samples)
+    og_train_mask[0:og_train_size] = 1
+    og_train_mask = torch.tensor(og_train_mask, dtype=torch.uint8)
+
+    val_mask = np.array([0] * n_samples)
+    val_mask[train_size:train_size+val_size] = 1
+    val_mask = torch.tensor(val_mask, dtype=torch.uint8)
+    val_mask = torch.logical_or(train_mask, val_mask)
+
+    test_mask = np.array([0] * n_samples)
+    test_mask[train_size + val_size:] = 1
+    test_mask = torch.tensor(test_mask, dtype=torch.uint8)
+
+    #Load all the data as Data object for pytorch geometric
+    data = Data(x=total_samples, edge_index=tensor_train_edge_list, val_edge_index=tensor_val_edge_list)
+    data.train_mask = train_mask
+    data.val_mask = val_mask
+    data.test_mask = test_mask
+    data.og_train_mask = og_train_mask
+
+    return data
+
 def compute_preds_val(target, val_size, output, label_type, label_school, label_tf, label_author):
     if target == 'all' or target == 'type':
       _, pred_type = torch.argmax(output[0], 1) if target == 'all' else torch.max(output, 1)
@@ -832,6 +939,7 @@ def compute_preds_val(target, val_size, output, label_type, label_school, label_
 
     if target == 'all':
       accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
+
     return accval
 
 
@@ -853,6 +961,8 @@ def run_train(args_dict):
     elif args_dict.model == 'rmtl':
         vis_encoder_train(args_dict)
     elif args_dict.model == 'gcn':
+        train_gcn_classifier(args_dict)
+    elif args_dict.model == 'gat':
         train_gcn_classifier(args_dict)
     else:
         assert False, 'Incorrect model type'
