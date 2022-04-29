@@ -665,6 +665,7 @@ def vis_encoder_train(args_dict):
             }, type=args_dict.att, train_feature=args_dict.embedds)
 
             feature_matrix = gen_embeds(args_dict, model, 'train')
+            print(feature_matrix.iloc[0:2, :].iloc[:10])
             pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
 
             feature_matrix = gen_embeds(args_dict, model, 'val')
@@ -672,9 +673,6 @@ def vis_encoder_train(args_dict):
 
             feature_matrix = gen_embeds(args_dict, model, 'test')
             pd.DataFrame(feature_matrix).to_csv('Data/feature_test_128_semart.csv')
-
-
-
 
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
@@ -712,6 +710,8 @@ def _load_labels(df_path, att2i):
 def train_gcn_classifier(args_dict):    
     from model_gcn import GCN, NODE2VEC_OUTPUT
     from model_gat import GAT
+    from torch_geometric.loader import DataLoader
+
 
     target = 'time'
     # Load classes
@@ -759,7 +759,8 @@ def train_gcn_classifier(args_dict):
     best_val, model, optimizer = resume(args_dict, model, optimizer)
 
     column_key = {'type':0, 'school':1, 'time':2, 'author':3}
-    
+    train_data_loader = DataLoader(data_train, batch_size=int(args_dict.batch_size), shuffle=True)  
+    val_data_loader = DataLoader(data_val, batch_size=int(args_dict.batch_size), shuffle=True)  
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
@@ -768,6 +769,8 @@ def train_gcn_classifier(args_dict):
     pat_track = 0
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
         print(epoch)
+
+        #for batch in loader:
         # Targets to Variable type
         target_var = list()
         for j in range(len(target_var_train)):

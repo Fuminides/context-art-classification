@@ -1,0 +1,85 @@
+import torch.utils.data as data
+import pandas as pd
+import os
+
+from PIL import Image
+
+
+class ArtDatasetGCN(data.Dataset):
+
+    def __init__(self, args_dict, set, att2i, transform = None):
+        """
+        Args:
+            args_dict: parameters dictionary
+            set: 'train', 'val', 'test'
+            att2i: list of attribute vocabularies as [type2idx, school2idx, time2idx, author2idx]
+            transform: data transform
+        """
+
+        self.args_dict = args_dict
+        self.set = set
+
+        # Load data
+        if self.set == 'train':
+            textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
+        elif self.set == 'val':
+            textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
+        elif self.set == 'test':
+            textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
+        df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
+
+        self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
+        self.transform = transform
+        self.type_vocab = att2i[0]
+        self.school_vocab = att2i[1]
+        self.time_vocab = att2i[2]
+        self.author_vocab = att2i[3]
+
+        self.imageurls = list(df['IMAGE_FILE'])
+        self.type = list(df['TYPE'])
+        self.school = list(df['SCHOOL'])
+        self.time = list(df['TIMEFRAME'])
+        self.author = list(df['AUTHOR'])
+
+        self.train_features = pd.read_csv(args_dict.feature_matrix, header=0, index_col=0, sep=',')
+        self.val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, header=0, index_col=0, sep=',')
+        self.test_feature_matrix = pd.read_csv(args_dict.test_feature_matrix, header=0, index_col=0, sep=',')
+
+        self.edge_list_train = pd.read_csv(args_dict.edge_list_train, header=None, index_col=None)
+        self.edge_list_val = pd.read_csv(args_dict.edge_list_val, header=None, index_col=None)
+        self.test_true_edge_list = pd.read_csv(args_dict.edge_list_test, header=None, index_col=None)
+
+
+
+
+    def __len__(self):
+        return len(self.imageurls)
+
+
+    def class_from_name(self, vocab, name):
+
+        if name in vocab:
+            idclass= vocab[name]
+        else:
+            idclass = vocab['UNK']
+
+        return idclass
+
+
+    def __getitem__(self, index):
+
+        '''# Load image & apply transformation
+        imagepath = self.imagefolder + self.imageurls[index]
+        image = Image.open(imagepath).convert('RGB')
+        if self.transform is not None:
+            image = self.transform(image)'''
+        
+
+
+        # Attribute class
+        type_idclass = self.class_from_name(self.type_vocab, self.type[index])
+        school_idclass = self.class_from_name(self.school_vocab, self.school[index])
+        time_idclass = self.class_from_name(self.time_vocab, self.time[index])
+        author_idclass = self.class_from_name(self.author_vocab, self.author[index])
+
+        return [image], [type_idclass, school_idclass, time_idclass, author_idclass]
