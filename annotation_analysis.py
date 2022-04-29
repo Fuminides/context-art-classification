@@ -44,3 +44,5 @@ def load_semart_symbols(args_dict):
     return dictionary_painting_symbol
 
 def symbol_connectivity():
+    from Data import symbol_graph
+    

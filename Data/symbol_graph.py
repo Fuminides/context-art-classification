@@ -12,8 +12,7 @@ import pandas as pd
 
 from scipy.sparse import dok_matrix
 
-import load_mix as lm
-
+PURGED_TERMS_DICT = './validated_symbol_definitions.pckl'
 
 def generate_adjacency_symbol_sparse(symmetry=True):
     '''
@@ -22,7 +21,7 @@ def generate_adjacency_symbol_sparse(symmetry=True):
     :param symmetry: True if you want the resulting matrix to be symmetric.
     :returns: a sparse dok_matrix with the corresponding adjacency matrix.
     '''
-    dict_mix = pickle.load(open(lm.PURGED_TERMS_DICT, 'rb'))
+    dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
     terms = list(dict_mix.keys())    
     definitions = list(dict_mix.values())
 
@@ -47,7 +46,7 @@ def generate_adjacency_df_symbol(symmetry=True):
     Returns a datafrme with the corresponding adjacency matrix of the mix dictionary.
     '''
     sparse_matrix = generate_adjacency_symbol_sparse(symmetry=symmetry)
-    dict_mix = pickle.load(open(lm.PURGED_TERMS_DICT, 'rb'))
+    dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
     terms = list(dict_mix.keys())
     
     dense_conectivity = sparse_matrix.todense() 
