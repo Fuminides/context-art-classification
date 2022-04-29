@@ -188,7 +188,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
             
             if args_dict.att == 'all':
                 if args_dict.model == 'rmtl':
-                    class_loss = multi_class_loss(criterion, target_var, output)
+                    class_loss = multi_class_loss(criterion[0], target_var, output)
             
                     encoder_loss = criterion[1](output[4], output[5])
               
