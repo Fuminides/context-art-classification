@@ -730,7 +730,6 @@ def train_gcn_classifier(args_dict):
     data = load_gcn_data(args_dict, og_train_size, val_size)
    
     if torch.cuda.is_available():
-        total_samples = total_samples.cuda()
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
         val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
         tensor_val_edge_list = tensor_val_edge_list.cuda()
@@ -760,8 +759,6 @@ def train_gcn_classifier(args_dict):
     best_val, model, optimizer = resume(args_dict, model, optimizer)
 
     column_key = {'type':0, 'school':1, 'time':2, 'author':3}
-    train_data_loader = DataLoader(data_train, batch_size=int(args_dict.batch_size), shuffle=True)  
-    val_data_loader = DataLoader(data_val, batch_size=int(args_dict.batch_size), shuffle=True)  
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
@@ -879,7 +876,7 @@ def load_gcn_data(args_dict, og_train_size, val_size):
     train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
     val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
     val_edge_list = pd.concat([train_edge_list, val_edge_list], axis=0)
-    
+
     tensor_train_edge_list = torch.tensor(np.array(train_edge_list).reshape((2, train_edge_list.shape[0])), dtype=torch.long)
     tensor_val_edge_list = torch.tensor(np.array(val_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
     
