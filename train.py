@@ -514,7 +514,7 @@ def gen_embeds(args_dict, vis_encoder, data_partition='train'):
     if data_partition == 'train':
         train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
     else:
-        train_node2vec_emb = pd.read_csv('Data/semart' + data_partition + '.emd', skiprows=1, sep=' ', header=None, index_col=0)
+        train_node2vec_emb = pd.read_csv('Data/semart_' + data_partition + '.emd', skiprows=1, sep=' ', header=None, index_col=0)
 
 
     vis_encoder.eval()
