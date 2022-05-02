@@ -665,7 +665,7 @@ def vis_encoder_train(args_dict):
             }, type=args_dict.att, train_feature=args_dict.embedds)
 
             feature_matrix = gen_embeds(args_dict, model, 'train')
-            print(feature_matrix.iloc[0:2, :].iloc[:10])
+            print(feature_matrix[0:2, :][:10])
             pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
 
             feature_matrix = gen_embeds(args_dict, model, 'val')
