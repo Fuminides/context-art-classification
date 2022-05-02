@@ -878,10 +878,9 @@ def load_gcn_data(args_dict, og_train_size, val_size):
     # Load semart knowledge graphs
     train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
     val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
-    print(train_edge_list.shape, val_edge_list.shape)
     val_edge_list = pd.concat([train_edge_list, val_edge_list], axis=0)
-    print(val_edge_list.shape)
-    tensor_train_edge_list = torch.tensor(np.array(train_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
+    
+    tensor_train_edge_list = torch.tensor(np.array(train_edge_list).reshape((2, train_edge_list.shape[0])), dtype=torch.long)
     tensor_val_edge_list = torch.tensor(np.array(val_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
     
     # Load the feature matrix from the vis+node2vec representations
