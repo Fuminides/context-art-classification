@@ -729,11 +729,11 @@ def train_gcn_classifier(args_dict):
 
     data = load_gcn_data(args_dict, og_train_size, val_size)
    
-    if torch.cuda.is_available():
+    '''if torch.cuda.is_available():
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
         val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
         tensor_val_edge_list = tensor_val_edge_list.cuda()
-        train_mask = train_mask.cuda()
+        train_mask = train_mask.cuda()'''
 
     # Define model
     if args_dict.model == 'gcn':
@@ -905,6 +905,10 @@ def load_gcn_data(args_dict, og_train_size, val_size):
     test_mask = np.array([0] * n_samples)
     test_mask[train_size + val_size:] = 1
     test_mask = torch.tensor(test_mask, dtype=torch.uint8)
+
+    if torch.cuda.is_available():
+        tensor_train_edge_list = tensor_train_edge_list.cuda()
+        tensor_val_edge_list = tensor_val_edge_list.cuda()
 
     #Load all the data as Data object for pytorch geometric
     data = Data(x=total_samples, edge_index=tensor_train_edge_list, val_edge_index=tensor_val_edge_list)
