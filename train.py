@@ -1,4 +1,5 @@
 from __future__ import division
+from operator import index
 
 import os
 import torch
@@ -280,11 +281,11 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
     # Return acc
     return acc
 
-def multi_class_loss(criterion, target_var, output):
-    return 0.25 * criterion(output[0], target_var[0].long()) + \
-                            0.25 * criterion(output[1], target_var[1].long()) + \
-                            0.25 * criterion(output[2], target_var[2].long()) + \
-                            0.25 * criterion(output[3], target_var[3].long())
+def multi_class_loss(criterion, target_var, output, index_loss):
+    return 0.25 * criterion(output[0][index_loss], target_var[0][index_loss].long()) + \
+                            0.25 * criterion(output[1][index_loss], target_var[1][index_loss].long()) + \
+                            0.25 * criterion(output[2][index_loss], target_var[2][index_loss].long()) + \
+                            0.25 * criterion(output[3][index_loss], target_var[3][index_loss].long())
 
 
 def train_knowledgegraph_classifier(args_dict):
@@ -711,8 +712,8 @@ def _load_labels(df_path, att2i):
 def train_gcn_classifier(args_dict):    
     from model_gcn import GCN, NODE2VEC_OUTPUT
     from model_gat import GAT
-    from torch_geometric.loader import DataLoader
-
+    from torch_geometric.loader import DataLoader, NeighborSampler
+    
 
     target = 'time'
     # Load classes
@@ -728,7 +729,10 @@ def train_gcn_classifier(args_dict):
     val_size = len(target_var_val[0])
 
     data = load_gcn_data(args_dict, og_train_size, val_size)
-   
+    loader = NeighborSampler(
+        data.edge_index, node_idx=data.train_mask,#+data.val_mask,
+        sizes=10, batch_size=int(args_dict.batch_size), shuffle=True, num_workers=0)
+    
     '''if torch.cuda.is_available():
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
         val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
@@ -768,29 +772,31 @@ def train_gcn_classifier(args_dict):
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
         print(epoch)
 
-        #for batch in loader:
+        for batch in loader:
         # Targets to Variable type
-        target_var = list()
-        for j in range(len(target_var_train)):
-            if torch.cuda.is_available():
-                aux = torch.tensor(target_var_train[j]).cuda(non_blocking=True)
+
+            target_var = list()
+            for j in range(len(target_var_train)):
+                if torch.cuda.is_available():
+                    aux = torch.tensor(target_var_train[j]).cuda(non_blocking=True)
+                else:
+                    aux = torch.tensor(target_var_train[j])
+
+                target_var.append(torch.autograd.Variable(aux))
+
+            # Compute a training epoch
+            optimizer.zero_grad()
+
+            output = model(batch.x, batch.edge_index)
+            index_loss = batch.edge_index < og_train_size
+            if target == 'all':
+                train_loss = multi_class_loss(criterion, target_var, output, index_loss)
             else:
-                aux = torch.tensor(target_var_train[j])
-
-            target_var.append(torch.autograd.Variable(aux))
-
-        # Compute a training epoch
-        optimizer.zero_grad()
-
-        output = model(data.x[data.train_mask], data.edge_index)
-        if target == 'all':
-          train_loss = multi_class_loss(criterion, target_var, output)
-        else:
-          train_loss = criterion(output[0:og_train_size], target_var[column_key[target]])
-          #print(train_loss)
-        train_loss.backward()
-        optimizer.step()
-        scheduler.step()
+                train_loss = criterion(output[index_loss], target_var[column_key[target]][index_loss])
+            #print(train_loss)
+            train_loss.backward()
+            optimizer.step()
+            scheduler.step()
 
         print('************')
         if target == 'all' or target == 'type':
