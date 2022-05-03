@@ -731,7 +731,7 @@ def train_gcn_classifier(args_dict):
     data = load_gcn_data(args_dict, og_train_size, val_size)
     loader = NeighborSampler(
         data.edge_index, node_idx=data.train_mask,#+data.val_mask,
-        sizes=10, batch_size=int(args_dict.batch_size), shuffle=True, num_workers=0)
+        sizes=[10, 5], batch_size=int(args_dict.batch_size), shuffle=True, num_workers=0)
     
     '''if torch.cuda.is_available():
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
