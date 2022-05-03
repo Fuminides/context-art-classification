@@ -894,7 +894,7 @@ def load_gcn_data(args_dict, og_train_size, val_size):
     train_size = train_feature_matrix.shape[0]
     val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=',',  header=None, skiprows=1, index_col=0)
     
-    torch_train_feature_matrix = torch.tensor(train_feature_matrix)
+    #torch_train_feature_matrix = torch.tensor(train_feature_matrix)
     total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix], axis=0))).float()
     n_samples = total_samples.shape[0]
 
@@ -921,7 +921,7 @@ def load_gcn_data(args_dict, og_train_size, val_size):
         tensor_val_edge_list = tensor_val_edge_list.cuda()
 
     #Load all the data as Data object for pytorch geometric
-    data = Data(train=torch_train_feature_matrix, x=total_samples, edge_index=tensor_train_edge_list, val_edge_index=tensor_val_edge_list)
+    data = Data(x=total_samples, edge_index=tensor_train_edge_list, val_edge_index=tensor_val_edge_list)
     data.train_mask = train_mask
     data.val_mask = val_mask
     data.test_mask = test_mask
