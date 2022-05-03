@@ -712,8 +712,8 @@ def _load_labels(df_path, att2i):
 def train_gcn_classifier(args_dict):    
     from model_gcn import GCN, NODE2VEC_OUTPUT
     from model_gat import GAT
-    from torch_geometric.loader import DataLoader
-
+    from torch_geometric.loader import DataLoader, NeighborSampler
+    
 
     target = 'time'
     # Load classes
@@ -729,7 +729,10 @@ def train_gcn_classifier(args_dict):
     val_size = len(target_var_val[0])
 
     data = load_gcn_data(args_dict, og_train_size, val_size)
-    loader = DataLoader(data, batch_size=int(args_dict.batch_size), shuffle=True)
+    loader = NeighborSampler(
+        data.edge_index, node_idx=data.train_mask,#+data.val_mask,
+        sizes=10, batch_size=int(args_dict.batch_size), shuffle=True, num_workers=0)
+    
     '''if torch.cuda.is_available():
         train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
         val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
