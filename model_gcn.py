@@ -52,8 +52,17 @@ class GCN(nn.Module):
         self.target_class = target_class
 
     def forward(self, x, edge_index):
-        x = F.relu(self.gc1(x, edge_index))
-        x = F.dropout(x, training=self.training)
+        if isinstance(edge_index, list):
+            adjs = edge_index 
+            edge_index, e_id, size = adjs[0]
+            x_target = x[:size[1]]
+            x = F.relu(self.gc1((x, x_target), edge_index))
+            edge_index, e_id, size = adjs[1]
+            
+        else:
+        
+            x = F.relu(self.gc1(x, edge_index))
+            x = F.dropout(x, training=self.training)
 
         if self.target_class == 'type':
             graph_emb = self.gc_type(x, edge_index)
