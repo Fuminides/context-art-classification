@@ -775,9 +775,9 @@ def train_gcn_classifier(args_dict):
         for batch in loader:
         # Targets to Variable type
             batch_size, n_id, adjs = batch
-            if torch.cuda.is_available():
-                adjs = [adj.cuda() for adj in adjs]
-                
+            #if torch.cuda.is_available():
+                #adjs = [adj.cuda() for adj in adjs]
+
             # edge_index, e_id, size = adjs[1]
 
             target_var = list()
@@ -922,6 +922,7 @@ def load_gcn_data(args_dict, og_train_size, val_size):
     if torch.cuda.is_available():
         tensor_train_edge_list = tensor_train_edge_list.cuda()
         tensor_val_edge_list = tensor_val_edge_list.cuda()
+        total_samples = total_samples.cuda()
 
     #Load all the data as Data object for pytorch geometric
     data = Data(x=total_samples, edge_index=tensor_train_edge_list, val_edge_index=tensor_val_edge_list)
