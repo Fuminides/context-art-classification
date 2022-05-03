@@ -774,6 +774,8 @@ def train_gcn_classifier(args_dict):
 
         for batch in loader:
         # Targets to Variable type
+            batch_size, n_id, adjs = batch
+            # edge_index, e_id, size = adjs[1]
 
             target_var = list()
             for j in range(len(target_var_train)):
@@ -787,8 +789,9 @@ def train_gcn_classifier(args_dict):
             # Compute a training epoch
             optimizer.zero_grad()
 
-            output = model(batch.x, batch.edge_index)
-            index_loss = batch.edge_index < og_train_size
+            output = model(data.X[n_id], adjs)
+            index_loss_bool = n_id < og_train_size
+            index_loss = index_loss[index_loss_bool]
             if target == 'all':
                 train_loss = multi_class_loss(criterion, target_var, output, index_loss)
             else:
