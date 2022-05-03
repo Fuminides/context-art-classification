@@ -775,6 +775,9 @@ def train_gcn_classifier(args_dict):
         for batch in loader:
         # Targets to Variable type
             batch_size, n_id, adjs = batch
+            if torch.cuda.is_available():
+                adjs = [adj.cuda() for adj in adjs]
+                
             # edge_index, e_id, size = adjs[1]
 
             target_var = list()
