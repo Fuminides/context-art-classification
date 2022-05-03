@@ -789,7 +789,7 @@ def train_gcn_classifier(args_dict):
             # Compute a training epoch
             optimizer.zero_grad()
 
-            output = model(data.total_samples[n_id], adjs)
+            output = model(data.x[n_id], adjs)
             index_loss_bool = n_id < og_train_size
             index_loss = index_loss[index_loss_bool]
             if target == 'all':
