@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 
-def bow_load_train_text_corpus(semart_path='../SemArt/', k=50):
+def bow_load_train_text_corpus(semart_path='../SemArt/', k=10):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
     #semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 
@@ -18,10 +18,9 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=50):
     #coded_semart_test = transformer.transform(semart_test['DESCRIPTION'])
 
     freqs = np.asarray(coded_semart_train.sum(axis=0))
-    sorted_freqs = np.argsort(freqs)
-    chosen_words = sorted_freqs[0][::-1][0:k]
+    bool_freqs = freqs > k
 
-    chosen_coded_semart_train = coded_semart_train[:, chosen_words]
+    chosen_coded_semart_train = coded_semart_train[:, bool_freqs.squeeze()]
     #chosen_coded_semart_test = coded_semart_test[:, chosen_words]
 
     return chosen_coded_semart_train
@@ -53,7 +52,7 @@ if __name__ == '__main__':
     from sklearn.decomposition import PCA
     from sklearn.manifold import TSNE
 
-    chosen_coded_semart_train, coded_semart_test= bow_load_train_text_corpus(k=5)
+    chosen_coded_semart_train = bow_load_train_text_corpus(k=10)
     pca = PCA()
     pca.fit(chosen_coded_semart_train.toarray())
     x_new = pca.transform(chosen_coded_semart_train.toarray())
