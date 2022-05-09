@@ -35,11 +35,14 @@ def get_parser():
     parser.add_argument('--patience', default=30, type=int)
     parser.add_argument('--nepochs', default=300, type=int)
 
+    
+
     # KGM model
     parser.add_argument('--graph_embs', default='semart-artgraph-node2vec.model')
     parser.add_argument('--lambda_c', default=0.9, type=float)
     parser.add_argument('--lambda_e', default=0.1, type=float)
     parser.add_argument('--embedds', default='graph', type=str)
+    parser.add_argument('--append', default='gradient')
 
     # FCM model
     parser.add_argument('--k', default=100, type=int)
