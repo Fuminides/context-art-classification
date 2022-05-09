@@ -99,10 +99,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
-        if extra_params is None:
-            output = model(input_var[0])
+        if args_dict.append == 'append':
+            output = model(input_var[0], target[1])
         else:
-            output = model(input_var[0], extra_params)
+            output = model(input_var[0])
 
         if args_dict.model != 'kgm':
 
@@ -184,7 +184,11 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
 
         # Predictions
         with torch.no_grad():
-            output = model(input_var[0])
+            # Output of the model
+            if args_dict.append == 'append':
+                output = model(input_var[0], target[1])
+            else:
+                output = model(input_var[0])
 
         if args_dict.model != 'kgm':
             

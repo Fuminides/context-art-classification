@@ -90,7 +90,7 @@ def silhoutte_progress():
 
     chosen_coded_semart_train = bow_load_train_text_corpus(k=10)
     silhouttes = []
-    for cluster in np.arange(2, 15):
+    for cluster in np.arange(2, 200):
         sol = fcm_coded_context(chosen_coded_semart_train, cluster)
         crips_sol = np.argmax(sol, axis=1)
         silhouttes.append(silhouette_score(chosen_coded_semart_train, crips_sol))
@@ -103,11 +103,12 @@ def biplot():
     from sklearn.decomposition import PCA
     from sklearn.manifold import TSNE
 
-    chosen_coded_semart_train = bow_load_train_text_corpus(k=10)
+    chosen_coded_semart_train = fcm_coded_context(
+                    bow_load_train_text_corpus(k=10, append=False), clusters=128)
     pca = PCA()
     pca.fit(chosen_coded_semart_train.toarray())
     x_new = pca.transform(chosen_coded_semart_train.toarray())
     myplot(x_new[:, 0:2], pca.components_)
 
 if __name__ == '__main__':
-    aux = silhoutte_progress()
+    aux = biplot()
