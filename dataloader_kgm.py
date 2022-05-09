@@ -102,4 +102,9 @@ class ArtDatasetKGM(data.Dataset):
 
 
         else:
-            return [image], [idclass]
+            if self.embedds == 'graph':
+                graph_emb = self.graphEm.wv[self.imageurls[index]]
+            else:
+                graph_emb = self.chosen_coded_semart_val[index, :]
+
+            return [image], [idclass, graph_emb]

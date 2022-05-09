@@ -89,9 +89,14 @@ def test_knowledgegraph(args_dict):
 
         # Output of the model
         with torch.no_grad():
-            output = model(input_var[0])
-            outsoftmax = torch.nn.functional.softmax(output[0])
-        conf, predicted = torch.max(outsoftmax, 1)
+            # Output of the model
+            if args_dict.append == 'append':
+                output = model(input_var[0], target[1])
+            else:
+                output = model(input_var[0])
+
+            #outsoftmax = torch.nn.functional.softmax(output[0])
+        conf, predicted = torch.max(output, 1)
 
         # Store embeddings
         if i==0:
