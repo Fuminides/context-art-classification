@@ -106,9 +106,9 @@ def biplot():
     chosen_coded_semart_train = fcm_coded_context(
                     bow_load_train_text_corpus(k=10, append=False), clusters=128)
     pca = PCA()
-    pca.fit(chosen_coded_semart_train.toarray())
-    x_new = pca.transform(chosen_coded_semart_train.toarray())
+    pca.fit(chosen_coded_semart_train)
+    x_new = pca.transform(chosen_coded_semart_train)
     myplot(x_new[:, 0:2], pca.components_)
 
 if __name__ == '__main__':
-    aux = biplot()
+    biplot()
