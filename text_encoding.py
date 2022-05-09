@@ -90,7 +90,7 @@ def silhoutte_progress():
 
     chosen_coded_semart_train = bow_load_train_text_corpus(k=10)
     silhouttes = []
-    for cluster in np.arange(2, 15):
+    for cluster in np.arange(2, 200):
         sol = fcm_coded_context(chosen_coded_semart_train, cluster)
         crips_sol = np.argmax(sol, axis=1)
         silhouttes.append(silhouette_score(chosen_coded_semart_train, crips_sol))
