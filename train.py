@@ -14,7 +14,7 @@ from xgboost import train
 import utils
 #from model_gcn import GCN
 from model_mtl import MTL
-from model_kgm import KGM
+from model_kgm import KGM, KGM_append
 from model_rmtl import RMTL
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
@@ -304,9 +304,15 @@ def train_knowledgegraph_classifier(args_dict):
 
     # Define model
     if args_dict.embedds == 'graph':
-        model = KGM(len(att2i))
+        if args_dict.append == 'append':
+            model = KGM(len(att2i))
+        else:
+            model = KGM_append(len(att2i))
     else:
-        model = KGM(len(att2i), end_dim=N_CLUSTERS)
+        if args_dict.append == 'append':
+            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+        else:
+            model = KGM_append(len(att2i))
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
