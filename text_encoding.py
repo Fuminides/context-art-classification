@@ -78,12 +78,15 @@ def myplot(score,coeff,labels=None):
     n = coeff.shape[0]
 
     plt.scatter(xs ,ys, c = labels) #without scaling
-    for i in range(n):
+    plt.xticks([])
+    plt.yticks([])
+
+    '''for i in range(n):
         plt.arrow(0, 0, coeff[i,0], coeff[i,1],color = 'r',alpha = 0.5)
         if labels is None:
             plt.text(coeff[i,0]* 1.15, coeff[i,1] * 1.15, "Var"+str(i+1), color = 'g', ha = 'center', va = 'center')
         else:
-            plt.text(coeff[i,0]* 1.15, coeff[i,1] * 1.15, labels[i], color = 'g', ha = 'center', va = 'center')
+            plt.text(coeff[i,0]* 1.15, coeff[i,1] * 1.15, labels[i], color = 'g', ha = 'center', va = 'center')'''
 
 def silhoutte_progress():
     from sklearn.metrics import silhouette_score
@@ -110,5 +113,17 @@ def biplot():
     x_new = pca.transform(chosen_coded_semart_train)
     myplot(x_new[:, 0:2], pca.components_)
 
+def biplot_tfidf():
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
+    from sklearn.manifold import TSNE
+
+    chosen_coded_semart_train = fcm_coded_context(
+                    tf_idf_load_train_text_corpus(k=10, append=False), clusters=128)
+    pca = PCA()
+    pca.fit(chosen_coded_semart_train)
+    x_new = pca.transform(chosen_coded_semart_train)
+    myplot(x_new[:, 0:2], pca.components_)
+
 if __name__ == '__main__':
-    biplot()
+    biplot_tfidf()
