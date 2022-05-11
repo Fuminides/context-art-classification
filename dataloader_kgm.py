@@ -103,10 +103,28 @@ class ArtDatasetKGM(data.Dataset):
                 return [image], [idclass, graph_emb]
 
 
-        else:
+        elif self.set == 'val':
             if self.embedds == 'graph':
                 graph_emb = self.graphEm.wv[self.imageurls[index]]
             else:
                 graph_emb = self.chosen_coded_semart_val[index, :]
 
-            return [image], [idclass, graph_emb]
+            graph_emb = torch.FloatTensor(graph_emb)
+
+            if self.args_dict.att == 'all':
+                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+            else:
+                return [image], [idclass, graph_emb]
+        
+        elif self.set == 'test':
+            if self.embedds == 'graph':
+                graph_emb = self.graphEm.wv[self.imageurls[index]]
+            else:
+                graph_emb = self.chosen_coded_semart_test[index, :]
+
+            graph_emb = torch.FloatTensor(graph_emb)
+            
+            if self.args_dict.att == 'all':
+                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+            else:
+                return [image], [idclass, graph_emb]

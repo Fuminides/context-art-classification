@@ -100,7 +100,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
         # Output of the model
         if args_dict.append == 'append':
-            output = model(input_var[0], target[1])
+            output = model(input_var[0], target[-1])
         else:
             output = model(input_var[0])
 
@@ -128,18 +128,27 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
 
+        # It is a Context-based model
         else:
-            if args_dict.att == 'all':
+            if args_dict.att == 'all': # TODO
                 class_loss = multi_class_loss(criterion, target_var, output)
                 
-                encoder_loss = criterion[1](output[4], output[5])
+                encoder_loss = criterion[1](output[4], target_var[-1].long())
+                train_loss = args_dict.lambda_c * class_loss + \
+                            args_dict.lambda_e * encoder_loss
+
             else:
-                class_loss = criterion[0](output, target_var[0].long())
-                encoder_loss = criterion[1](output[1], target_var[1].long())
+                if args_dict.append == 'append':
+                    train_loss = criterion[0](output, target_var[0].long())
+                    
+                else:
+                    class_loss = criterion[0](output, target_var[0].long())
+                    encoder_loss = criterion[1](output[1], target_var[1].long())
 
-            train_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
+                    train_loss = args_dict.lambda_c * class_loss + \
+                                args_dict.lambda_e * encoder_loss
 
+                
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
 
         # Backpropagate loss and update weights
@@ -206,8 +215,9 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
                 val_loss = criterion(output, target_var)
 
 
+        # It is a context aware model
         else:
-            if args_dict.att == 'all':
+            if args_dict.att == 'all': # TODO
                 class_loss = multi_class_loss(criterion, target_var, output)
                 
                 encoder_loss = criterion[1](output[4], output[5])

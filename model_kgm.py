@@ -12,6 +12,12 @@ class KGM(nn.Module):
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
 
+        # Classifiers
+        '''self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))
+        self.class_school = nn.Sequential(nn.Linear(2048, num_class[1]))
+        self.class_tf = nn.Sequential(nn.Linear(2048, num_class[2]))
+        self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
+
         # Classifier
         self.classifier = nn.Sequential(nn.Linear(2048, num_class))
 
