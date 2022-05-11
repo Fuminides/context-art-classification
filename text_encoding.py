@@ -62,7 +62,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'
         pruned_corpus.append(ntesxt)
     
     val_pruned_corpus = []
-    for tesxt in val_pruned_corpus:
+    for tesxt in val_corpus:
         ntesxt = []
         for word in tesxt.split():
             if word in commons:
@@ -71,7 +71,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'
         val_pruned_corpus.append(ntesxt)
 
     test_pruned_corpus = []
-    for tesxt in test_pruned_corpus:
+    for tesxt in test_corpus:
         ntesxt = []
         for word in tesxt.split():
             if word in commons:
