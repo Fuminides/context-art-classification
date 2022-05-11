@@ -54,11 +54,10 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
 
     vectorizer = TfidfVectorizer()
     vectorizer.fit(corpus)
-    print(vectorizer.transform(corpus).shape, bool_freqs.shape)
     
-    chosen_coded_semart_train = fcm_coded_context(vectorizer.transform(corpus)[:, bool_freqs.squeeze()], clusters=128)
-    chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_corpus)[:, bool_freqs.squeeze()], clusters=128)
-    chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_corpus)[:, bool_freqs.squeeze()], clusters=128)
+    chosen_coded_semart_train = vectorizer.transform(corpus)[:, bool_freqs.squeeze()]
+    chosen_coded_semart_val = vectorizer.transform(val_corpus)[:, bool_freqs.squeeze()]
+    chosen_coded_semart_test = vectorizer.transform(test_corpus)[:, bool_freqs.squeeze()]
     
     if append != 'append':
         return chosen_coded_semart_train
