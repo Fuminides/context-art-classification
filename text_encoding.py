@@ -6,6 +6,7 @@ File to perform bow enconding of semart annotations.
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
+from collections import Counter
 
 def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
@@ -39,56 +40,45 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
     semart_val = pd.read_csv(semart_path + 'semart_val.csv', encoding = "ISO-8859-1", sep='\t')
     semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 
+    transformer = CountVectorizer(stop_words='english')
+    transformer = transformer.fit(semart_train['DESCRIPTION'])
+
+    bow_coded_semart_train = transformer.transform(semart_train['DESCRIPTION'])
+
     corpus = list(semart_train['DESCRIPTION'])
     val_corpus = list(semart_val['DESCRIPTION'])
     test_corpus = list(semart_test['DESCRIPTION'])
 
-    freqs = {}
-    for tesxt in corpus:
-        for word in tesxt.split():
-            try:
-                freqs[word] += 1
-            except KeyError:
-                freqs[word] = 1
+    pruned_corpus = prune_corpus(corpus)
+    val_pruned_corpus = prune_corpus(val_corpus)
+    test_pruned_corpus = prune_corpus(test_corpus)
 
-    commons = np.array([x for x,y in freqs.items() if y > k])
-    pruned_corpus = []
-    for tesxt in corpus:
-        ntesxt = []
-        for word in tesxt.split():
-            if word in commons:
-                ntesxt.append(word)
-        ntesxt = ' '.join(ntesxt)
-        pruned_corpus.append(ntesxt)
+    freqs = np.asarray(bow_coded_semart_train.sum(axis=0))
+    bool_freqs = freqs > k
+
     
-    val_pruned_corpus = []
-    for tesxt in val_corpus:
-        ntesxt = []
-        for word in tesxt.split():
-            if word in commons:
-                ntesxt.append(word)
-        ntesxt = ' '.join(ntesxt)
-        val_pruned_corpus.append(ntesxt)
-
-    test_pruned_corpus = []
-    for tesxt in test_corpus:
-        ntesxt = []
-        for word in tesxt.split():
-            if word in commons:
-                ntesxt.append(word)
-        ntesxt = ' '.join(ntesxt)
-        test_pruned_corpus.append(ntesxt)
-
     vectorizer = TfidfVectorizer()
-    vectorizer.fit(pruned_corpus)
-    chosen_coded_semart_train = fcm_coded_context(vectorizer.transform(pruned_corpus), clusters=128)
-    chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_pruned_corpus), clusters=128)
-    chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_pruned_corpus), clusters=128)
+    vectorizer.fit(corpus)
+    vectorizer.transform(pruned_corpus)[:, bool_freqs]
+    chosen_coded_semart_train = fcm_coded_context(vectorizer.transform(pruned_corpus)[:, bool_freqs], clusters=128)
+    chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_pruned_corpus)[:, bool_freqs], clusters=128)
+    chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_pruned_corpus)[:, bool_freqs], clusters=128)
     
     if append != 'append':
         return chosen_coded_semart_train
     else:
         return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
+
+def prune_corpus(corpus):
+    joined_corpus = '$$'.join(corpus)
+    joined_corpus2 = joined_corpus.split(' ')
+    counts = Counter(joined_corpus2)
+    correct_words = list(filter(lambda a: a[1] > 10, list(counts.items())))
+    pruned_words = [b[0] for a, b in enumerate(correct_words)]
+
+    pruned_corpus = ' '.join(filter(lambda a: a in pruned_words, joined_corpus2)).split('$$')
+
+    return pruned_corpus
 
 def fcm_coded_context(chosen_coded_semart, clusters):
     from skfuzzy.cluster import cmeans

@@ -53,6 +53,11 @@ def generate_adjacency_df_symbol(symmetry=True):
     res = pd.DataFrame(dense_conectivity, index=terms, columns=terms)
     
     return res
-    
+
+def load_terms():
+    dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
+    terms = list(dict_mix.keys())  
+
+    return terms  
 if __name__ == '__main__':
     trial = generate_adjacency_df_symbol(symmetry=True)
