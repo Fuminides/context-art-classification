@@ -40,7 +40,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
     semart_val = pd.read_csv(semart_path + 'semart_val.csv', encoding = "ISO-8859-1", sep='\t')
     semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 
-    transformer = CountVectorizer(stop_words='english')
+    transformer = CountVectorizer(stop_words=None)
     transformer = transformer.fit(semart_train['DESCRIPTION'])
 
     bow_coded_semart_train = transformer.transform(semart_train['DESCRIPTION'])
