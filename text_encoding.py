@@ -49,20 +49,16 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
     val_corpus = list(semart_val['DESCRIPTION'])
     test_corpus = list(semart_test['DESCRIPTION'])
 
-    pruned_corpus = prune_corpus(corpus)
-    val_pruned_corpus = prune_corpus(val_corpus)
-    test_pruned_corpus = prune_corpus(test_corpus)
-
     freqs = np.asarray(bow_coded_semart_train.sum(axis=0))
     bool_freqs = freqs > k
 
-    
     vectorizer = TfidfVectorizer()
     vectorizer.fit(corpus)
-    vectorizer.transform(pruned_corpus)[:, bool_freqs]
-    chosen_coded_semart_train = fcm_coded_context(vectorizer.transform(pruned_corpus)[:, bool_freqs], clusters=128)
-    chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_pruned_corpus)[:, bool_freqs], clusters=128)
-    chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_pruned_corpus)[:, bool_freqs], clusters=128)
+    print(vectorizer.transform(corpus).shape, len(bool_freqs))
+    
+    chosen_coded_semart_train = fcm_coded_context(vectorizer.transform(corpus)[:, bool_freqs], clusters=128)
+    chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_corpus)[:, bool_freqs], clusters=128)
+    chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_corpus)[:, bool_freqs], clusters=128)
     
     if append != 'append':
         return chosen_coded_semart_train
