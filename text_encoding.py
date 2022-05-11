@@ -58,7 +58,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'
         for word in tesxt.split():
             if word in commons:
                 ntesxt.append(word)
-        ntesxt = ' '.concatenate(ntesxt)
+        ntesxt = ' '.join(ntesxt)
         pruned_corpus.append(ntesxt)
     
     val_pruned_corpus = []
@@ -67,7 +67,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'
         for word in tesxt.split():
             if word in commons:
                 ntesxt.append(word)
-        ntesxt = ' '.concatenate(ntesxt)
+        ntesxt = ' '.join(ntesxt)
         val_pruned_corpus.append(ntesxt)
 
     test_pruned_corpus = []
@@ -76,7 +76,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'
         for word in tesxt.split():
             if word in commons:
                 ntesxt.append(word)
-        ntesxt = ' '.concatenate(ntesxt)
+        ntesxt = ' '.join(ntesxt)
         test_pruned_corpus.append(ntesxt)
 
     vectorizer = TfidfVectorizer()
