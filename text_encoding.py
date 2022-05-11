@@ -32,7 +32,7 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
         return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
 
 
-def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
+def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append'):
     from sklearn.feature_extraction.text import TfidfVectorizer
 
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')

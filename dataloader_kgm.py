@@ -40,6 +40,7 @@ class ArtDatasetKGM(data.Dataset):
             elif embedds == 'tfidf':
                 self.chosen_coded_semart_train, self.chosen_coded_semart_val, self.chosen_coded_semart_test = \
                 text_encoding.tf_idf_load_train_text_corpus(args_dict.dir_dataset, append=True, k=k)
+                
                 self.chosen_coded_semart_train = text_encoding.fcm_coded_context(
                     self.chosen_coded_semart_train, clusters=clusters)
                 self.chosen_coded_semart_val = text_encoding.fcm_coded_context(
