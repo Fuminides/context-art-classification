@@ -323,7 +323,7 @@ def train_knowledgegraph_classifier(args_dict):
         else:
             model = KGM_append(len(att2i))
     else:
-        if args_dict.append == 'append':
+        if args_dict.append != 'append':
             model = KGM(len(att2i), end_dim=N_CLUSTERS)
         else:
             model = KGM_append(len(att2i))
