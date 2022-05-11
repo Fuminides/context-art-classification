@@ -26,7 +26,7 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
     chosen_coded_semart_val = coded_semart_val[:, bool_freqs.squeeze()]
     chosen_coded_semart_test = coded_semart_test[:, bool_freqs.squeeze()]
 
-    if append == 'append':
+    if append != 'append':
         return chosen_coded_semart_train
     else:
         return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
@@ -85,7 +85,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
     chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_pruned_corpus), clusters=128)
     chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_pruned_corpus), clusters=128)
     
-    if append == 'append':
+    if append != 'append':
         return chosen_coded_semart_train
     else:
         return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
