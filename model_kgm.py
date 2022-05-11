@@ -38,7 +38,7 @@ class KGM_append(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
 
     def __init__(self, num_class, end_dim=128):
-        super(KGM, self).__init__()
+        super(KGM_append, self).__init__()
 
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
