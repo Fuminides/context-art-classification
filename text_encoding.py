@@ -39,25 +39,52 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append=False):
     semart_val = pd.read_csv(semart_path + 'semart_val.csv', encoding = "ISO-8859-1", sep='\t')
     semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 
-
-    transformer = CountVectorizer(stop_words='english')
-    transformer = transformer.fit(semart_train['DESCRIPTION'])
-
-    coded_semart_train = transformer.transform(semart_train['DESCRIPTION'])
-    coded_semart_val = transformer.transform(semart_val['DESCRIPTION'])
-    coded_semart_test = transformer.transform(semart_test['DESCRIPTION'])
-
-    freqs = np.asarray(coded_semart_train.sum(axis=0))
-    bool_freqs = freqs > k
-
     corpus = list(semart_train['DESCRIPTION'])
+    val_corpus = list(semart_val['DESCRIPTION'])
+    test_corpus = list(semart_test['DESCRIPTION'])
+
+    freqs = {}
+    for tesxt in corpus:
+        for word in tesxt.split():
+            try:
+                freqs[word] += 1
+            except KeyError:
+                freqs[word] = 1
+
+    commons = np.array([x for x,y in freqs.items() if y > k])
+    pruned_corpus = []
+    for tesxt in corpus:
+        ntesxt = []
+        for word in tesxt.split():
+            if word in commons:
+                ntesxt.append(word)
+        ntesxt = ' '.concatenate(ntesxt)
+        pruned_corpus.append(ntesxt)
+    
+    val_pruned_corpus = []
+    for tesxt in val_pruned_corpus:
+        ntesxt = []
+        for word in tesxt.split():
+            if word in commons:
+                ntesxt.append(word)
+        ntesxt = ' '.concatenate(ntesxt)
+        val_pruned_corpus.append(ntesxt)
+
+    test_pruned_corpus = []
+    for tesxt in test_pruned_corpus:
+        ntesxt = []
+        for word in tesxt.split():
+            if word in commons:
+                ntesxt.append(word)
+        ntesxt = ' '.concatenate(ntesxt)
+        test_pruned_corpus.append(ntesxt)
+
     vectorizer = TfidfVectorizer()
-    X = vectorizer.fit_transform(corpus)
-
-    chosen_coded_semart_train = coded_semart_train[:, bool_freqs.squeeze()]
-    chosen_coded_semart_val = coded_semart_val[:, bool_freqs.squeeze()]
-    chosen_coded_semart_test = coded_semart_test[:, bool_freqs.squeeze()]
-
+    vectorizer.fit(pruned_corpus)
+    chosen_coded_semart_train = fcm_coded_context(vectorizer.transform(pruned_corpus), clusters=128)
+    chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_pruned_corpus), clusters=128)
+    chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_pruned_corpus), clusters=128)
+    
     if not append:
         return chosen_coded_semart_train
     else:
@@ -110,6 +137,7 @@ def biplot():
                     bow_load_train_text_corpus(k=10, append=False), clusters=128)
     pca = PCA()
     pca.fit(chosen_coded_semart_train)
+    print(pca.explained_variance_ratio_[0:2])
     x_new = pca.transform(chosen_coded_semart_train)
     myplot(x_new[:, 0:2], pca.components_)
 
