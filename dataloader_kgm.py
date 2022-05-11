@@ -81,7 +81,7 @@ class ArtDatasetKGM(data.Dataset):
         # Attribute class
         idclass = self.class_from_name(self.att2i, self.att[index])
 
-       ''' # Attribute class
+        ''' # Attribute class
         type_idclass = self.class_from_name(self.type_vocab, self.type[index])
         school_idclass = self.class_from_name(self.school_vocab, self.school[index])
         time_idclass = self.class_from_name(self.time_vocab, self.time[index])
