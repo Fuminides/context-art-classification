@@ -38,8 +38,15 @@ class ArtDatasetKGM(data.Dataset):
                     self.chosen_coded_semart_test, clusters=clusters)
 
             elif embedds == 'tfidf':
-                self.chosen_coded_semart_train, self.chosen_coded_semart_val, self.chosen_coded_semart_test  = text_encoding.fcm_coded_context(
-                    text_encoding.tf_idf_load_train_text_corpus(args_dict.dir_dataset, append=True, k=k), clusters=clusters)
+                self.chosen_coded_semart_train, self.chosen_coded_semart_val, self.chosen_coded_semart_test = \
+                text_encoding.tf_idf_load_train_text_corpus(args_dict.dir_dataset, append=True, k=k)
+                self.chosen_coded_semart_train = text_encoding.fcm_coded_context(
+                    self.chosen_coded_semart_train, clusters=clusters)
+                self.chosen_coded_semart_val = text_encoding.fcm_coded_context(
+                    self.chosen_coded_semart_val, clusters=clusters)
+                self.chosen_coded_semart_test = text_encoding.fcm_coded_context(
+                    self.chosen_coded_semart_test, clusters=clusters)
+
 
         elif self.set == 'val':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
