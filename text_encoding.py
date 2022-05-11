@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 
-def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append=False):
+def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
     semart_val = pd.read_csv(semart_path + 'semart_val.csv', encoding = "ISO-8859-1", sep='\t')
     semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
@@ -26,13 +26,13 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append=False):
     chosen_coded_semart_val = coded_semart_val[:, bool_freqs.squeeze()]
     chosen_coded_semart_test = coded_semart_test[:, bool_freqs.squeeze()]
 
-    if not append:
+    if append == 'append':
         return chosen_coded_semart_train
     else:
         return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
 
 
-def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append=False):
+def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
     from sklearn.feature_extraction.text import TfidfVectorizer
 
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
@@ -85,7 +85,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append=False):
     chosen_coded_semart_val = fcm_coded_context(vectorizer.transform(val_pruned_corpus), clusters=128)
     chosen_coded_semart_test = fcm_coded_context(vectorizer.transform(test_pruned_corpus), clusters=128)
     
-    if not append:
+    if append == 'append':
         return chosen_coded_semart_train
     else:
         return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
