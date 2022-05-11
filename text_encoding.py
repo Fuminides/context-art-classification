@@ -93,7 +93,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
 def fcm_coded_context(chosen_coded_semart, clusters):
     from skfuzzy.cluster import cmeans
 
-    cntr, u, u0, d, jm, p, fpc = cmeans(chosen_coded_semart.toarray().T, clusters, 2, 0.01, 200)
+    cntr, u, u0, d, jm, p, fpc = cmeans(chosen_coded_semart.T, clusters, 2, 0.01, 200)
 
     return u.T
 
