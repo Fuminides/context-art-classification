@@ -21,9 +21,9 @@ def generate_adjacency_symbol_sparse(symmetry=True):
     :param symmetry: True if you want the resulting matrix to be symmetric.
     :returns: a sparse dok_matrix with the corresponding adjacency matrix.
     '''
-    dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
-    terms = list(dict_mix.keys())    
-    definitions = list(dict_mix.values())
+    dict_mix = pd.read_csv(open(CIRLO_DICT, 'rb'))
+    terms = dict_mix['TERMS']  
+    definitions = dict_mix['DEFINITIONS']  
 
     res = dok_matrix((len(terms), len(terms)), dtype=np.int8)
     for ix, term in enumerate(terms):

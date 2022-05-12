@@ -100,7 +100,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
         # Output of the model
         if args_dict.append == 'append':
-            output = model(input_var[0], target[-1])
+            output = model((input_var[0], target[-1]))
         else:
             output = model(input_var[0])
 
