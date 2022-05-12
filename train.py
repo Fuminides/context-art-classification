@@ -195,7 +195,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         with torch.no_grad():
             # Output of the model
             if args_dict.append == 'append':
-                output = model(input_var[0], target[1])
+                output = model((input_var[0], target[1]))
             else:
                 output = model(input_var[0])
 
