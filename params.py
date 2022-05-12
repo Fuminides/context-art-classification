@@ -46,7 +46,7 @@ def get_parser():
 
     # FCM model
     parser.add_argument('--k', default=100, type=int)
-    parser.add_argument('--clusters', default=150, type=int)
+    parser.add_argument('--clusters', default=128, type=int)
 
     # GCN model
     parser.add_argument('--feature_matrix', default='Data/feature_train_128_semart.csv', type=str)

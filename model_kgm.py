@@ -37,7 +37,7 @@ class KGM(nn.Module):
 class KGM_append(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
 
-    def __init__(self, num_class, end_dim=128):
+    def __init__(self, num_class, end_dim=128, clusters=128):
         super(KGM_append, self).__init__()
 
         # Load pre-trained visual model
@@ -45,15 +45,15 @@ class KGM_append(nn.Module):
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
 
         # Classifier
-        self.classifier = nn.Sequential(nn.Linear(2048 + 128, num_class))
+        self.classifier = nn.Sequential(nn.Linear(2048 + clusters, num_class))
 
         # Graph space encoder
-        self.nodeEmb = nn.Sequential(nn.Linear(2048 + 128, end_dim))
+        self.nodeEmb = nn.Sequential(nn.Linear(2048 + clusters, end_dim))
 
 
     def forward(self, img):
         img, context_emb = img
-        print(context_emb.shape)
+
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
 
