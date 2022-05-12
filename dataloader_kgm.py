@@ -29,7 +29,7 @@ class ArtDatasetKGM(data.Dataset):
                 self.graphEm = Word2Vec.load(os.path.join(args_dict.dir_data, args_dict.graph_embs))
             elif embedds == 'bow':
                 self.chosen_coded_semart_train, self.chosen_coded_semart_val, self.chosen_coded_semart_test = \
-                text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, append=True, k=k)
+                text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, append='append', k=k)
                 self.chosen_coded_semart_train = text_encoding.fcm_coded_context(
                     self.chosen_coded_semart_train, clusters=clusters)
                 self.chosen_coded_semart_val = text_encoding.fcm_coded_context(
