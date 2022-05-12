@@ -215,18 +215,27 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
                 val_loss = criterion(output, target_var)
 
 
-        # It is a context aware model
+        # It is a Context-based model
         else:
             if args_dict.att == 'all': # TODO
                 class_loss = multi_class_loss(criterion, target_var, output)
                 
-                encoder_loss = criterion[1](output[4], output[5])
-            else:
-                class_loss = criterion[0](output, target_var[0].long())
-                encoder_loss = criterion[1](output[1], target_var[1].long())
+                encoder_loss = criterion[1](output[4], target_var[-1].long())
+                val_loss = args_dict.lambda_c * class_loss + \
+                            args_dict.lambda_e * encoder_loss
 
-            val_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
+            else:
+                if args_dict.append == 'append':
+                    val_loss = criterion[0](output, target_var[0].long())
+                    
+                else:
+                    class_loss = criterion[0](output[0], target_var[0].long())
+                    encoder_loss = criterion[1](output[1], target_var[1].float())
+
+                    val_loss = args_dict.lambda_c * class_loss + \
+                                args_dict.lambda_e * encoder_loss
+
+        
                             
         
         losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
