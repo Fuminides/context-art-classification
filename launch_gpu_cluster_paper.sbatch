@@ -2,7 +2,7 @@
 #SBATCH --partition=power_std
 #SBATCH --account=acc_ure_power_std
 #SBATCH --gres=gpu:v100:1
-#SBATCH --array=1-4
+#SBATCH --array=1-20
 # Activate the conda environment named "pytorch"
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate pytorch
