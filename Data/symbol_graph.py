@@ -12,7 +12,7 @@ import pandas as pd
 
 from scipy.sparse import dok_matrix
 
-PURGED_TERMS_DICT = './validated_symbol_definitions.pckl'
+CIRLO_DICT = './cirlot_tabular.csv'
 
 def generate_adjacency_symbol_sparse(symmetry=True):
     '''
@@ -58,6 +58,12 @@ def load_terms():
     dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
     terms = list(dict_mix.keys())  
 
-    return terms  
+    return terms
+
+def load_semart_annotations_titles(semart_path):
+    '''
+    Loads for each painting the title + annotation
+    '''  
+
 if __name__ == '__main__':
     trial = generate_adjacency_df_symbol(symmetry=True)
