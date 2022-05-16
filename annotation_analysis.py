@@ -5,14 +5,37 @@ import pandas as pd
 import numpy as np
 
 import params
-## FUNCTIONS RELATED TO THE ORIGINAL DATASET
-def load_dictionary_definitions():
-    with open('Data/validated_symbol_definitions.pckl', 'rb') as f:
-        aux = pickle.load(f)
+## FUNCTIONS RELATED TO THE CIRLOT DATASET
+def load_dictionary_df():
+    dict_df = pd.read_csv('Data/cirlot_tabular.csv')
     
-    return aux
+    return dict_df
+
+def load_terms():
+    return load_dictionary_df()['TERM']
+
+def load_definitions():
+    return load_dictionary_df()['DEFINITION']
+
+def load_cirlot_as_dict():
+    terms = load_dictionary_df()['TERM']
+    defs = load_dictionary_df()['DEFINITION']
+
+    return {term: def0 for term, def0 in zip(terms, defs) }
 
 ## FUNCTIONS RELATED TO THE SEMART DATA
+
+def __load_semart_proxy(mode='train'):
+    class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
+        def __init__(self):
+            pass
+
+    args_dict = dummyPlug()
+    args_dict.mode = mode
+    args_dict.dir_dataset = r'G:\Mi unidad\Code\SemArt'
+    args_dict.csvtrain = args_dict.dir_dataset + '\semart_train.csv'
+
+    return load_semart_symbols(args_dict)
 
 def load_semart_symbols(args_dict):
     # Load data
@@ -23,24 +46,25 @@ def load_semart_symbols(args_dict):
     elif args_dict.mode == 'test':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
     
-    symbol_dictionary = load_dictionary_definitions()
-    symbol_canon_list = symbol_dictionary.keys()
+    symbol_canon_list = load_definitions()
 
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
-
     names = df['IMAGE_FILE']
     descriptions = df['DESCRIPTION'] # Load the contextual annotations
 
-    dictionary_painting_symbol = {}
+    dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
     for ix, description in enumerate(descriptions):
-        words = description.split()
-        symbols_painting = np.zeros(symbol_canon_list)
+        
+        symbols_painting = np.zeros((len(symbol_canon_list),))
 
-        for word in words:
-            if word in symbol_canon_list:
+        for symbol in symbol_canon_list:
+            symbol = symbol.lower()
+            description = description.lower()
+            
+            if symbol in description:
                 symbols_painting[ix] = 1
 
-        dictionary_painting_symbol[names.iloc[ix]] = symbols_painting
+        dictionary_painting_symbol[ix, :] = symbols_painting
     
     return dictionary_painting_symbol
 
@@ -52,5 +76,4 @@ def symbol_connectivity():
     return trial
 
 if __name__ == '__main__':
-    args_dict = params.get_parser()
-    aux = load_semart_symbols(args_dict)
+    symbol_context = __load_semart_proxy(mode='train')
