@@ -284,7 +284,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
                 label = label_actual
                 
             else:
-                out = np.concatenate((out, pred), axis=0)
+                out = np.concatenate((out, pred.data.cpu().numpy()), axis=0)
                 label = np.concatenate((label, label_actual), axis=0)
                 
     # Accuracy
