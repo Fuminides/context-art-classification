@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 
 import params
+
+
+
 ## FUNCTIONS RELATED TO THE CIRLOT DATASET
 def load_dictionary_df():
     dict_df = pd.read_csv('Data/cirlot_tabular.csv')
@@ -46,7 +49,7 @@ def load_semart_symbols(args_dict):
     elif args_dict.mode == 'test':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
     
-    symbol_canon_list = load_definitions()
+    symbol_canon_list = load_terms()
 
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
     names = df['IMAGE_FILE']
@@ -57,12 +60,12 @@ def load_semart_symbols(args_dict):
         
         symbols_painting = np.zeros((len(symbol_canon_list),))
 
-        for symbol in symbol_canon_list:
+        for jx, symbol in enumerate(symbol_canon_list):
             symbol = symbol.lower()
             description = description.lower()
-            
+
             if symbol in description:
-                symbols_painting[ix] = 1
+                symbols_painting[jx] = 1
 
         dictionary_painting_symbol[ix, :] = symbols_painting
     
@@ -75,5 +78,41 @@ def symbol_connectivity():
 
     return trial
 
+def symbol_report(symbol_matrix):
+
+    res = {}
+    #Number of paintings with at least one symbol
+    symbol_presence = np.mean(symbol_context.sum(axis=1)>0)
+    res['symbol_paintings'] = symbol_presence
+
+    #Number of paintings with at more than one symbol
+    symbol_abundance = np.mean(symbol_context.sum(axis=1)>1)
+    res['useful_paintings'] = symbol_abundance
+
+    #Histogram of number of symbols per painting
+    symbol_histogram = symbol_context.sum(axis=1)
+    res['painting_histogram'] = symbol_histogram
+
+    #Paintings sortered with more symbols
+    symbol_histogram = np.argsort(symbol_context.sum(axis=1) > 0)
+    res['important_paintings'] = symbol_histogram
+
+    #Symbols that appear at least one time
+    symbol_histogram = np.mean(symbol_context.sum(axis=0) > 0)
+    res['useful_symbols'] = symbol_histogram
+
+    #Histogram of number of symbols
+    symbol_histogram = symbol_context.sum(axis=1) > 0
+    res['symbol_histogram'] = symbol_histogram
+
+    #Most common symbols
+    symbol_histogram = np.argsort(symbol_context.sum(axis=1) > 0)
+    res['sorted_symbols'] = symbol_histogram
+
+    return res
+
+    
+
 if __name__ == '__main__':
     symbol_context = __load_semart_proxy(mode='train')
+    print('hOLA')
