@@ -268,10 +268,10 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch):
         
         else:
             if args_dict.model == 'kgm' and (not args_dict.append == 'append'):
-                out = torch.argmax(output[0], 1)
+                pred = torch.argmax(output[0], 1)
                 label = target[0].cpu().numpy()
             elif args_dict.model == 'kgm':
-                out = torch.argmax(output, 1)
+                pred = torch.argmax(output, 1)
                 label = target[0].cpu().numpy()
             else:
                 pred = torch.argmax(output, 1)
