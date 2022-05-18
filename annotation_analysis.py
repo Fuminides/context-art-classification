@@ -69,7 +69,7 @@ def load_semart_symbols(args_dict):
 
         dictionary_painting_symbol[ix, :] = symbols_painting
     
-    return dictionary_painting_symbol
+    return dictionary_painting_symbol, names, symbol_canon_list
 
 def symbol_connectivity():
     from Data import symbol_graph
@@ -78,7 +78,7 @@ def symbol_connectivity():
 
     return trial
 
-def symbol_report(symbol_matrix):
+def symbol_report(symbol_matrix, symbol_names=None, painting_names=None):
 
     res = {}
     #Number of paintings with at least one symbol
@@ -94,8 +94,11 @@ def symbol_report(symbol_matrix):
     res['painting_histogram'] = symbol_histogram
 
     #Paintings sortered with more symbols
-    symbol_histogram = np.argsort(symbol_context.sum(axis=1) > 0)
-    res['important_paintings'] = symbol_histogram
+    symbol_histogram = np.argsort(symbol_context.sum(axis=1))
+    if painting_names is None:
+        res['important_paintings'] = symbol_histogram
+    else:
+        res['important_paintings'] = painting_names[symbol_histogram]
 
     #Symbols that appear at least one time
     symbol_histogram = np.mean(symbol_context.sum(axis=0) > 0)
@@ -106,13 +109,19 @@ def symbol_report(symbol_matrix):
     res['symbol_histogram'] = symbol_histogram
 
     #Most common symbols
-    symbol_histogram = np.argsort(symbol_context.sum(axis=1) > 0)
-    res['sorted_symbols'] = symbol_histogram
+    symbol_histogram = np.argsort(symbol_context.sum(axis=0))
+    if symbol_names is None:
+        res['sorted_symbols'] = symbol_histogram
+    else:
+        res['sorted_symbols'] = symbol_names[symbol_histogram]
+
 
     return res
 
     
 
 if __name__ == '__main__':
-    symbol_context = __load_semart_proxy(mode='train')
+    symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
+    res = symbol_report(symbol_context, symbol_names=symbols_names, painting_names=paintings_names)
+    print(res)
     print('hOLA')
