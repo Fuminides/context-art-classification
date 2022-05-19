@@ -53,7 +53,7 @@ class KGM_append(nn.Module):
 
     def forward(self, img):
         img, context_emb = img
-
+        print(context_emb.shape)
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
 
