@@ -82,6 +82,11 @@ def test_knowledgegraph(args_dict):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
+            if j == 0:
+              target[j] = torch.tensor(np.array(target[j], dtype=np.int32))
+            else:
+              target[j] = torch.tensor(target[j])
+            
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
 
