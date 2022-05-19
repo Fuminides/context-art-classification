@@ -5,7 +5,7 @@ import torch
 from torchvision import transforms
 
 from model_mtl import MTL
-from model_kgm import KGM
+from model_kgm import KGM, KGM_append
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
@@ -26,7 +26,9 @@ def test_knowledgegraph(args_dict):
         att2i = author2idx
 
     # Define model
-    if args_dict.embedds == 'graph':
+    if args_dict.append == 'append':
+        model = KGM_append(len(att2i), end_dim=args_dict.clusters)
+    elif args_dict.embedds == 'graph':
         model = KGM(len(att2i))
     else:
         model = KGM(len(att2i), end_dim=args_dict.clusters)
