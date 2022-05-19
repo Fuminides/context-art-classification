@@ -20,7 +20,7 @@ class ArtDatasetKGM(data.Dataset):
 
         self.args_dict = args_dict
         self.set = set
-        self.embedds = args_dict.embeds
+        self.embedds = args_dict.embedds
         # Load Data + Graph Embeddings
         self.graphEmb = []
         
