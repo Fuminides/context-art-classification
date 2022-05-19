@@ -376,8 +376,8 @@ def train_knowledgegraph_classifier(args_dict):
     ])
     k = args_dict.k
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, embedds=args_dict.embedds, clusters=N_CLUSTERS, k=k)
-    semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, embedds=args_dict.embedds, clusters=N_CLUSTERS, k=k)
+    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, clusters=N_CLUSTERS, k=k)
+    semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, clusters=N_CLUSTERS, k=k)
 
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
