@@ -96,7 +96,7 @@ def test_knowledgegraph(args_dict):
         with torch.no_grad():
             # Output of the model
             if args_dict.append == 'append':
-                output = model(input_var[0], target[1])
+                output = model((input_var[0], target[1]))
             elif args_dict.model == 'kgm':
                 output, _ = model(input_var[0])    
             else:
