@@ -122,7 +122,19 @@ def symbol_report(symbol_matrix, symbol_names=None, painting_names=None):
 
     return res
 
-def vis_painting_symbols(painting_arg, symbol_mat, symbols_names):
+def paint_gallery(painting_list, symbol_mat, symbols_names):
+    max_width = 3
+    rows = (len(painting_list) % max_width) + 1
+    i = 1
+    import matplotlib.pyplot as plt
+    fig = plt.figure(figsize=(30,30))
+
+    for painting in painting_list:
+        fig.add_subplot(2, max_width, i) # two rows, one column, first plot
+        vis_painting_symbols(painting, symbol_mat, symbols_names, symbols_mode=False)
+        i+=1    
+
+def vis_painting_symbols(painting_arg, symbol_mat, symbols_names, symbols_mode=True):
 
         
     def write_symbols(symbol_list):
@@ -145,7 +157,7 @@ def vis_painting_symbols(painting_arg, symbol_mat, symbols_names):
     textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
 
-    if isinstance(painting_arg, 'str'):
+    if isinstance(painting_arg, str):
         trial = df['TITLE'] == painting_arg
         if sum(trial) == 0:
             trial = df['IMAGE_FILE'] == painting_arg
@@ -156,16 +168,18 @@ def vis_painting_symbols(painting_arg, symbol_mat, symbols_names):
     my_image = mpimg.imread(args_dict.dir_dataset + '/Images/' + df['IMAGE_FILE'].iloc[painting_arg])
 
     name = df['TITLE'].iloc[painting_arg]
-    symbols = symbol_context[painting_arg, :]
+    symbols = symbol_mat[painting_arg, :]
     symbols_names_painting = symbols_names[symbols.astype(np.bool)]
 
 
-    plt.figure()
+    #plt.figure()
     plt.title(name)
     ax = plt.gca()
     ax.axes.xaxis.set_visible(False)
     ax.axes.yaxis.set_visible(False)
-    write_symbols(symbols_names_painting)
+    if symbols_mode:
+        write_symbols(symbols_names_painting)
+
     plt.imshow(my_image)
 
 
