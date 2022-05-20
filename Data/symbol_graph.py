@@ -21,7 +21,7 @@ def generate_adjacency_symbol_sparse(symmetry=True):
     :param symmetry: True if you want the resulting matrix to be symmetric.
     :returns: a sparse dok_matrix with the corresponding adjacency matrix.
     '''
-    dict_mix = pd.read_csv(open(CIRLO_DICT, 'rb'))
+    dict_mix = pd.read_csv(CIRLO_DICT)
     terms = dict_mix['TERMS']  
     definitions = dict_mix['DEFINITIONS']  
 
@@ -46,7 +46,7 @@ def generate_adjacency_df_symbol(symmetry=True):
     Returns a datafrme with the corresponding adjacency matrix of the mix dictionary.
     '''
     sparse_matrix = generate_adjacency_symbol_sparse(symmetry=symmetry)
-    dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
+    dict_mix = pd.read_csv(CIRLO_DICT)
     terms = list(dict_mix.keys())
     
     dense_conectivity = sparse_matrix.todense() 
@@ -55,7 +55,7 @@ def generate_adjacency_df_symbol(symmetry=True):
     return res
 
 def load_terms():
-    dict_mix = pickle.load(open(PURGED_TERMS_DICT, 'rb'))
+    dict_mix = pd.read_csv(CIRLO_DICT)
     terms = list(dict_mix.keys())  
 
     return terms

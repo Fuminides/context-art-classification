@@ -7,6 +7,18 @@ import numpy as np
 import params
 
 
+class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
+    def __init__(self):
+        pass
+
+try:
+    args_dict
+except NameError:
+    args_dict = dummyPlug()
+    args_dict.mode = 'train'
+    args_dict.dir_dataset = r'G:\Mi unidad\Code\SemArt'
+    args_dict.csvtrain = args_dict.dir_dataset + '\semart_train.csv'
+
 
 ## FUNCTIONS RELATED TO THE CIRLOT DATASET
 def load_dictionary_df():
@@ -29,15 +41,7 @@ def load_cirlot_as_dict():
 ## FUNCTIONS RELATED TO THE SEMART DATA
 
 def __load_semart_proxy(mode='train'):
-    class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
-        def __init__(self):
-            pass
-
-    args_dict = dummyPlug()
-    args_dict.mode = mode
-    args_dict.dir_dataset = r'G:\Mi unidad\Code\SemArt'
-    args_dict.csvtrain = args_dict.dir_dataset + '\semart_train.csv'
-
+    global args_dict
     return load_semart_symbols(args_dict)
 
 def load_semart_symbols(args_dict):
@@ -52,7 +56,7 @@ def load_semart_symbols(args_dict):
     symbol_canon_list = load_terms()
 
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
-    names = df['IMAGE_FILE']
+    names = df['TITLE']
     descriptions = df['DESCRIPTION'] # Load the contextual annotations
 
     dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
@@ -69,7 +73,7 @@ def load_semart_symbols(args_dict):
 
         dictionary_painting_symbol[ix, :] = symbols_painting
     
-    return dictionary_painting_symbol, names, symbol_canon_list
+    return dictionary_painting_symbol.astype(np.bool), names, symbol_canon_list
 
 def symbol_connectivity():
     from Data import symbol_graph
@@ -118,10 +122,58 @@ def symbol_report(symbol_matrix, symbol_names=None, painting_names=None):
 
     return res
 
+def vis_painting_symbols(painting_arg, symbol_mat, symbols_names):
+
+        
+    def write_symbols(symbol_list):
+        start_x = 0.8
+        start_y = 0.8
+        x_add = 0.15
+        y_add = -0.1
+        for symbol in symbol_list:
+            plt.text(start_x, start_y, symbol, fontsize=14, transform=plt.gcf().transFigure)
+
+            start_y += y_add
+
+            if  start_y < 0.1:
+                start_x += x_add
+                start_y = 0.8
+
+    import matplotlib.pyplot as plt
+    import matplotlib.image as mpimg
+
+    textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
+    df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
+
+    if isinstance(painting_arg, 'str'):
+        trial = df['TITLE'] == painting_arg
+        if sum(trial) == 0:
+            trial = df['IMAGE_FILE'] == painting_arg
+        
+        painting_arg = np.argmax(trial)
     
+    
+    my_image = mpimg.imread(args_dict.dir_dataset + '/Images/' + df['IMAGE_FILE'].iloc[painting_arg])
+
+    name = df['TITLE'].iloc[painting_arg]
+    symbols = symbol_context[painting_arg, :]
+    symbols_names_painting = symbols_names[symbols.astype(np.bool)]
+
+
+    plt.figure()
+    plt.title(name)
+    ax = plt.gca()
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
+    write_symbols(symbols_names_painting)
+    plt.imshow(my_image)
+
+
+
 
 if __name__ == '__main__':
     symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
-    res = symbol_report(symbol_context, symbol_names=symbols_names, painting_names=paintings_names)
+    #res = symbol_report(symbol_context, symbol_names=symbols_names, painting_names=paintings_names)
+    vis_painting_symbols(2, symbol_context, symbols_names)
     print(res)
     print('hOLA')
