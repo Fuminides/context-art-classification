@@ -216,6 +216,18 @@ def semart_gen_symbol_graph(symbol_context):
                     res[symbol2, symbol] = 1
 
     return res
+
+def semart_gen_painting_graph(symbol_context):
+    res = np.zeros((symbol_context.shape[1], symbol_context.shape[1]))
+    for painting in range(symbol_context.shape[0]):
+        painting_symbols = res[painting, :]
+        for symbol in painting_symbols:
+            for symbol2 in painting_symbols:
+                if symbol and symbol2:
+                    res[symbol, symbol2] = 1
+                    res[symbol2, symbol] = 1
+
+    return res
     
 #### COMPARISON  METHODS BTWEEN CIRLOT AND SEMART
 
@@ -226,6 +238,9 @@ def pair_graph_load():
     symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
     cirlot_semart_reduced = sg.generate_adjacency_symbol_sparse_reduced(symbols_names, symmetry=True)
 
+    return utils.graph_similarity(cirlot_semart_reduced, symbol_context)
+
+# TODO Generate graph de simbolos de los textos, y comparar
 
 
 if __name__ == '__main__':
