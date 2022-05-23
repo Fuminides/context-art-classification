@@ -5,7 +5,9 @@ import pandas as pd
 import numpy as np
 
 import params
+import utils
 
+from Data import symbol_graph as sg
 
 class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
     def __init__(self):
@@ -182,6 +184,47 @@ def vis_painting_symbols(painting_arg, symbol_mat, symbols_names, symbols_mode=T
 
     plt.imshow(my_image)
 
+
+def load_semart_annotations_titles(args_dict):
+    '''
+    Loads for each painting the title + annotation
+    '''
+    
+    dict_mix = pd.read_csv(CIRLO_DICT)
+    df = pd.read_csv(os.path.join(args_dict.dir_dataset, args_dict.csvtrain), delimiter='\t', encoding='Cp1252')
+
+    terms = df['TITLE']  
+    definitions = dict_mix['ANNOTATION']
+
+    return zip(terms, definitions)  
+
+def more_repeated_symbols(symbol_context, symbols_names, k=10):
+    return symbols_names[symbol_context.sum(axis=0).argsort()[::-1][0:k]]
+
+def more_repeated_symbols_theme(symbol_context, symbols_names, theme, df, k=10):
+    chosen_paintings = df['THEME'] == theme
+    return symbols_names[chosen_paintings[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]]    
+
+def semart_gen_symbol_graph(symbol_context):
+    res = np.zeros((symbol_context.shape[1], symbol_context.shape[1]))
+    for painting in range(symbol_context.shape[0]):
+        painting_symbols = res[painting, :]
+        for symbol in painting_symbols:
+            for symbol2 in painting_symbols:
+                if symbol and symbol2:
+                    res[symbol, symbol2] = 1
+                    res[symbol2, symbol] = 1
+
+    return res
+    
+#### COMPARISON  METHODS BTWEEN CIRLOT AND SEMART
+
+def symbol_intersection(symbol_context):
+    return np.mean(symbol_context.sum(axis=0)>0)
+
+def pair_graph_load():
+    symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
+    cirlot_semart_reduced = sg.generate_adjacency_symbol_sparse_reduced(symbols_names, symmetry=True)
 
 
 

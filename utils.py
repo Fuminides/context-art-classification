@@ -41,6 +41,11 @@ def save_att_as_csv(data, csv_path):
     aux.to_csv(csv_path, header=None, index=None)
     
 
+#### GRAPH MATCHING AND COMPARISON
+def graph_similarity(g1, g2):
+    return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] + g1.shape[1])
+
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):

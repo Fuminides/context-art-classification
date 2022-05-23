@@ -40,6 +40,24 @@ def generate_adjacency_symbol_sparse(symmetry=True):
                     
     return res
 
+def generate_adjacency_symbol_sparse_reduced(terms, symmetry=True):
+    dict_mix = pd.read_csv(CIRLO_DICT)
+    definitions = dict_mix['DEFINITIONS']  
+
+    res = dok_matrix((len(terms), len(terms)), dtype=np.int8)
+    for ix, term in enumerate(terms):
+        term_procesed = term.lower()
+        for jx, definition in enumerate(definitions):
+            
+            for ind_definition in definition:
+                definition_pocesed = ind_definition.lower()
+                
+                if term_procesed in definition_pocesed:
+                    res[jx, ix] = 1
+                    if symmetry:
+                        res[ix, jx] = 1
+                    
+    return res
 
 def generate_adjacency_df_symbol(symmetry=True):
     '''
@@ -60,10 +78,6 @@ def load_terms():
 
     return terms
 
-def load_semart_annotations_titles(semart_path):
-    '''
-    Loads for each painting the title + annotation
-    '''  
 
 if __name__ == '__main__':
     trial = generate_adjacency_df_symbol(symmetry=True)
