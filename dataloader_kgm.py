@@ -6,6 +6,8 @@ import pandas as pd
 from gensim.models import Word2Vec
 import text_encoding
 
+import numpy as np
+
 class ArtDatasetKGM(data.Dataset):
 
     def __init__(self, args_dict, set, att2i, att_name, transform=None, append='False', clusters=15, k=100):
@@ -134,7 +136,7 @@ class ArtDatasetKGM(data.Dataset):
         
         elif self.set == 'test':
             if self.embedds == 'graph':
-                graph_emb = self.graphEm.wv[self.imageurls[index]]
+                    graph_emb = np.random((128,))#; self.graphEm.wv[self.imageurls[index]]
             else:
                 graph_emb = self.chosen_coded_semart_test[index, :]
 
