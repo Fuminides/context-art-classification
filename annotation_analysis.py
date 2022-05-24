@@ -1,5 +1,6 @@
 import os
 import pickle
+import itertools
 
 import pandas as pd
 import numpy as np
@@ -189,7 +190,8 @@ def load_semart_annotations_titles(args_dict):
     '''
     Loads for each painting the title + annotation
     '''
-    
+    from Data.symbol_graph import CIRLO_DICT
+
     dict_mix = pd.read_csv(CIRLO_DICT)
     df = pd.read_csv(os.path.join(args_dict.dir_dataset, args_dict.csvtrain), delimiter='\t', encoding='Cp1252')
 
@@ -206,32 +208,36 @@ def more_repeated_symbols_theme(symbol_context, symbols_names, theme, df, k=10):
     return symbols_names[chosen_paintings[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]]    
 
 def semart_gen_symbol_graph(symbol_context):
+    try:
+        symbol_context = symbol_context.toarray()
+    except AttributeError:
+        pass
     res = np.zeros((symbol_context.shape[1], symbol_context.shape[1]))
-    for painting in range(symbol_context.shape[0]):
-        painting_symbols = res[painting, :]
-        for symbol in painting_symbols:
-            for symbol2 in painting_symbols:
-                if symbol and symbol2:
-                    res[symbol, symbol2] = 1
-                    res[symbol2, symbol] = 1
+    for painting in range(symbol_context.shape[0]):            
+        painting_symbols = symbol_context[painting, :].squeeze()
+        existing_symbols = [i for i, e in enumerate(painting_symbols) if e > 0]
+        iter_list_symbols = list(itertools.product(existing_symbols, existing_symbols))
+        for s1, s2 in iter_list_symbols:
+            res[s1, s2] += 1
+            res[s2, s1] += 1
 
     return res
 
 def semart_gen_painting_graph(symbol_context):
-    res = np.zeros((symbol_context.shape[1], symbol_context.shape[1]))
-    for painting in range(symbol_context.shape[0]):
-        painting_symbols = res[painting, :]
-        for symbol in painting_symbols:
-            for symbol2 in painting_symbols:
-                if symbol and symbol2:
-                    res[symbol, symbol2] = 1
-                    res[symbol2, symbol] = 1
+    res = np.zeros((symbol_context.shape[0], symbol_context.shape[0]))
+    for symbol in range(symbol_context.shape[1]):
+        painting_symbols = symbol_context[:, symbol].toarray().squeeze()
+        existing_symbols = [i for i, e in enumerate(painting_symbols) if e != 0]
+        iter_list_symbols = list(itertools.product(existing_symbols, existing_symbols))
+        for s1, s2 in iter_list_symbols:
+            res[s1, s2] += 1
+            res[s2, s1] += 1
 
     return res
     
 #### COMPARISON  METHODS BTWEEN CIRLOT AND SEMART
 
-def symbol_intersection(symbol_context):
+def symbol_existence(symbol_context):
     return np.mean(symbol_context.sum(axis=0)>0)
 
 def pair_graph_load():
@@ -246,6 +252,6 @@ def pair_graph_load():
 if __name__ == '__main__':
     symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
     #res = symbol_report(symbol_context, symbol_names=symbols_names, painting_names=paintings_names)
-    vis_painting_symbols(2, symbol_context, symbols_names)
+    res = semart_gen_symbol_graph(symbol_context)
     print(res)
     print('hOLA')

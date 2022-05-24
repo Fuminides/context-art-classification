@@ -14,6 +14,14 @@ from scipy.sparse import dok_matrix
 
 CIRLO_DICT = './cirlot_tabular.csv'
 
+def load_dict():
+    try:
+        dict_mix = pd.read_csv(CIRLO_DICT)
+    except FileNotFoundError:
+        dict_mix = pd.read_csv('Data/' + CIRLO_DICT)
+    
+    return dict_mix
+
 def generate_adjacency_symbol_sparse(symmetry=True):
     '''
     Returns a sparse matrix that contains the connectivy graph between the studied symbols.
@@ -21,8 +29,8 @@ def generate_adjacency_symbol_sparse(symmetry=True):
     :param symmetry: True if you want the resulting matrix to be symmetric.
     :returns: a sparse dok_matrix with the corresponding adjacency matrix.
     '''
-    dict_mix = pd.read_csv(CIRLO_DICT)
-    terms = dict_mix['TERMS']  
+    dict_mix = load_dict()
+    terms = dict_mix['TERM']  
     definitions = dict_mix['DEFINITIONS']  
 
     res = dok_matrix((len(terms), len(terms)), dtype=np.int8)
@@ -41,21 +49,25 @@ def generate_adjacency_symbol_sparse(symmetry=True):
     return res
 
 def generate_adjacency_symbol_sparse_reduced(terms, symmetry=True):
-    dict_mix = pd.read_csv(CIRLO_DICT)
-    definitions = dict_mix['DEFINITIONS']  
+    dict_mix = load_dict()
+    definitions_og = dict_mix['DEFINITION']  
+    terms_og = dict_mix['TERM']  
+
+    definitions = []
+    for term_og, definition in zip(terms_og, definitions_og):
+        if term_og in terms:
+            definitions.append(definition)
 
     res = dok_matrix((len(terms), len(terms)), dtype=np.int8)
     for ix, term in enumerate(terms):
         term_procesed = term.lower()
         for jx, definition in enumerate(definitions):
-            
-            for ind_definition in definition:
-                definition_pocesed = ind_definition.lower()
-                
-                if term_procesed in definition_pocesed:
-                    res[jx, ix] = 1
-                    if symmetry:
-                        res[ix, jx] = 1
+            definition_pocesed = definition.lower()
+        
+            if term_procesed in definition_pocesed:
+                res[jx, ix] = 1
+                if symmetry:
+                    res[ix, jx] = 1
                     
     return res
 
@@ -64,7 +76,7 @@ def generate_adjacency_df_symbol(symmetry=True):
     Returns a datafrme with the corresponding adjacency matrix of the mix dictionary.
     '''
     sparse_matrix = generate_adjacency_symbol_sparse(symmetry=symmetry)
-    dict_mix = pd.read_csv(CIRLO_DICT)
+    dict_mix = load_dict()
     terms = list(dict_mix.keys())
     
     dense_conectivity = sparse_matrix.todense() 
@@ -73,7 +85,7 @@ def generate_adjacency_df_symbol(symmetry=True):
     return res
 
 def load_terms():
-    dict_mix = pd.read_csv(CIRLO_DICT)
+    dict_mix = load_dict()
     terms = list(dict_mix.keys())  
 
     return terms
