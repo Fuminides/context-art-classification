@@ -26,10 +26,10 @@ def test_knowledgegraph(args_dict):
     elif args_dict.att == 'author':
         att2i = author2idx
     N_CLUSTERS = args_dict.clusters
-    
+
     # Define model
     if args_dict.embedds == 'graph':
-        if args_dict.append == 'append':
+        if args_dict.append != 'append':
             model = KGM(len(att2i))
         else:
             model = KGM_append(len(att2i))
