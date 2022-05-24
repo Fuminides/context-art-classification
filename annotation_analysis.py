@@ -221,7 +221,7 @@ def semart_gen_symbol_graph(symbol_context):
             res[s1, s2] += 1
             res[s2, s1] += 1
 
-    return res
+    return res / 2
 
 def semart_gen_painting_graph(symbol_context):
     res = np.zeros((symbol_context.shape[0], symbol_context.shape[0]))
