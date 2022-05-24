@@ -11,6 +11,7 @@ from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 
 from model_gcn import GCN, NODE2VEC_OUTPUT
+from train import N_CLUSTERS
 
 def test_knowledgegraph(args_dict):
 
@@ -26,12 +27,16 @@ def test_knowledgegraph(args_dict):
         att2i = author2idx
 
     # Define model
-    if args_dict.append == 'append':
-        model = KGM_append(len(att2i), end_dim=args_dict.clusters)
-    elif args_dict.embedds == 'graph':
-        model = KGM(len(att2i))
+    if args_dict.embedds == 'graph':
+        if args_dict.append == 'append':
+            model = KGM(len(att2i))
+        else:
+            model = KGM_append(len(att2i))
     else:
-        model = KGM(len(att2i), end_dim=args_dict.clusters)
+        if args_dict.append != 'append':
+            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+        else:
+            model = KGM_append(len(att2i))
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -44,10 +49,10 @@ def test_knowledgegraph(args_dict):
         model.load_state_dict(checkpoint['state_dict'])
         print("=> loaded checkpoint '{}' (epoch {})"
               .format(args_dict.model_path, checkpoint['epoch']))
-    except RuntimeError as e:
+    '''except RuntimeError as e:
         print(e)
         print('No checkpoint available')
-        args_dict.start_epoch = 0
+        args_dict.start_epoch = 0'''
 
 
     # Data transformation for test
