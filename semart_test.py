@@ -44,7 +44,8 @@ def test_knowledgegraph(args_dict):
         model.load_state_dict(checkpoint['state_dict'])
         print("=> loaded checkpoint '{}' (epoch {})"
               .format(args_dict.model_path, checkpoint['epoch']))
-    except RuntimeError:
+    except RuntimeError as e:
+        print(e)
         print('No checkpoint available')
         args_dict.start_epoch = 0
 
