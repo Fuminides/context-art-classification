@@ -11,7 +11,7 @@ from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 
 from model_gcn import GCN, NODE2VEC_OUTPUT
-from train import N_CLUSTERS
+
 
 def test_knowledgegraph(args_dict):
 
@@ -25,7 +25,8 @@ def test_knowledgegraph(args_dict):
         att2i = time2idx
     elif args_dict.att == 'author':
         att2i = author2idx
-
+    N_CLUSTERS = args_dict.clusters
+    
     # Define model
     if args_dict.embedds == 'graph':
         if args_dict.append == 'append':
