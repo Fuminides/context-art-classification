@@ -42,13 +42,13 @@ def test_knowledgegraph(args_dict):
         model.cuda()
 
     # Load best model
-    try:
-        print("=> loading checkpoint '{}'".format(args_dict.model_path))
-        checkpoint = torch.load(args_dict.model_path)
-        args_dict.start_epoch = checkpoint['epoch']
-        model.load_state_dict(checkpoint['state_dict'])
-        print("=> loaded checkpoint '{}' (epoch {})"
-              .format(args_dict.model_path, checkpoint['epoch']))
+
+    print("=> loading checkpoint '{}'".format(args_dict.model_path))
+    checkpoint = torch.load(args_dict.model_path)
+    args_dict.start_epoch = checkpoint['epoch']
+    model.load_state_dict(checkpoint['state_dict'])
+    print("=> loaded checkpoint '{}' (epoch {})"
+            .format(args_dict.model_path, checkpoint['epoch']))
     '''except RuntimeError as e:
         print(e)
         print('No checkpoint available')
