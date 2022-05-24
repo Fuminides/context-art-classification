@@ -96,6 +96,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
 
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
+
             target_var.append(torch.autograd.Variable(target[j]))
 
         # Output of the model
@@ -789,7 +790,7 @@ def train_gcn_classifier(args_dict):
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
                                 momentum=args_dict.momentum)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 100)
+    #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 100)
 
     # Resume training if needed
     best_val, model, optimizer = resume(args_dict, model, optimizer)
@@ -834,7 +835,7 @@ def train_gcn_classifier(args_dict):
             #print(train_loss)
             train_loss.backward()
             optimizer.step()
-            scheduler.step()
+            #scheduler.step()
 
         print('************')
         if target == 'all' or target == 'type':

@@ -32,7 +32,7 @@ def get_parser():
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--workers', default=8, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
-    parser.add_argument('--patience', default=30, type=int)
+    parser.add_argument('--patience', default=100, type=int)
     parser.add_argument('--nepochs', default=300, type=int)
 
     
