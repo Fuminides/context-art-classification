@@ -136,7 +136,7 @@ class ArtDatasetKGM(data.Dataset):
         
         elif self.set == 'test':
             if self.embedds == 'graph':
-                    graph_emb = np.random.rand((128,))#; self.graphEm.wv[self.imageurls[index]]
+                    graph_emb = np.random.rand(128,1)#; self.graphEm.wv[self.imageurls[index]]
             else:
                 graph_emb = self.chosen_coded_semart_test[index, :]
 
