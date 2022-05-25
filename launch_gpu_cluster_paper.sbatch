@@ -2,7 +2,7 @@
 #SBATCH --partition=power_std
 #SBATCH --account=acc_ure_power_std
 #SBATCH --gres=gpu:v100:1
-#SBATCH --array=1-16
+#SBATCH --array=1-14
 # Activate the conda environment named "pytorch"
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate pytorch
@@ -10,15 +10,15 @@ conda activate pytorch
 #cd ../src/runs
 # Set all the tasks to perform
 
-#ContextNet Append
+#ContextNet Append NOT PERFORMED
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --append append --resume  ./Models/kgm_author_best_model.pth.tar >salidas/kgm_author_out.txt 2>salidas/author_error.txt"
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --append append --resume  ./Models/kgm_school_best_model.pth.tar >salidas/kgm_school_out.txt 2>salidas/school_error.txt"
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att time --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --append append --resume ./Models/kgm_time_best_model.pth.tar >salidas/kgm_time_out.txt 2>salidas/time_error.txt"
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att type --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --append append --resume ./Models/kgm_type_best_model.pth.tar >salidas/kgm_type_out.txt 2>salidas/type_error.txt"
 
 # BoW + FCM
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_author_best_model.pth.tar >salidas/fcm_author_out.txt 2>salidas/author_error.txt"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_school_best_model.pth.tar >salidas/fcm_school_out.txt 2>salidas/school_error.txt"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_author_best_model.pth.tar >salidas/fcm_author_out.txt 2>salidas/author_error.txt"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_school_best_model.pth.tar >salidas/fcm_school_out.txt 2>salidas/school_error.txt"
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att time --dir_dataset   ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_time_best_model.pth.tar >salidas/fcm_time_out.txt 2>salidas/time_error.txt"
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att type --dir_dataset   ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_type_best_model.pth.tar >salidas/fcm_type_out.txt 2>salidas/type_error.txt"
 

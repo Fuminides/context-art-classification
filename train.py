@@ -158,9 +158,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, extr
         optimizer.step()
 
         # Print info
-        print('Train Epoch: {} [{}/{} ({:.0f}%)]\t'
-              'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
-            epoch, batch_idx, len(train_loader), 100. * batch_idx / len(train_loader), loss=losses))
+        if epoch % 30 == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\t'
+                'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
+                epoch, batch_idx, len(train_loader), 100. * batch_idx / len(train_loader), loss=losses))
 
     # Plot
     #plotter.plot('closs', 'train', 'Class Loss', epoch, losses.avg)
