@@ -71,7 +71,7 @@ def load_semart_symbols(args_dict):
             symbol = symbol.lower()
             description = description.lower()
 
-            if symbol in description:
+            if symbol in description.split():
                 symbols_painting[jx] = 1
 
         dictionary_painting_symbol[ix, :] = symbols_painting
@@ -85,7 +85,7 @@ def symbol_connectivity():
 
     return trial
 
-def symbol_report(symbol_matrix, symbol_names=None, painting_names=None):
+def symbol_report(symbol_context, symbol_names=None, painting_names=None):
 
     res = {}
     #Number of paintings with at least one symbol
@@ -112,7 +112,7 @@ def symbol_report(symbol_matrix, symbol_names=None, painting_names=None):
     res['useful_symbols'] = symbol_histogram
 
     #Histogram of number of symbols
-    symbol_histogram = symbol_context.sum(axis=1) > 0
+    symbol_histogram = symbol_context.sum(axis=0)
     res['symbol_histogram'] = symbol_histogram
 
     #Most common symbols
@@ -136,6 +136,17 @@ def paint_gallery(painting_list, symbol_mat, symbols_names):
         fig.add_subplot(2, max_width, i) # two rows, one column, first plot
         vis_painting_symbols(painting, symbol_mat, symbols_names, symbols_mode=False)
         i+=1    
+
+def most_import_connections(symbol_painting_graphs, k=10):
+   s_names = symbol_painting_graphs.index 
+   def get_indices_of_k_smallest(arr, k):
+    idx = np.argpartition(arr.ravel(), k)
+    return tuple(np.array(np.unravel_index(idx, arr.shape))[:, range(min(k, 0), max(k, 0))])
+
+   aux = np.tril(symbol_painting_graphs, k=-1)
+   idx_array = get_indices_of_k_smallest(aux*-1, k=k)
+
+   return [(s_names[a], s_names[b]) for a,b in zip(*idx_array)]
 
 def vis_painting_symbols(painting_arg, symbol_mat, symbols_names, symbols_mode=True):
 
@@ -200,12 +211,19 @@ def load_semart_annotations_titles(args_dict):
 
     return zip(terms, definitions)  
 
-def more_repeated_symbols(symbol_context, symbols_names, k=10):
-    return symbols_names[symbol_context.sum(axis=0).argsort()[::-1][0:k]]
+def most_connected_symbols(symbol_context, symbols_names, k=10):
+    idx = (symbol_context.to_numpy().sum(axis=0)*-1).argsort()[0:k]
+    counts = symbol_context.sum(axis=0)[idx]
+    return list(zip(symbols_names[idx], counts))
+
+def most_connected_symbols_theme(symbol_context, symbols_names, k=10):
+    idx = (symbol_context.to_numpy().sum(axis=0)*-1).argsort()[0:k]
+    counts = symbol_context.sum(axis=0)[idx]
+    return list(zip(symbols_names[idx], counts))
 
 def more_repeated_symbols_theme(symbol_context, symbols_names, theme, df, k=10):
     chosen_paintings = df['THEME'] == theme
-    return symbols_names[chosen_paintings[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]]    
+    return list(symbols_names[chosen_paintings[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]].values())
 
 def semart_gen_symbol_graph(symbol_context):
     try:
