@@ -22,6 +22,50 @@ except NameError:
     args_dict.dir_dataset = r'G:\Mi unidad\Code\SemArt'
     args_dict.csvtrain = args_dict.dir_dataset + '\semart_train.csv'
 
+## FUNCTIONS RELATED TO THE MYTH GRAPHS
+def edges2adjacency_df(edges_df,symmetry=False):
+    '''
+    Returns the adjacency version of an edges df.
+    '''
+    unicos = set(edges_df['Source']).union(set(edges_df['Target']))
+
+    res = pd.DataFrame(np.zeros((len(unicos), len(unicos))))
+    res.columns = unicos
+    res.index = unicos
+
+    for ix, elem_row in enumerate(edges_df.iterrows()):
+        try:
+            source, target, weight = elem_row[1]
+        except ValueError:
+            source, target = elem_row[1]
+            weight = 1
+            
+        res[source][target] = weight
+        if symmetry:
+            res[target][source] = weight
+
+    return res
+
+def load_edda():
+    return edges2adjacency_df(pd.read_csv('Data/edda.csv', index_col=0), True)
+
+def load_celt():
+    return  edges2adjacency_df(pd.read_csv('Data/celt.csv', index_col=0), True)
+
+def load_greek():
+    return  edges2adjacency_df(pd.read_csv('Data/greek.csv', index_col=0), True)
+
+def load_myth():
+    return  edges2adjacency_df(pd.read_csv('Data/myth_all.csv', index_col=0), True)
+
+def filter_df(wanted_names, tale_df):
+    actual_names = tale_df.index
+    filtered = [name for name in actual_names if name in wanted_names]
+    tale_df = tale_df.copy()
+    tale_df = tale_df.loc[filtered, :]
+    tale_df = tale_df.T.loc[filtered, :]
+
+    return tale_df.T
 
 ## FUNCTIONS RELATED TO THE CIRLOT DATASET
 def load_dictionary_df():
