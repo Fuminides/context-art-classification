@@ -11,7 +11,7 @@ import pandas as pd
 from scipy.sparse import dok_matrix
 
 from dataloader_mtl import ArtDatasetMTL
-from model_gcn import NODE2VEC_OUTPUT
+#from model_gcn import NODE2VEC_OUTPUT
 
 from params import get_parser
 from train import run_train, load_att_class
