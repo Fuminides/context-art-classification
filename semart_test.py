@@ -10,7 +10,8 @@ from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 
-from model_gcn import GCN, NODE2VEC_OUTPUT
+#from model_gcn import GCN, 
+NODE2VEC_OUTPUT = 128
 
 
 def test_knowledgegraph(args_dict):
