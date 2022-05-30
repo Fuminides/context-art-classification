@@ -53,11 +53,11 @@ class KGM_append(nn.Module):
 
     def forward(self, img):
         img, context_emb = img
-        print(context_emb.shape)
+
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
 
-        emb = cat([visual_emb, context_emb], 1)
+        emb = cat([visual_emb, context_emb.float()], 1)
         pred_class = self.classifier(emb)
 
         return pred_class
