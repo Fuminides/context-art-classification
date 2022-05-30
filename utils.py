@@ -43,7 +43,7 @@ def save_att_as_csv(data, csv_path):
 
 #### GRAPH MATCHING AND COMPARISON
 def graph_similarity(g1, g2):
-    return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] + g1.shape[1])
+    return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] * g1.shape[1])
 
 
 class AverageMeter(object):
