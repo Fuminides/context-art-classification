@@ -47,13 +47,13 @@ def edges2adjacency_df(edges_df,symmetry=False):
     return res
 
 def load_edda():
-    return edges2adjacency_df(pd.read_csv('Data/edda.csv', index_col=0), True)
+    return edges2adjacency_df(pd.read_csv('Data/edda_edges_df.csv', index_col=0), True)
 
 def load_celt():
-    return  edges2adjacency_df(pd.read_csv('Data/celt.csv', index_col=0), True)
+    return  edges2adjacency_df(pd.read_csv('Data/celt_edges_df.csv', index_col=0), True)
 
 def load_greek():
-    return  edges2adjacency_df(pd.read_csv('Data/greek.csv', index_col=0), True)
+    return  edges2adjacency_df(pd.read_csv('Data/greek_edges_df.csv', index_col=0), True)
 
 def load_myth():
     return  edges2adjacency_df(pd.read_csv('Data/myth_all.csv', index_col=0), True)
@@ -67,6 +67,18 @@ def filter_df(wanted_names, tale_df):
 
     return tale_df.T
 
+def filter_edges_df(wanted_names, edges_df):
+    filtered_edge_df = pd.DataFrame(None, columns=['Source', 'Target'])
+    for _, row in edges_df.iterrows():
+        source = row['Source']
+        target = row['Target']
+
+        if source in wanted_names and target in wanted_names:
+            filtered_edge_df.append({'Source': source, 'Target': target}, ignore_index=True)
+        
+    
+    return filtered_edge_df
+    
 ## FUNCTIONS RELATED TO THE CIRLOT DATASET
 def load_dictionary_df():
     dict_df = pd.read_csv('Data/cirlot_tabular.csv')
