@@ -46,6 +46,34 @@ def edges2adjacency_df(edges_df,symmetry=False):
 
     return res
 
+def load_edges_edda():
+    aux = pd.read_csv('Data/edda_edges_df.csv', index_col=0)
+    aux['Source'] = aux['Source'].apply(str.lower)
+    aux['Target'] = aux['Target'].apply(str.lower)
+
+    return aux
+
+def load_edges_celt():
+    aux = pd.read_csv('Data/celt_edges_df.csv', index_col=0)
+    aux['Source'] = aux['Source'].apply(str.lower)
+    aux['Target'] = aux['Target'].apply(str.lower)
+
+    return aux
+
+def load_edges_greek():
+    aux = pd.read_csv('Data/greek_edges_df.csv', index_col=0)
+    aux['Source'] = aux['Source'].apply(str.lower)
+    aux['Target'] = aux['Target'].apply(str.lower)
+
+    return aux
+
+def load_edges_myth():
+    aux = pd.read_csv('Data/myth_all.csv', index_col=0)
+    aux['Source'] = aux['Source'].apply(str.lower)
+    aux['Target'] = aux['Target'].apply(str.lower)
+
+    return aux
+
 def load_edda():
     return edges2adjacency_df(pd.read_csv('Data/edda_edges_df.csv', index_col=0), True)
 
@@ -74,11 +102,20 @@ def filter_edges_df(wanted_names, edges_df):
         target = row['Target']
 
         if source in wanted_names and target in wanted_names:
-            filtered_edge_df.append({'Source': source, 'Target': target}, ignore_index=True)
+            filtered_edge_df = pd.concat([filtered_edge_df, pd.DataFrame.from_dict({'Source': [source], 'Target': [target]})])
         
     
     return filtered_edge_df
+
+def filter_dual_edges_df(edges_df1, edges_df2):
+    wanted_names1 = set(pd.concat([edges_df1['Source'], edges_df1['Target']]))
+    wanted_names2 = set(pd.concat([edges_df2['Source'], edges_df2['Target']]))
     
+    new_df1 = filter_edges_df(wanted_names1, edges_df2)
+    new_df2 = filter_edges_df(wanted_names2, edges_df1)
+
+    return new_df1, new_df2
+
 ## FUNCTIONS RELATED TO THE CIRLOT DATASET
 def load_dictionary_df():
     dict_df = pd.read_csv('Data/cirlot_tabular.csv')

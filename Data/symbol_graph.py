@@ -31,7 +31,7 @@ def generate_adjacency_symbol_sparse(symmetry=True):
     '''
     dict_mix = load_dict()
     terms = dict_mix['TERM']  
-    definitions = dict_mix['DEFINITIONS']  
+    definitions = dict_mix['DEFINITION']  
 
     res = dok_matrix((len(terms), len(terms)), dtype=np.int8)
     for ix, term in enumerate(terms):
@@ -47,6 +47,7 @@ def generate_adjacency_symbol_sparse(symmetry=True):
                         res[ix, jx] = 1
                     
     return res
+
 
 def generate_adjacency_symbol_sparse_reduced(terms, symmetry=True):
     dict_mix = load_dict()
@@ -71,6 +72,24 @@ def generate_adjacency_symbol_sparse_reduced(terms, symmetry=True):
                     
     return res
 
+def generate_cirlot_edges_df():
+    dict_mix = load_dict()
+    definitions = dict_mix['DEFINITION']  
+    terms = dict_mix['TERM']  
+    res = pd.DataFrame(None, columns=['Source', 'Target'])
+
+
+    for ix, term in enumerate(terms):
+        term_procesed = term.lower()
+        for jx, definition in enumerate(definitions):
+            definition_pocesed = definition.lower()
+        
+            if ix != jx:
+                if term_procesed in definition_pocesed.split():
+                    res = pd.concat([res, pd.DataFrame.from_dict({'Source': [term_procesed], 'Target': [terms[jx].lower()]})], ignore_index=True)
+                
+                    
+    return res
 def generate_adjacency_df_symbol(symmetry=True):
     '''
     Returns a datafrme with the corresponding adjacency matrix of the mix dictionary.
