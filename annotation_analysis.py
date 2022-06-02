@@ -60,6 +60,20 @@ def load_edges_celt():
 
     return aux
 
+def load_edges_odyssey():
+    aux = pd.read_csv('Data/odyssey_edges_df.csv', index_col=0)
+    aux['Source'] = aux['Source'].apply(str.lower)
+    aux['Target'] = aux['Target'].apply(str.lower)
+
+    return aux
+
+def load_edges_iliad():
+    aux = pd.read_csv('Data/iliad_edges_df.csv', index_col=0)
+    aux['Source'] = aux['Source'].apply(str.lower)
+    aux['Target'] = aux['Target'].apply(str.lower)
+
+    return aux
+
 def load_edges_greek():
     aux = pd.read_csv('Data/greek_edges_df.csv', index_col=0)
     aux['Source'] = aux['Source'].apply(str.lower)
@@ -68,11 +82,13 @@ def load_edges_greek():
     return aux
 
 def load_edges_myth():
-    aux = pd.read_csv('Data/myth_all.csv', index_col=0)
-    aux['Source'] = aux['Source'].apply(str.lower)
-    aux['Target'] = aux['Target'].apply(str.lower)
+    edda = load_edges_edda()
+    celt = load_edges_celt()
+    greek = load_edges_greek()
 
-    return aux
+    myth_edges = pd.concat([edda, celt, greek])
+
+    return myth_edges.drop_duplicates()
 
 def load_edda():
     return edges2adjacency_df(pd.read_csv('Data/edda_edges_df.csv', index_col=0), True)
@@ -82,6 +98,12 @@ def load_celt():
 
 def load_greek():
     return  edges2adjacency_df(pd.read_csv('Data/greek_edges_df.csv', index_col=0), True)
+
+def load_odyssey():
+    return  edges2adjacency_df(pd.read_csv('Data/odyssey_edges_df.csv', index_col=0), True)
+
+def load_iliad():
+    return  edges2adjacency_df(pd.read_csv('Data/iliad_edges_df.csv', index_col=0), True)
 
 def load_myth():
     return  edges2adjacency_df(pd.read_csv('Data/myth_all.csv', index_col=0), True)
@@ -357,7 +379,6 @@ def pair_graph_load():
 
     return utils.graph_similarity(cirlot_semart_reduced, symbol_context)
 
-# TODO Generate graph de simbolos de los textos, y comparar
 
 
 if __name__ == '__main__':
