@@ -13,7 +13,7 @@ class MTL(nn.Module):
             resnet = models.resnet50(pretrained=True)
             embedding_size = 2048
         elif 'vgg':
-            resnet = torch.hub.load('pytorch/vision:v0.10.0', 'vgg16', pretrained=True)
+            resnet = models.vgg16(pretrained=True)
             embedding_size = 25088
 
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
