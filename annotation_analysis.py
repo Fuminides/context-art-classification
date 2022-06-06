@@ -19,8 +19,8 @@ try:
 except NameError:
     args_dict = dummyPlug()
     args_dict.mode = 'train'
-    args_dict.dir_dataset = r'G:\Mi unidad\Code\SemArt'
-    args_dict.csvtrain = args_dict.dir_dataset + '\semart_train.csv'
+    args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt'
+    args_dict.csvtrain =  'semart_train.csv'
 
 ## FUNCTIONS RELATED TO THE MYTH GRAPHS
 def edges2adjacency_df(edges_df,symmetry=False):
@@ -175,7 +175,7 @@ def load_semart_symbols(args_dict):
 
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
     names = df['TITLE']
-    descriptions = df['DESCRIPTION'] # Load the contextual annotations
+    descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
 
     dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
     for ix, description in enumerate(descriptions):
@@ -322,7 +322,7 @@ def load_semart_annotations_titles(args_dict):
     df = pd.read_csv(os.path.join(args_dict.dir_dataset, args_dict.csvtrain), delimiter='\t', encoding='Cp1252')
 
     terms = df['TITLE']  
-    definitions = dict_mix['ANNOTATION']
+    definitions = df['TITLE']   + ' ' + dict_mix['ANNOTATION']
 
     return zip(terms, definitions)  
 
@@ -336,7 +336,7 @@ def most_connected_symbols_theme(symbol_context, symbols_names, k=10):
     counts = symbol_context.sum(axis=0)[idx]
     return list(zip(symbols_names[idx], counts))
 
-def more_repeated_symbols_theme(symbol_context, symbols_names, theme, df, k=10):
+def most_repeated_symbols_theme(symbol_context, symbols_names, theme, df, k=10):
     chosen_paintings = df['THEME'] == theme
     return list(symbols_names[chosen_paintings[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]].values())
 
