@@ -138,7 +138,7 @@ def test_multitask(args_dict):
     num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
     att2i = [type2idx, school2idx, time2idx, author2idx]
 
-    model = MTL(num_classes)
+    model = MTL(num_classes, model=args_dict.architecture)
     if torch.cuda.is_available():
         model.cuda()
 

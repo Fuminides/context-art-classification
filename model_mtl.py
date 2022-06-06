@@ -1,15 +1,20 @@
 import torch.nn as nn
 from torchvision import models
-
+import torch
 class MTL(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
 
-    def __init__(self, num_class):
+    def __init__(self, num_class, model='resnet'):
         super(MTL, self).__init__()
 
         # Load pre-trained visual model
-        resnet = models.resnet50(pretrained=True)
+        if model == 'resnet':
+            resnet = models.resnet50(pretrained=True)
+        elif 'vgg':
+            resnet = torch.hub.load('pytorch/vision:v0.10.0', 'vgg16', pretrained=True)
+
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+            
 
         # Classifiers
         self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))

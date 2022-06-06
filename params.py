@@ -57,6 +57,8 @@ def get_parser():
     parser.add_argument('--edge_list_val', default='Data/kg_semart_val.csv', type=str)
     parser.add_argument('--edge_list_test', default='Data/kg_semart_test.csv', type=str)
     
+    # MTL model
+    parser.add_argument('--architecture', default='resnet', type=str)
     # Test
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
     parser.add_argument('--no_cuda', action='store_true')
