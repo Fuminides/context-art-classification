@@ -38,8 +38,8 @@ conda activate pytorch
 # TF-IDF + FCM append
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds tfidf  --resume ./Models/fcm_tf_append_author_best_model.pth.tar >salidas/tfauthor_append_out.txt 2>salidas/tfauthor_append_error.txt"
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds tfidf  --resume ./Models/fcm_tf_append_school_best_model.pth.tar >salidas/tfschool_append_out.txt 2>salidas/tfschool_append_error.txt"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds tfidf  --resume ./Models/fcm_tf_append_time_best_model.pth.tar >salidas/tftime_append_out.txt 2>salidas/tftime_append_error.txt"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds tfidf  --resume ./Models/fcm_tf_append_type_best_model.pth.tar >salidas/tftype_append_out.txt 2>salidas/tftype_append_error.txt"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds tfidf  --resume ./Models/fcm_tf_append_time_best_model.pth.tar >salidas/tftime_append_out.txt 2>salidas/tftime_append_error.txt"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att all   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow  --resume ./Models/mtl_all_best_model.pth.tar >salidas/mtl_out.txt 2>salidas/mtl_error.txt"
 
 
 srun python main.py ${argumentos[SLURM_ARRAY_TASK_ID-1]}
