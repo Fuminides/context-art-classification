@@ -359,11 +359,10 @@ def run_test(args_dict):
 
     if args_dict.model == 'mtl':
         test_multitask(args_dict)
-    if args_dict.model == 'gcn':
+    elif args_dict.model == 'gcn':
         test_gcn(args_dict)
     elif args_dict.model == 'kgm':
         test_knowledgegraph(args_dict)
     else:
-        print(args_dict.model)
-        assert False, 'Incorrect model type'
+        assert False, 'Incorrect model type: ' + args_dict.model
 
