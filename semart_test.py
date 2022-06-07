@@ -364,5 +364,6 @@ def run_test(args_dict):
     elif args_dict.model == 'kgm':
         test_knowledgegraph(args_dict)
     else:
+        print(args_dict.model)
         assert False, 'Incorrect model type'
 
