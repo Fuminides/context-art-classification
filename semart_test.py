@@ -185,6 +185,7 @@ def test_multitask(args_dict):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
+            target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
             if torch.cuda.is_available():
                 target[j] = target[j].cuda(non_blocking=True)
 
