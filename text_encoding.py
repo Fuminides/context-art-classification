@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from collections import Counter
 
-def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
+def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', top=True):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
     semart_val = pd.read_csv(semart_path + 'semart_val.csv', encoding = "ISO-8859-1", sep='\t')
     semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
@@ -21,11 +21,20 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False'):
     coded_semart_test = transformer.transform(semart_test['DESCRIPTION'])
 
     freqs = np.asarray(coded_semart_train.sum(axis=0))
-    bool_freqs = freqs > k
 
-    chosen_coded_semart_train = coded_semart_train[:, bool_freqs.squeeze()]
-    chosen_coded_semart_val = coded_semart_val[:, bool_freqs.squeeze()]
-    chosen_coded_semart_test = coded_semart_test[:, bool_freqs.squeeze()]
+    if not top:
+        bool_freqs = freqs > k
+
+        chosen_coded_semart_train = coded_semart_train[:, bool_freqs.squeeze()]
+        chosen_coded_semart_val = coded_semart_val[:, bool_freqs.squeeze()]
+        chosen_coded_semart_test = coded_semart_test[:, bool_freqs.squeeze()]
+    else:
+        sorted_freqs = np.argsort(freqs)
+        chosen_words = sorted_freqs[0][::-1][0:k]
+
+        chosen_coded_semart_train = coded_semart_train[:, chosen_words]
+        chosen_coded_semart_val = coded_semart_val[:, chosen_words]
+        chosen_coded_semart_test = coded_semart_test[:, chosen_words]
 
     if append != 'append':
         return chosen_coded_semart_train
