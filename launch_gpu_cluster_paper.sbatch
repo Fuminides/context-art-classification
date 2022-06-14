@@ -43,7 +43,8 @@ conda activate pytorch
 
 # MTL
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att all   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --architecture resnet  --resume ./Models/vgg_all_best_model.pth.tar"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att all   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --architecture vgg  --resume ./Models/vgg_all_best_model.pth.tar"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att all   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --architecture resnet  --resume ./Models/vgg_all_best_model.pth.tar"
 
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --k 100
 
 srun python main.py ${argumentos[SLURM_ARRAY_TASK_ID-1]}
