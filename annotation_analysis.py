@@ -256,7 +256,7 @@ class Gallery:
 
     def __init__(self,symbols_names, paintings_names, symbol_context, path):
         self.symbols_names = symbols_names
-        self.paintings_names = paintings_names
+        self.painting_names = paintings_names
         self.symbol_context = symbol_context
         self.path = path
 
@@ -281,12 +281,12 @@ class Gallery:
 
     def vis_painting_symbols(self, painting_arg, symbols_mode=True):
 
-        def write_symbols(self):
+        def write_symbols(symbols_names_list):
             start_x = 0.8
             start_y = 0.8
             x_add = 0.15
             y_add = -0.1
-            for symbol in self.symbol_list:
+            for symbol in symbols_names_list:
                 plt.text(start_x, start_y, symbol, fontsize=14, transform=plt.gcf().transFigure)
 
                 start_y += y_add
@@ -302,10 +302,10 @@ class Gallery:
             
             painting_arg = np.argmax(trial)
         
-        my_image = mpimg.imread(args_dict.dir_dataset + '/Images/' + self.df['IMAGE_FILE'].iloc[painting_arg])
+        my_image = mpimg.imread(self.path + '/Images/' + self.df['IMAGE_FILE'].iloc[painting_arg])
 
         name = self.df['TITLE'].iloc[painting_arg]
-        symbols = self.symbol_mat[painting_arg, :]
+        symbols = self.symbol_context[painting_arg, :]
         symbols_names_painting = self.symbols_names[symbols.astype(np.bool)]
 
 
@@ -335,7 +335,7 @@ class Gallery:
         res['painting_histogram'] = symbol_histogram
 
         #Paintings sortered with more symbols
-        symbol_histogram = np.argsort(symbol_context.sum(axis=1))
+        symbol_histogram = np.argsort(self.symbol_context.sum(axis=1))
         
         
         res['important_paintings'] = self.painting_names[symbol_histogram]
@@ -345,13 +345,13 @@ class Gallery:
         res['useful_symbols'] = symbol_histogram
 
         #Histogram of number of symbols
-        symbol_histogram = self.ymbol_context.sum(axis=0)
+        symbol_histogram = self.symbol_context.sum(axis=0)
         res['symbol_histogram'] = symbol_histogram
 
         #Most common symbols
-        symbol_histogram = np.argsort(symbol_context.sum(axis=0))
+        symbol_histogram = np.argsort(self.symbol_context.sum(axis=0))
         
-        res['sorted_symbols'] = self.symbol_names[symbol_histogram]
+        res['sorted_symbols'] = self.symbols_names[symbol_histogram]
 
 
         return res
@@ -362,26 +362,22 @@ class Gallery:
         i = 1
         fig = plt.figure(figsize=(30,30))
 
-        for painting in self.painting_list:
+        for painting in painting_list:
             fig.add_subplot(2, max_width, i) # two rows, one column, first plot
-            self.vis_painting_symbols(painting, self.symbol_mat, self.symbols_names, symbols_mode=False)
+            self.vis_painting_symbols(painting, symbols_mode=False)
             i+=1    
         
     
     def most_repeated_symbols_theme(self, theme, k=10):
-        chosen_paintings = self.df['THEME'] == theme
-        return list(self.symbols_names[chosen_paintings[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]].values())
+        chosen_paintings = self.df['TYPE'] == theme
+        return list(self.symbols_names[self.symbol_context[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]])
 
 
     def most_connected_symbols(self, k=10):
-        idx = (self.symbol_context.to_numpy().sum(axis=0)*-1).argsort()[0:k]
+        idx = (self.symbol_context.sum(axis=0)*-1).argsort()[0:k]
         counts = self.symbol_context.sum(axis=0)[idx]
         return list(zip(self.symbols_names[idx], counts))    
 
-    def most_connected_symbols_theme(self, k=10):
-        idx = (self.symbol_context.to_numpy().sum(axis=0)*-1).argsort()[0:k]
-        counts = self.symbol_context.sum(axis=0)[idx]
-        return list(zip(self.symbols_names[idx], counts))
 
 if __name__ == '__main__':
     symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
