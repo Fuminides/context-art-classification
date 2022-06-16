@@ -371,12 +371,33 @@ class Gallery:
     def most_repeated_symbols_theme(self, theme, k=10):
         chosen_paintings = self.df['TYPE'] == theme
         return list(self.symbols_names[self.symbol_context[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]])
+    
+    def most_repeated_symbols(self, k=10):
+        return list(self.symbols_names[self.symbol_context.sum(axis=0).argsort()[::-1][0:k]])
 
 
     def most_connected_symbols(self, k=10):
         idx = (self.symbol_context.sum(axis=0)*-1).argsort()[0:k]
         counts = self.symbol_context.sum(axis=0)[idx]
         return list(zip(self.symbols_names[idx], counts))    
+    
+    def n_symbolic_paintings(self, k=None):
+        aux = np.argsort(self.symbol_context.sum(axis=1))[::-1]
+
+        if aux is not None:
+            aux = aux[0:k]
+        
+        return aux
+
+    def density_symbolic_paintings(self, k=None):
+        aux = np.argsort(self.symbol_context.mean(axis=1))[::-1]
+
+        if aux is not None:
+            aux = aux[0:k]
+        
+        return aux
+        
+
 
 
 if __name__ == '__main__':
