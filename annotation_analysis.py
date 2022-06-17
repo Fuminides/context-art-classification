@@ -13,6 +13,7 @@ from Data import symbol_graph as sg
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
+import hashlib
 
 class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
     def __init__(self):
@@ -179,20 +180,27 @@ def load_semart_symbols(args_dict):
     names = df['TITLE']
     descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
 
-    dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
-    for ix, description in enumerate(descriptions):
-        
-        symbols_painting = np.zeros((len(symbol_canon_list),))
+    hash_cached = hashlib.md5.update(str(df).encode('utf-8'))
 
-        for jx, symbol in enumerate(symbol_canon_list):
-            symbol = symbol.lower()
-            description = description.lower()
-
-            if symbol in description.split():
-                symbols_painting[jx] = 1
-
-        dictionary_painting_symbol[ix, :] = symbols_painting
     
+    if os.path.exists('cache/' + hash_cached):
+        dictionary_painting_symbol = pd.read_csv()
+    else:
+        dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
+        for ix, description in enumerate(descriptions):
+        
+            symbols_painting = np.zeros((len(symbol_canon_list),))
+
+            for jx, symbol in enumerate(symbol_canon_list):
+                symbol = symbol.lower()
+                description = description.lower()
+
+                if symbol in description.split():
+                    symbols_painting[jx] = 1
+
+            dictionary_painting_symbol[ix, :] = symbols_painting
+        pd.DataFrame(dictionary_painting_symbol).to_csv(hash_cached)
+        
     return dictionary_painting_symbol.astype(np.bool), names, symbol_canon_list
 
 def symbol_connectivity():
