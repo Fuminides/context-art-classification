@@ -32,10 +32,6 @@ class ArtDatasetSym(data.Dataset):
 
         self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
         self.transform = transform
-        self.type_vocab = att2i[0]
-        self.school_vocab = att2i[1]
-        self.time_vocab = att2i[2]
-        self.author_vocab = att2i[3]
 
         self.imageurls = list(df['IMAGE_FILE'])
 

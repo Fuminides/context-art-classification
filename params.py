@@ -63,4 +63,7 @@ def get_parser():
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
     parser.add_argument('--no_cuda', action='store_true')
 
+    #Symbol task
+    parser.add_argument('--symbol_task', default=False, type=bool)
+
     return parser
