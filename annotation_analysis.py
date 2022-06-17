@@ -180,7 +180,7 @@ def load_semart_symbols(args_dict):
     names = df['TITLE']
     descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
 
-    hash_cached = str(hash(df))
+    hash_cached = str(hash(str(df)))
 
     
     if os.path.exists('cache/' + hash_cached):
