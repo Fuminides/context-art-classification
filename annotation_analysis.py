@@ -199,7 +199,7 @@ def load_semart_symbols(args_dict):
                     symbols_painting[jx] = 1
 
             dictionary_painting_symbol[ix, :] = symbols_painting
-        pd.DataFrame(dictionary_painting_symbol).to_csv(hash_cached)
+        pd.DataFrame(dictionary_painting_symbol).to_csv('cache/' + hash_cached)
 
     return dictionary_painting_symbol.astype(np.bool), names, symbol_canon_list
 
