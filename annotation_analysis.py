@@ -180,7 +180,7 @@ def load_semart_symbols(args_dict):
     names = df['TITLE']
     descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
 
-    hash_cached = hashlib.md5.update(str(df).encode('utf-8'))
+    hash_cached = hashlib.md5().update(str(df).encode('utf-8'))
 
     
     if os.path.exists('cache/' + hash_cached):
@@ -200,7 +200,7 @@ def load_semart_symbols(args_dict):
 
             dictionary_painting_symbol[ix, :] = symbols_painting
         pd.DataFrame(dictionary_painting_symbol).to_csv(hash_cached)
-        
+
     return dictionary_painting_symbol.astype(np.bool), names, symbol_canon_list
 
 def symbol_connectivity():
