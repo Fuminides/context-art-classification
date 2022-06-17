@@ -34,7 +34,7 @@ class ArtDatasetSym(data.Dataset):
 
         self.imageurls = list(df['IMAGE_FILE'])
 
-        self.symbol_context, self.paintings_names, self.symbols_names = an.__load_semart_proxy(mode='train')
+        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict)
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, an.args_dict.dir_dataset)
 
 
