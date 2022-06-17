@@ -1124,7 +1124,9 @@ def run_train(args_dict):
     #global plotter
     #plotter = utils.VisdomLinePlotter(env_name=args_dict.name)
 
-    if args_dict.model == 'mtl':
+    if args_dict.symbol_task:
+        train_symbol_classifier(args_dict)
+    elif args_dict.model == 'mtl':
         train_multitask_classifier(args_dict)
     elif args_dict.model == 'kgm':
         train_knowledgegraph_classifier(args_dict)
