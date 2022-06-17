@@ -9,12 +9,11 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, att2i, transform = None):
+    def __init__(self, args_dict, set, transform = None):
         """
         Args:
             args_dict: parameters dictionary
             set: 'train', 'val', 'test'
-            att2i: list of attribute vocabularies as [type2idx, school2idx, time2idx, author2idx]
             transform: data transform
         """
 
