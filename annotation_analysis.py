@@ -18,13 +18,7 @@ class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
     def __init__(self):
         pass
 
-try:
-    args_dict
-except NameError:
-    args_dict = dummyPlug()
-    args_dict.mode = 'train'
-    args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt'
-    args_dict.csvtrain =  'semart_train.csv'
+
 
 ## FUNCTIONS RELATED TO THE MYTH GRAPHS
 def edges2adjacency_df(edges_df,symmetry=False):
@@ -163,7 +157,11 @@ def load_cirlot_as_dict():
 ## FUNCTIONS RELATED TO THE SEMART DATA
 
 def __load_semart_proxy(mode='train'):
-    global args_dict
+    
+    args_dict = dummyPlug()
+    args_dict.mode = 'train'
+    args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt'
+    args_dict.csvtrain =  'semart_train.csv'
     return load_semart_symbols(args_dict)
 
 def load_semart_symbols(args_dict):
