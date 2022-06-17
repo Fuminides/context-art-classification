@@ -30,7 +30,7 @@ class SymModel(nn.Module):
 
     def forward(self, img):
 
-        if self.mode != 'clip':
+        if self.model != 'clip':
             visual_emb = self.resnet(img)
         else:
             visual_emb = self.resnet.encode_image(img)

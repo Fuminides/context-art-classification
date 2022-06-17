@@ -602,7 +602,7 @@ def train_symbol_classifier(args_dict):
 
 
     # Now, let's start the training process!
-    print('Start training MTL model...')
+    print('Start training Symbolic task...')
     pat_track = 0
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
