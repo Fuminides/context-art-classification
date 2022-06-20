@@ -10,7 +10,7 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, transform = None):
+    def __init__(self, args_dict, partition, transform = None):
         """
         Args:
             args_dict: parameters dictionary
@@ -19,14 +19,14 @@ class ArtDatasetSym(data.Dataset):
         """
 
         self.args_dict = args_dict
-        self.set = set
+        self.partition = partition
 
         # Load data
-        if self.set == 'train':
+        if self.partition == 'train':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
-        elif self.set == 'val':
+        elif self.partition == 'val':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
-        elif self.set == 'test':
+        elif self.partition == 'test':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
         df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
 
@@ -38,7 +38,7 @@ class ArtDatasetSym(data.Dataset):
         myth_edges = an.load_edges_myth()
         myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
         args_dict.canon_list = myth_entities
-        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict)
+        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.partition)
 
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
 

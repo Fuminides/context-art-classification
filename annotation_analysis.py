@@ -165,13 +165,13 @@ def __load_semart_proxy(mode='train'):
     args_dict.csvtrain =  'semart_train.csv'
     return load_semart_symbols(args_dict)
 
-def load_semart_symbols(args_dict):
+def load_semart_symbols(args_dict, dataset):
     # Load data
-    if args_dict.mode == 'train':
+    if dataset == 'train':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
-    elif args_dict.mode == 'val':
+    elif dataset == 'val':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
-    elif args_dict.mode == 'test':
+    elif dataset == 'test':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
     
     try:
