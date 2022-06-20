@@ -107,7 +107,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
                 target_var.append(torch.autograd.Variable(target[j]))
         else:
-            target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
+            target_var = torch.tensor(np.array(target, dtype=np.long), dtype=torch.long)
             if torch.cuda.is_available():
                     target_var = target_var.cuda(non_blocking=True)
             
@@ -210,7 +210,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
                 target_var.append(torch.autograd.Variable(target[j]))
         else:
-            target_var = torch.tensor(np.array(target, dtype=np.float))
+            target_var = torch.tensor(np.array(target, dtype=np.long), dtype=torch.long)
             if torch.cuda.is_available():
                     target_var = target_var.cuda(non_blocking=True)
 
