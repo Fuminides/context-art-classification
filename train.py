@@ -45,10 +45,15 @@ def print_classes(type2idx, school2idx, timeframe2idx, author2idx):
 
 
 def save_model(args_dict, state, type='school', train_feature='kgm', append='gradient'):
-    directory = args_dict.dir_model + "%s/"%(args_dict.name)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    filename = directory + train_feature + '_' + type + '_' + append + '_best_model.pth.tar'
+
+    try:
+        filename = 'Models/' + args_dict.model_path
+    except:
+        directory = args_dict.dir_model + "%s/"%(args_dict.name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        filename = directory + train_feature + '_' + type + '_' + append + '_best_model.pth.tar'
+
     print('Model saved in ' + filename)
     torch.save(state, filename)
 
