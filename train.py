@@ -265,7 +265,20 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         
         losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
 
-        if args_dict.att == 'all':
+        if symbol_task:
+            pred = torch.argmax(output, dim=1)
+            label_actual = target.cpu().numpy()
+
+            # Save predictions to compute accuracy
+            if batch_idx == 0:
+                out = pred.data.cpu().numpy()
+                label = label_actual
+                
+            else:
+                out = np.concatenate((out, pred.data.cpu().numpy()), axis=0)
+                label = np.concatenate((label, label_actual), axis=0)
+
+        elif args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
             pred_school = torch.argmax(output[1], 1)
             pred_time = torch.argmax(output[2], 1)
@@ -291,9 +304,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label_tf = np.concatenate((label_tf, target[2].cpu().numpy()), axis=0)
                 label_author = np.concatenate((label_author, target[3].cpu().numpy()), axis=0)
         
-        elif symbol_task:
-            pred = torch.argmax(output, 1)
-            label_actual = target.cpu().numpy()
+        
         else:
             if args_dict.model == 'kgm' and (not args_dict.append == 'append'):
                 pred = torch.argmax(output[0], 1)
