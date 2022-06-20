@@ -10,12 +10,11 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, att2i, transform = None):
+    def __init__(self, args_dict, set, transform = None):
         """
         Args:
             args_dict: parameters dictionary
             set: 'train', 'val', 'test'
-            att2i: list of attribute vocabularies as [type2idx, school2idx, time2idx, author2idx]
             transform: data transform
         """
 
@@ -33,17 +32,14 @@ class ArtDatasetSym(data.Dataset):
 
         self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
         self.transform = transform
-        self.type_vocab = att2i[0]
-        self.school_vocab = att2i[1]
-        self.time_vocab = att2i[2]
-        self.author_vocab = att2i[3]
 
         self.imageurls = list(df['IMAGE_FILE'])
 
         myth_edges = an.load_myth()
         myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
-        self.symbol_context, self.paintings_names, self.symbols_names = an.__load_semart_proxy(mode='train')
-        self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, an.args_dict.dir_dataset)
+        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict)
+        self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
+
 
 
     def __len__(self):
@@ -73,5 +69,5 @@ class ArtDatasetSym(data.Dataset):
 
         return [image], symbols
 
-def filter_symbols():
+#def filter_symbols():
     
