@@ -35,7 +35,7 @@ class ArtDatasetSym(data.Dataset):
 
         self.imageurls = list(df['IMAGE_FILE'])
 
-        myth_edges = an.load_myth()
+        myth_edges = an.load_edges_myth()
         myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
         self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict)
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
