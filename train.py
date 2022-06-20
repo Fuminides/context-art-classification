@@ -580,8 +580,8 @@ def train_symbol_classifier(args_dict):
 
 
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms)
-    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms)
+    semart_train_loader = ArtDatasetSym(args_dict, partition='train', transform=train_transforms)
+    semart_val_loader = ArtDatasetSym(args_dict, partition='val',  transform=val_transforms)
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
