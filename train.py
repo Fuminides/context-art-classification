@@ -106,11 +106,9 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
             if torch.cuda.is_available():
                     target_var = target_var.cuda(non_blocking=True)
             
-            print(target_var.shape)
 
         # Output of the model
         if args_dict.append == 'append':
-            print(len(target))
             output = model((input_var[0], target[-1]))
         else:
             output = model(input_var[0])
@@ -126,8 +124,9 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     train_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
                 elif symbol_task:
-                    train_loss = criterion(output, target)
-                else:
+                    print(target_var.shape, output.shape)
+                    train_loss = criterion(output, target_var)
+                else: 
                     train_loss = multi_class_loss(criterion, target_var, output)
             else:
               if args_dict.model == 'rmtl':
