@@ -124,7 +124,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     train_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
                 elif symbol_task:
-                    print(target_var.shape, output.shape)
                     train_loss = criterion(output, target_var)
                 else: 
                     train_loss = multi_class_loss(criterion, target_var, output)
@@ -208,7 +207,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         else:
             target_var = torch.tensor(np.array(target, dtype=np.float))
             if torch.cuda.is_available():
-                    target = target.cuda(non_blocking=True)
+                    target_var = target_var.cuda(non_blocking=True)
 
         # Predictions
         with torch.no_grad():
@@ -229,7 +228,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                     val_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
                 elif symbol_task:
-                    train_loss = criterion(output, target)
+                    val_loss = criterion(output, target_var)
                 else:
                     val_loss = multi_class_loss(criterion, target_var, output)
             else:
