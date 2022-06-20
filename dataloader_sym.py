@@ -1,3 +1,4 @@
+import numpy as np
 import torch.utils.data as data
 import pandas as pd
 import os
@@ -39,6 +40,8 @@ class ArtDatasetSym(data.Dataset):
 
         self.imageurls = list(df['IMAGE_FILE'])
 
+        myth_edges = an.load_myth()
+        myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
         self.symbol_context, self.paintings_names, self.symbols_names = an.__load_semart_proxy(mode='train')
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, an.args_dict.dir_dataset)
 
@@ -69,3 +72,6 @@ class ArtDatasetSym(data.Dataset):
         symbols = self.symbol_context[index, :]
 
         return [image], symbols
+
+def filter_symbols():
+    

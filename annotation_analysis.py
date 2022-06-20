@@ -282,9 +282,9 @@ class Gallery:
     def vis_painting_symbols(self, painting_arg, symbols_mode=True):
 
         def write_symbols(symbols_names_list):
-            start_x = 0.8
+            start_x = 1
             start_y = 0.8
-            x_add = 0.15
+            x_add = 0.30
             y_add = -0.1
             for symbol in symbols_names_list:
                 plt.text(start_x, start_y, symbol, fontsize=14, transform=plt.gcf().transFigure)
