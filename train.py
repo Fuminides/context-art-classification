@@ -102,11 +102,11 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
                 target_var.append(torch.autograd.Variable(target[j]))
         else:
-            target_var = torch.tensor(np.array(target, dtype=np.float))
+            target_var = torch.tensor(np.array(target, dtype=torch.float))
             if torch.cuda.is_available():
-                    target = target.cuda(non_blocking=True)
+                    target_var = target_var.cuda(non_blocking=True)
             
-            target_var.append(torch.autograd.Variable(target[j]))
+            print(target_var.shape)
 
         # Output of the model
         if args_dict.append == 'append':
