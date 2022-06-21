@@ -337,14 +337,16 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label = np.concatenate((label, label_actual), axis=0)
                 
     # Accuracy
-    if args_dict.att == 'all':
+    if symbol_task:
+        acc = np.sum(out == label) / len(out)
+    elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
         acc_tf = np.sum(out_time == label_tf) / len(out_time)
         acc_author = np.sum(out_author == label_author) / len(out_author)
         acc = np.mean((acc_type, acc_school, acc_tf, acc_author))
 
-    elif args_dict.model == 'kgm' or symbol_task:
+    elif args_dict.model == 'kgm':
         acc = np.sum(out == label) / len(out)
 
     # Print validation info
