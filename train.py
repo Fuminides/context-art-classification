@@ -274,6 +274,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label = target[0].cpu().numpy()
 
                 good_scores = np.sum(np.equal(out, label))
+                print(out.shape)
             else:
                 out = pred.data.cpu().numpy()
                 label = target[0].cpu().numpy()
