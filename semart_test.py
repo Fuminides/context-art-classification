@@ -9,10 +9,114 @@ from model_kgm import KGM, KGM_append
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
+from model_sym import SymModel
 
 #from model_gcn import GCN, 
 NODE2VEC_OUTPUT = 128
 
+
+def test_symbol_task(args_dict):
+
+    model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
+    # Define model
+    if args_dict.embedds == 'graph':
+        if args_dict.append != 'append':
+            model = KGM(len(att2i))
+        else:
+            model = KGM_append(len(att2i))
+    else:
+        if args_dict.append != 'append':
+            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+        else:
+            model = KGM_append(len(att2i))
+
+    if torch.cuda.is_available():#args_dict.use_gpu:
+        model.cuda()
+
+    # Load best model
+
+    print("=> loading checkpoint '{}'".format(args_dict.model_path))
+    checkpoint = torch.load(args_dict.model_path)
+    args_dict.start_epoch = checkpoint['epoch']
+    model.load_state_dict(checkpoint['state_dict'])
+    print("=> loaded checkpoint '{}' (epoch {})"
+            .format(args_dict.model_path, checkpoint['epoch']))
+    '''except RuntimeError as e:
+        print(e)
+        print('No checkpoint available')
+        args_dict.start_epoch = 0'''
+
+
+    # Data transformation for test
+    test_transforms = transforms.Compose([
+        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(224),                         # we get only the center of that rescaled
+        transforms.ToTensor(),                              # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128)
+
+    # Data Loaders for test
+    if torch.cuda.is_available():
+        test_loader = torch.utils.data.DataLoader(
+            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+            batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+    else:
+        test_loader = torch.utils.data.DataLoader(
+            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+            batch_size=args_dict.batch_size, shuffle=False, pin_memory=False,
+            num_workers=args_dict.workers)
+        
+    
+    model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
+    # Switch to evaluation mode & compute test samples embeddings
+    model.eval()
+    for i, (input, target) in enumerate(test_loader):
+        # Inputs to Variable type
+        input_var = list()
+        for j in range(len(input)):
+            if torch.cuda.is_available():
+                input_var.append(torch.autograd.Variable(input[j]).cuda())
+            else:
+                input_var.append(torch.autograd.Variable(input[j]))
+        
+        target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float)
+        if torch.cuda.is_available():
+                target_var = target_var.cuda(non_blocking=True)
+        target_var = torch.autograd.Variable(target_var)
+
+        # Output of the model
+        with torch.no_grad():
+            # Output of the model
+            if args_dict.append == 'append':
+                output = model((input_var[0], target[1]))
+            elif args_dict.model == 'kgm':
+                output, _ = model(input_var[0])    
+            else:
+                output = model(input_var[0])
+
+            #outsoftmax = torch.nn.functional.softmax(output[0])
+        
+        predicted = output > 0.5
+
+        # Store embeddings
+        if i==0:
+            out = predicted.data.cpu().numpy()
+            label = target[0].cpu().numpy()
+
+            good_scores = np.sum(np.equal(out, label))
+        else:
+            out = predicted.data.cpu().numpy()
+            label = target[0].cpu().numpy()
+
+            good_scores += np.sum(np.equal(out, label))
+
+    # Compute Accuracy
+    total_guesses = out.shape[0] * semart_train_loader.__len__()
+    acc =  good_scores / total_guesses
+    print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
 
 def test_knowledgegraph(args_dict):
 
