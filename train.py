@@ -266,7 +266,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
 
         if symbol_task:
-            pred = torch.argmax(output, dim=1)
+            pred = output > 0.5
             label_actual = target.cpu().numpy()
 
             # Save predictions to compute accuracy
@@ -338,7 +338,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 
     # Accuracy
     if symbol_task:
-        acc = np.sum(out == label) / len(out)
+        acc = np.sum(np.equal(out, label)) / len(out)
     elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
