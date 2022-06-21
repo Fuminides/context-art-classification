@@ -269,7 +269,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             pred = output > 0.5
             label_actual = target.cpu().numpy()
             
-            if i==0:
+            if batch_idx==0:
                 out = pred.data.cpu().numpy()
                 label = target[0].cpu().numpy()
 
