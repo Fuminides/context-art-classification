@@ -35,7 +35,7 @@ class ArtDatasetSym(data.Dataset):
 
         self.imageurls = list(df['IMAGE_FILE'])
 
-        myth_edges = an.load_myth()
+        myth_edges = an.load_edges_myth()
         myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
         args_dict.canon_list = myth_entities
 
