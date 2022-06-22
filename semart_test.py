@@ -8,6 +8,7 @@ from model_mtl import MTL
 from model_kgm import KGM, KGM_append
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
+from dataloader_sym import ArtDatasetSym
 from attributes import load_att_class
 from model_sym import SymModel
 
@@ -18,22 +19,21 @@ NODE2VEC_OUTPUT = 128
 def test_symbol_task(args_dict):
 
     model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
-    # Define model
-    if args_dict.embedds == 'graph':
-        if args_dict.append != 'append':
-            model = KGM(len(att2i))
-        else:
-            model = KGM_append(len(att2i))
-    else:
-        if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
-        else:
-            model = KGM_append(len(att2i))
-
+    
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
 
     # Load best model
+    # Load classes
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    if args_dict.att == 'type':
+        att2i = type2idx
+    elif args_dict.att == 'school':
+        att2i = school2idx
+    elif args_dict.att == 'time':
+        att2i = time2idx
+    elif args_dict.att == 'author':
+        att2i = author2idx
 
     print("=> loading checkpoint '{}'".format(args_dict.model_path))
     checkpoint = torch.load(args_dict.model_path)
@@ -61,11 +61,11 @@ def test_symbol_task(args_dict):
     # Data Loaders for test
     if torch.cuda.is_available():
         test_loader = torch.utils.data.DataLoader(
-            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+            ArtDatasetSym(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
             batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
     else:
         test_loader = torch.utils.data.DataLoader(
-            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+            ArtDatasetSym(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
             batch_size=args_dict.batch_size, shuffle=False, pin_memory=False,
             num_workers=args_dict.workers)
         
@@ -73,6 +73,9 @@ def test_symbol_task(args_dict):
     model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
     # Switch to evaluation mode & compute test samples embeddings
     model.eval()
+
+    total_guesses = 0
+    good_scores = 0
     for i, (input, target) in enumerate(test_loader):
         # Inputs to Variable type
         input_var = list()
@@ -100,21 +103,14 @@ def test_symbol_task(args_dict):
             #outsoftmax = torch.nn.functional.softmax(output[0])
         
         predicted = output > 0.5
+        
+        out = predicted.data.cpu().numpy()
+        label = target[0].cpu().numpy()
 
-        # Store embeddings
-        if i==0:
-            out = predicted.data.cpu().numpy()
-            label = target[0].cpu().numpy()
-
-            good_scores = np.sum(np.equal(out, label))
-        else:
-            out = predicted.data.cpu().numpy()
-            label = target[0].cpu().numpy()
-
-            good_scores += np.sum(np.equal(out, label))
+        good_scores += np.sum(np.equal(out, label), axis=-1)
+        total_guesses += out.shape[0] * out.shape[1]
 
     # Compute Accuracy
-    total_guesses = out.shape[0] * semart_train_loader.__len__()
     acc =  good_scores / total_guesses
     print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
 

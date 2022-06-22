@@ -273,13 +273,15 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 out = pred.data.cpu().numpy()
                 label = target[0].cpu().numpy()
 
-                good_scores = np.sum(np.equal(out, label))
-                print(out.shape)
+                good_scores = np.sum(np.equal(out, label), axis=-1)
+                total_guesses = out.shape[0] * out.shape[1]
+                print(out.shape, label.shape)
             else:
                 out = pred.data.cpu().numpy()
                 label = target[0].cpu().numpy()
+                total_guesses += out.shape[0] * out.shape[1]
 
-                good_scores += np.sum(np.equal(out, label))
+                good_scores += np.sum(np.equal(out, label), axis=-1)
 
         elif args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
@@ -341,7 +343,6 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 
     # Accuracy
     if symbol_task:
-        total_guesses = out.shape[0] * val_loader.__len__()
         acc =  good_scores / total_guesses
     elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
