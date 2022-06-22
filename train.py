@@ -186,7 +186,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
-
+    good_scores = 0
+    total_guesses = 0
     # switch to evaluation mode
     model.eval()
     for batch_idx, (input, target) in enumerate(val_loader):
@@ -267,21 +268,12 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
         if symbol_task:
             pred = output > 0.5
-            label_actual = target.cpu().numpy()
-            
-            if batch_idx==0:
-                out = pred.data.cpu().numpy()
-                label = target[0].cpu().numpy()
+            label = target.cpu().numpy()
+        
+            out = pred.data.cpu().numpy()
 
-                good_scores = np.sum(np.equal(out, label), axis=-1)
-                total_guesses = out.shape[0] * out.shape[1]
-                print(out.shape, label.shape)
-            else:
-                out = pred.data.cpu().numpy()
-                label = target[0].cpu().numpy()
-                total_guesses += out.shape[0] * out.shape[1]
-
-                good_scores += np.sum(np.equal(out, label), axis=-1)
+            total_guesses += out.shape[0] * out.shape[1]
+            good_scores += np.sum(np.equal(out, label), axis=-1)
 
         elif args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
