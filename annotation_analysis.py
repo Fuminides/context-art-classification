@@ -183,8 +183,8 @@ def load_semart_symbols(args_dict, dataset):
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
     names = df['TITLE']
     descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
+    hash_cached = hashlib.sha256(str(df).encode('utf-8')).hexdigest()
 
-    hash_cached = str(hash(str(df)))
 
     
     if os.path.exists('cache/' + hash_cached):
