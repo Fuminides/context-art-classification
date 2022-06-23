@@ -17,15 +17,13 @@ def compute_rules_output(X, X_val, X_test, y):
     import rpy2.robjects as robjects
     from rpy2.robjects import pandas2ri
 
-    names = [str(x) for x in range(X.shape[0])]
+    names = [str(x) for x in range(X.shape[1])]
     X_df = pd.DataFrame(X, columns=names)
     X_df['y'] = y
 
     X_val_df = pd.DataFrame(X_val, columns=names)
-    X_val_df['y'] = y
 
     X_test_df = pd.DataFrame(X_test, columns=names)
-    X_test_df['y'] = y
 
     # Defining the R script and loading the instance in Python
     r = robjects.r
@@ -71,7 +69,8 @@ def frbc(X, X_val, X_test, output_clusters=128):
             q_prima = compute_q(X[~y,:])
         
         # Generate rules
-        consequents_train, consequents_val, consequents_test = compute_rules_output(X, np.array(y))
+        X
+        consequents_train, consequents_val, consequents_test = compute_rules_output(X, X_val, X_test, y)
 
         select = consequents_train < 0.5
 
