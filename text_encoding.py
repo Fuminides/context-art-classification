@@ -50,7 +50,7 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', t
             return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
 
 
-def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append'):
+def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append', top=True, explain=False):
     from sklearn.feature_extraction.text import TfidfVectorizer
 
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
@@ -59,6 +59,7 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
 
     transformer = CountVectorizer(stop_words=None)
     transformer = transformer.fit(semart_train['DESCRIPTION'])
+  
 
     bow_coded_semart_train = transformer.transform(semart_train['DESCRIPTION'])
 
@@ -67,19 +68,39 @@ def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append
     test_corpus = list(semart_test['DESCRIPTION'])
 
     freqs = np.asarray(bow_coded_semart_train.sum(axis=0))
-    bool_freqs = freqs > k
 
     vectorizer = TfidfVectorizer()
     vectorizer.fit(corpus)
     
-    chosen_coded_semart_train = vectorizer.transform(corpus)[:, bool_freqs.squeeze()]
-    chosen_coded_semart_val = vectorizer.transform(val_corpus)[:, bool_freqs.squeeze()]
-    chosen_coded_semart_test = vectorizer.transform(test_corpus)[:, bool_freqs.squeeze()]
-    
-    if append != 'append':
-        return chosen_coded_semart_train
+  
+
+    if not top:
+        bool_freqs = freqs > k
+
+        chosen_coded_semart_train = vectorizer.transform(corpus)[:, bool_freqs.squeeze()]
+        chosen_coded_semart_val = vectorizer.transform(val_corpus)[:, bool_freqs.squeeze()]
+        chosen_coded_semart_test = vectorizer.transform(test_corpus)[:, bool_freqs.squeeze()]
+
+        word_name = transformer.get_feature_names_out()
     else:
-        return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
+        sorted_freqs = np.argsort(freqs)
+        chosen_words = sorted_freqs[0][::-1][0:k]
+
+        chosen_coded_semart_train = vectorizer.transform(corpus)[:, chosen_words]
+        chosen_coded_semart_val = vectorizer.transform(val_corpus)[:, chosen_words]
+        chosen_coded_semart_test = vectorizer.transform(test_corpus)[:, chosen_words]
+        word_name = transformer.get_feature_names_out()[chosen_words]
+
+    if explain:
+        if append != 'append':
+            return chosen_coded_semart_train, word_name
+        else:
+            return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test, word_name
+    else:
+        if append != 'append':
+            return chosen_coded_semart_train
+        else:
+            return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
 
 def prune_corpus(corpus):
     joined_corpus = '$$'.join(corpus)
