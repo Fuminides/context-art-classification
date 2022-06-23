@@ -51,9 +51,8 @@ def frbc(X, X_val, X_test, output_clusters=128):
     m_N_val = X_val.shape[0]
     m_N_test = X_test.shape[0]
 
-    y = [0] * m_N
+    y = np.array([1] * m_N, dtype=np.bool)
     
-    q = 0
     q_prima = 0
     
     final_memberships = np.zeros((m_N, 128))
@@ -61,17 +60,15 @@ def frbc(X, X_val, X_test, output_clusters=128):
     final_memberships_test = np.zeros((m_N_test, 128))
 
     for j in range(output_clusters):
+        q = compute_q(X[y,:])
         print('Rule: ', j)
-        artificial_samples = []
+        
         while q >= q_prima:
-            artificial_sample = np.random.random_sample((X.shape[1]))
-            artificial_samples.append(artificial_sample)
-
+            artificial_sample = np.random.random_sample((int(X.shape[0]*0.05), X.shape[1]))
             X = np.vstack([X, artificial_sample])
-            y.append(1)
-
-            q = compute_q(X)
-            q_prima = compute_q(np.array(artificial_samples))
+            y = np.hstack([y, np.array([0] * artificial_sample.shape[0], dtype=np.bool)])
+            
+            q_prima = compute_q(X[~y,:])
         
         # Generate rules
         consequents_train, consequents_val, consequents_test = compute_rules_output(X, np.array(y))
@@ -82,7 +79,7 @@ def frbc(X, X_val, X_test, output_clusters=128):
         final_memberships_val[j, :] = consequents_val
         consequents_test[j, :] = consequents_test
         X = X[select, :]
-        y = [z for ix, z in enumerate(y) if select[ix]]
+        y = y[select]
     
     return final_memberships, final_memberships_val, final_memberships_test
 
