@@ -36,8 +36,10 @@ def compute_rules_output(X, X_val, X_test, y):
     # Reading and processing data
     #converting it into r object for passing into r function
     df_r = ro.conversion.py2rpy(X_df)
+    df_val = ro.conversion.py2rpy(X_val_df)
+    df_test = ro.conversion.py2rpy(X_test_df)
     #Invoking the R function and getting the result
-    df_result_r = filter_country_function_r(df_r, X_val_df, X_test_df)
+    df_result_r = filter_country_function_r(df_r, df_val, df_test)
     #Converting it back to a pandas dataframe.
     df_result = pandas2ri.py2ri(df_result_r)
 

@@ -66,8 +66,10 @@ class ArtDatasetSym(data.Dataset):
             image = self.transform(image)
 
         # Attribute class
-        print(index)
-        symbols = self.symbol_context[index, :]
+        try:
+            symbols = self.symbol_context[index, :]
+        except:
+            print(self.set, index)
 
         return [image], symbols
 
