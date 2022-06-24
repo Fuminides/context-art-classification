@@ -40,12 +40,21 @@ def compute_rules_output(X, X_train_og, X_val, X_test, y):
     df_val = ro.conversion.py2rpy(X_val_df)
     df_test = ro.conversion.py2rpy(X_test_df)
     #Invoking the R function and getting the result
-    df_result_r = filter_country_function_r(df_r, df_r_og, df_val, df_test)
-    #Converting it back to a pandas dataframe.
-    consequents_train = df_result_r[0]
-    consequents_train_og = df_result_r[1]
-    consequents_val = df_result_r[2]
-    consequents_test = df_result_r[3]
+    try:
+        df_result_r = filter_country_function_r(df_r, df_r_og, df_val, df_test)
+
+         #Converting it back to a pandas dataframe.
+        consequents_train = df_result_r[0]
+        consequents_train_og = df_result_r[1]
+        consequents_val = df_result_r[2]
+        consequents_test = df_result_r[3]
+    except:
+        print('Error in R')
+        consequents_train = np.zeros((df_r.shape[0], 1))
+        consequents_train_og = np.zeros((df_r.shape[0], 1))
+        consequents_val = np.zeros((df_r.shape[0], 1))
+        consequents_test = np.zeros((df_r.shape[0], 1))
+   
 
     return consequents_train, consequents_train_og, consequents_val, consequents_test 
 
@@ -81,6 +90,7 @@ def frbc(X, X_val, X_test, output_clusters=128):
         final_memberships[:, j] = consequents_train_og
         final_memberships_val[:, j] = consequents_val
         final_memberships_test[:, j] = consequents_test
+
         X = X[select, :]
         y = y[select]
     
