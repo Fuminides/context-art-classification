@@ -14,7 +14,10 @@ def best_rule(rules_antecedents):
     return np.argmax(np.prod(rules_antecedents, axis=1))
 
 def compute_rules_output(X, X_val, X_test, y):
-    import rpy2.robjects as robjects
+    import rpy2.robjects as ro
+    from rpy2.robjects import pandas2ri
+    pandas2ri.activate()
+
     from rpy2.robjects import pandas2ri
 
     names = [str(x) for x in range(X.shape[1])]
@@ -26,13 +29,13 @@ def compute_rules_output(X, X_val, X_test, y):
     X_test_df = pd.DataFrame(X_test, columns=names)
 
     # Defining the R script and loading the instance in Python
-    r = robjects.r
+    r = ro.r
     r['source']('fuzzy_rules.R')
     # Loading the function we have defined in R.
-    filter_country_function_r = robjects.globalenv['main']
+    filter_country_function_r = ro.globalenv['main']
     # Reading and processing data
     #converting it into r object for passing into r function
-    df_r = pandas2ri.ri2py(X_df)
+    df_r = ro.conversion.py2rpy(X_df)
     #Invoking the R function and getting the result
     df_result_r = filter_country_function_r(df_r, X_val_df, X_test_df)
     #Converting it back to a pandas dataframe.
@@ -49,7 +52,7 @@ def frbc(X, X_val, X_test, output_clusters=128):
     m_N_val = X_val.shape[0]
     m_N_test = X_test.shape[0]
 
-    y = np.array([1] * m_N, dtype=np.bool)
+    y = np.array([1] * m_N, dtype=bool)
     
     q_prima = 0
     
@@ -64,7 +67,7 @@ def frbc(X, X_val, X_test, output_clusters=128):
         while q >= q_prima:
             artificial_sample = np.random.random_sample((int(X.shape[0]*0.05), X.shape[1]))
             X = np.vstack([X, artificial_sample])
-            y = np.hstack([y, np.array([0] * artificial_sample.shape[0], dtype=np.bool)])
+            y = np.hstack([y, np.array([0] * artificial_sample.shape[0], dtype=bool)])
             
             q_prima = compute_q(X[~y,:])
         

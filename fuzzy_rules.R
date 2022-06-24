@@ -1,3 +1,4 @@
+library('lfl')
 main <- function(X, val, test) {
   fuzzy_X = lcut(X)
   fuzzy_val = lcut(val)
@@ -23,5 +24,3 @@ main <- function(X, val, test) {
   
   return(df)
 }
-
-main(xiris, xiris, xiris)
