@@ -91,8 +91,11 @@ def frbc(X, X_val, X_test, output_clusters=128):
         final_memberships_val[:, j] = consequents_val.squeeze()
         final_memberships_test[:, j] = consequents_test.squeeze()
 
-        X = X[select, :]
-        y = y[select]
+        try:
+            X = X[select, :]
+            y = y[select]
+        except IndexError:
+            return final_memberships[:, :j], final_memberships_val[:, :j], final_memberships_test[:, :j]
     
     return final_memberships, final_memberships_val, final_memberships_test
 
@@ -111,6 +114,6 @@ if __name__ == '__main__':
 
     # Run FRBC
     final_memberships, final_memberships_val, final_memberships_test = frbc(X_train, X_val, X_test, output_clusters=128)
-    final_memberships.to_csv('rule_embds_train.csv')
-    final_memberships_val.to_csv('rule_embds_val.csv')
-    final_memberships_test.to_csv('rule_embds_test.csv')
+    pd.DataFrame(final_memberships).to_csv('rule_embds_train.csv')
+    pd.DataFrame(final_memberships_val).to_csv('rule_embds_val.csv')
+    pd.DataFrame(final_memberships_test).to_csv('rule_embds_test.csv')

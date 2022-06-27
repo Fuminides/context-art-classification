@@ -60,7 +60,7 @@ class ArtDatasetSym(data.Dataset):
     def __getitem__(self, index):
 
         # Load image & apply transformation
-        imagepath = self.imagefolder + self.imageurls[index]
+        imagepath = self.imagefolder +  '/' + self.imageurls[index]
         image = Image.open(imagepath).convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
