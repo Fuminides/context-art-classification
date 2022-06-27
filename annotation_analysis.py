@@ -174,7 +174,10 @@ def load_semart_symbols(args_dict):
     elif args_dict.mode == 'test':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
     
-    symbol_canon_list = load_terms()
+    try:
+        symbol_canon_list = args_dict.canon_list
+    except:
+        symbol_canon_list = load_terms()
 
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
     names = df['TITLE']
