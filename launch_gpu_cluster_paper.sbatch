@@ -29,16 +29,16 @@ conda activate pytorch
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds tfidf --resume ./Models/fcm_tf_type_best_model.pth.tar >salidas/type_out.txt 2>salidas/type_error.txt"
 
 # TF-IDF + FRBC
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
 
 # TF-IDF + FRBC
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 33"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 37"
 
 # BoW + FCM append
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume  ./Models/bow_append_author_best_model.pth.tar >salidas/author_out_append.txt 2>salidas/author_error_append.txt"
