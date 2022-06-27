@@ -184,6 +184,9 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
     # switch to evaluation mode
     model.eval()
+    acc_sample = 0
+    acc_possible = 0
+    
     for batch_idx, (input, target) in enumerate(val_loader):
 
         # Inputs to Variable type
@@ -216,8 +219,14 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 output = model((input_var[0], target[1]))
             else:
                 output = model(input_var[0])
+        if symbol_task:
+            pred = output > 0.5
+            label_actual = target.cpu().numpy()
 
-        if args_dict.att == 'all':
+            acc_sample += np.equal(pred, label_actual)
+            acc_possible += pred.shape[0] * pred.shape[1]
+
+        elif args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
             pred_school = torch.argmax(output[1], 1)
             pred_time = torch.argmax(output[2], 1)
@@ -242,10 +251,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label_school = np.concatenate((label_school, target[1].cpu().numpy()), axis=0)
                 label_tf = np.concatenate((label_tf, target[2].cpu().numpy()), axis=0)
                 label_author = np.concatenate((label_author, target[3].cpu().numpy()), axis=0)
-        
-        elif symbol_task:
-            pred = torch.argmax(output, 1)
-            label_actual = target.cpu().numpy()
+           
         else:
             if args_dict.model == 'kgm' and (not args_dict.append == 'append'):
                 pred = torch.argmax(output[0], 1)
@@ -278,7 +284,9 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label = np.concatenate((label, label_actual), axis=0)
                 
     # Accuracy
-    if args_dict.att == 'all':
+    if symbol_task:
+        acc = acc_sample / acc_possible
+    elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
         acc_tf = np.sum(out_time == label_tf) / len(out_time)
