@@ -217,49 +217,6 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             else:
                 output = model(input_var[0])
 
-        if args_dict.model != 'kgm':
-            
-            if args_dict.att == 'all':
-                if args_dict.model == 'rmtl':
-                    class_loss = multi_class_loss(criterion[0], target_var, output)
-            
-                    encoder_loss = criterion[1](output[4], output[5])
-              
-                    val_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
-                elif symbol_task:
-                    val_loss = criterion(output, target_var)
-                else:
-                    val_loss = multi_class_loss(criterion, target_var, output)
-            else:
-                val_loss = criterion(output, target_var)
-
-
-        # It is a Context-based model
-        else:
-            if args_dict.att == 'all': # TODO
-                class_loss = multi_class_loss(criterion, target_var, output)
-                
-                encoder_loss = criterion[1](output[4], target_var[-1].long())
-                val_loss = args_dict.lambda_c * class_loss + \
-                            args_dict.lambda_e * encoder_loss
-
-            else:
-                if args_dict.append == 'append':
-                    val_loss = criterion[0](output, target_var[0].long())
-                    
-                else:
-                    class_loss = criterion[0](output[0], target_var[0].long())
-                    encoder_loss = criterion[1](output[1], target_var[1].float())
-
-                    val_loss = args_dict.lambda_c * class_loss + \
-                                args_dict.lambda_e * encoder_loss
-
-        
-                            
-        
-        losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
-
         if args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
             pred_school = torch.argmax(output[1], 1)
@@ -332,8 +289,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         acc = np.sum(out == label) / len(out)
 
     # Print validation info
-    print('Validation set: Average loss: {:.4f}\t'
-          'Accuracy {acc}'.format(losses.avg, acc=acc))
+    print('Accuracy {acc}'.format(acc=acc))
     #plotter.plot('closs', 'val', 'Class Loss', epoch, losses.avg)
     #plotter.plot('acc', 'val', 'Class Accuracy', epoch, acc)
 
