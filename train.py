@@ -179,9 +179,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
 def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
-    # object to store & plot the losses
-    losses = utils.AverageMeter()
-
     # switch to evaluation mode
     model.eval()
     acc_sample = 0
