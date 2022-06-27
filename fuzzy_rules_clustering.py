@@ -101,11 +101,11 @@ def frbc(X, X_val, X_test, output_clusters=128):
 
 if __name__ == '__main__':
     # Load data
-    top = 10
+    top = 20
 
     X_train = pd.read_csv(semart_train_path).values
-    X_val = pd.read_csv(semart_val_path).values
-    X_test = pd.read_csv(semart_test_path).values
+    X_val = pd.read_csv(semart_val_path, header=None).values
+    X_test = pd.read_csv(semart_test_path, header=None).values
 
     arg_words = np.argsort(X_train.sum(axis=0)>0)[::-1][0:top]
     X_train = X_train[:, arg_words]

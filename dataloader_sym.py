@@ -68,8 +68,6 @@ class ArtDatasetSym(data.Dataset):
 
         # Attribute class
         try:
-            symbols = self.symbol_context.iloc[index, :]
-        except AttributeError:
             symbols = self.symbol_context[index, :]
         except Exception as e:
             print(e, self.set, index)
