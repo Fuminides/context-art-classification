@@ -178,7 +178,8 @@ def load_semart_symbols(args_dict):
         symbol_canon_list = args_dict.canon_list
     except:
         symbol_canon_list = load_terms()
-
+    print('Loading file... ' + str(textfile))
+    
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
     names = df['TITLE']
     descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
