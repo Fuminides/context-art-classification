@@ -220,6 +220,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             pred = output > 0.5
             label_actual = target.cpu().numpy()
 
+            print(pred.shape, label_actual.shape)
             acc_sample += np.equal(pred.cpu().numpy(), label_actual)
             acc_possible += pred.shape[0] * pred.shape[1]
 
