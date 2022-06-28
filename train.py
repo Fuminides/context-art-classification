@@ -182,6 +182,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     # switch to evaluation mode
     model.eval()
     acc_sample = 0
+    symbols_detected = 0
+    symbols_possible = 0
     acc_possible = 0
 
     for batch_idx, (input, target) in enumerate(val_loader):
@@ -218,7 +220,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         if symbol_task:
             pred = output > 0.5
             label_actual = target.cpu().numpy()
-
+            symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
+            symbols_possible += np.sum(label_actual, axis=None)
             acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
             acc_possible += pred.shape[0] * pred.shape[1]
 
@@ -282,6 +285,10 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     # Accuracy
     if symbol_task:
         acc = acc_sample / acc_possible
+        acc_symbols = symbols_detected / symbols_possible
+
+        print('Symbols detected {acc}'.format(acc=acc_symbols))
+
     elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
