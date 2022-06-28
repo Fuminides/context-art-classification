@@ -411,7 +411,7 @@ class Gallery:
 
 if __name__ == '__main__':
     symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
-    semart_Gallery = Gallery(symbols_names, paintings_names, symbol_context, args_dict.dir_dataset)
+    semart_Gallery = Gallery(symbols_names, paintings_names, symbol_context, '../SemArt/')
 
     #res = symbol_report(symbol_context, symbol_names=symbols_names, painting_names=paintings_names)
     res = semart_gen_symbol_graph(symbol_context)

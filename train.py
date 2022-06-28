@@ -221,7 +221,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             label_actual = target.cpu().numpy()
 
             print(pred.shape, label_actual.shape)
-            acc_sample += np.equal(pred.cpu().numpy(), label_actual)
+            acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
             acc_possible += pred.shape[0] * pred.shape[1]
 
         elif args_dict.att == 'all':
