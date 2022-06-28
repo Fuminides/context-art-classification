@@ -185,7 +185,6 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     acc_possible = 0
 
     for batch_idx, (input, target) in enumerate(val_loader):
-        print(target.shape)
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
@@ -220,7 +219,6 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             pred = output > 0.5
             label_actual = target.cpu().numpy()
 
-            print(pred.shape, label_actual.shape)
             acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
             acc_possible += pred.shape[0] * pred.shape[1]
 
