@@ -185,7 +185,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     acc_possible = 0
 
     for batch_idx, (input, target) in enumerate(val_loader):
-
+        print(target.shape)
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
