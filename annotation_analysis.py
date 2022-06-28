@@ -187,7 +187,7 @@ def load_semart_symbols(args_dict):
 
     
     if os.path.exists('cache/' + hash_cached):
-        dictionary_painting_symbol = pd.read_csv('cache/' + hash_cached).values
+        dictionary_painting_symbol = pd.read_csv('cache/' + hash_cached, index_col=0).values
     else:
         dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
         for ix, description in enumerate(descriptions):
