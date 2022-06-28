@@ -40,6 +40,7 @@ class ArtDatasetSym(data.Dataset):
         myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
         args_dict.canon_list = myth_entities
         self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict)
+        print('Symbol mat: ' + str(self.symbol_context.shape))
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
 
 
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     args_dict = params.get_parser()
 
     args_dict.dir_data = 'Data'
-    args_dict.mode = 'val'
+    args_dict.mode = 'train'
     args_dict.vocab_type = 'type2ind.csv'
     args_dict.vocab_school = 'school2ind.csv'
     args_dict.vocab_time = 'time2ind.csv'
@@ -99,4 +100,4 @@ if __name__ == '__main__':
 
     semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode)
     for batch_idx, (input, target) in enumerate(semart_val_loader):
-        print(batch_idx, input, target)
+        print(batch_idx, len(input), target.shape)
