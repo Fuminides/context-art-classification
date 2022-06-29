@@ -185,6 +185,9 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     symbols_detected = 0
     symbols_possible = 0
     acc_possible = 0
+    absence_detected = 0
+    absence_possible = 0
+
 
     for batch_idx, (input, target) in enumerate(val_loader):
         # Inputs to Variable type
@@ -224,6 +227,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             symbols_possible += np.sum(label_actual, axis=None)
             acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
             acc_possible += pred.shape[0] * pred.shape[1]
+            absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
+            absence_possible += np.sum(np.logical_not(label_actual), axis=None)
 
         elif args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
@@ -286,8 +291,10 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     if symbol_task:
         acc = acc_sample / acc_possible
         acc_symbols = symbols_detected / symbols_possible
+        acc_absence = absence_detected / absence_possible
 
         print('Symbols detected {acc}'.format(acc=acc_symbols))
+        print('Absence detected {acc}'.format(acc=acc_absence))
 
     elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)

@@ -42,7 +42,7 @@ def test_knowledgegraph(args_dict):
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
-
+    symbol_task = args_dict.symbol_task
     # Load best model
 
     print("=> loading checkpoint '{}'".format(args_dict.model_path))
@@ -79,6 +79,14 @@ def test_knowledgegraph(args_dict):
 
     # Switch to evaluation mode & compute test samples embeddings
     model.eval()
+
+    acc_sample = 0
+    symbols_detected = 0
+    symbols_possible = 0
+    acc_possible = 0
+    absence_detected = 0
+    absence_possible = 0
+
     for i, (input, target) in enumerate(test_loader):
 
         # Inputs to Variable type
@@ -114,7 +122,18 @@ def test_knowledgegraph(args_dict):
 
             #outsoftmax = torch.nn.functional.softmax(output[0])
         
-        conf, predicted = torch.max(output, 1)
+        if symbol_task:
+            pred = output > 0.5
+            label_actual = target.cpu().numpy()
+            symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
+            symbols_possible += np.sum(label_actual, axis=None)
+            absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
+            absence_possible += np.sum(np.logical_not(label_actual), axis=None)
+
+            acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
+            acc_possible += pred.shape[0] * pred.shape[1]
+        else:
+            conf, predicted = torch.max(output, 1)
 
         # Store embeddings
         if i==0:
@@ -127,7 +146,16 @@ def test_knowledgegraph(args_dict):
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
 
     # Compute Accuracy
-    acc = np.sum(out == label)/len(out)
+    # Accuracy
+    if symbol_task:
+        acc = acc_sample / acc_possible
+        acc_symbols = symbols_detected / symbols_possible
+        acc_absence = absence_detected / absence_possible
+    
+        print('Symbols detected {acc}'.format(acc=acc_symbols))
+        print('Absence detected {acc}'.format(acc=acc_absence))
+    else:
+        acc = np.sum(out == label)/len(out)
     print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
 
 
