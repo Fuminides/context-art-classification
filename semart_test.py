@@ -38,7 +38,7 @@ def test_knowledgegraph(args_dict):
         if args_dict.append != 'append':
             model = KGM(len(att2i), end_dim=N_CLUSTERS)
         else:
-            model = KGM_append(len(att2i))
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()

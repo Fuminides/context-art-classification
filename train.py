@@ -179,13 +179,14 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
 def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
-    # object to store & plot the losses
-    losses = utils.AverageMeter()
-
     # switch to evaluation mode
     model.eval()
-    for batch_idx, (input, target) in enumerate(val_loader):
+    acc_sample = 0
+    symbols_detected = 0
+    symbols_possible = 0
+    acc_possible = 0
 
+    for batch_idx, (input, target) in enumerate(val_loader):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
@@ -216,51 +217,15 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 output = model((input_var[0], target[1]))
             else:
                 output = model(input_var[0])
+        if symbol_task:
+            pred = output > 0.5
+            label_actual = target.cpu().numpy()
+            symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
+            symbols_possible += np.sum(label_actual, axis=None)
+            acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
+            acc_possible += pred.shape[0] * pred.shape[1]
 
-        if args_dict.model != 'kgm':
-            
-            if args_dict.att == 'all':
-                if args_dict.model == 'rmtl':
-                    class_loss = multi_class_loss(criterion[0], target_var, output)
-            
-                    encoder_loss = criterion[1](output[4], output[5])
-              
-                    val_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
-                elif symbol_task:
-                    val_loss = criterion(output, target_var)
-                else:
-                    val_loss = multi_class_loss(criterion, target_var, output)
-            else:
-                val_loss = criterion(output, target_var)
-
-
-        # It is a Context-based model
-        else:
-            if args_dict.att == 'all': # TODO
-                class_loss = multi_class_loss(criterion, target_var, output)
-                
-                encoder_loss = criterion[1](output[4], target_var[-1].long())
-                val_loss = args_dict.lambda_c * class_loss + \
-                            args_dict.lambda_e * encoder_loss
-
-            else:
-                if args_dict.append == 'append':
-                    val_loss = criterion[0](output, target_var[0].long())
-                    
-                else:
-                    class_loss = criterion[0](output[0], target_var[0].long())
-                    encoder_loss = criterion[1](output[1], target_var[1].float())
-
-                    val_loss = args_dict.lambda_c * class_loss + \
-                                args_dict.lambda_e * encoder_loss
-
-        
-                            
-        
-        losses.update(val_loss.data.cpu().numpy(), input[0].size(0))
-
-        if args_dict.att == 'all':
+        elif args_dict.att == 'all':
             pred_type = torch.argmax(output[0], 1)
             pred_school = torch.argmax(output[1], 1)
             pred_time = torch.argmax(output[2], 1)
@@ -285,10 +250,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label_school = np.concatenate((label_school, target[1].cpu().numpy()), axis=0)
                 label_tf = np.concatenate((label_tf, target[2].cpu().numpy()), axis=0)
                 label_author = np.concatenate((label_author, target[3].cpu().numpy()), axis=0)
-        
-        elif symbol_task:
-            pred = torch.argmax(output, 1)
-            label_actual = target.cpu().numpy()
+           
         else:
             if args_dict.model == 'kgm' and (not args_dict.append == 'append'):
                 pred = torch.argmax(output[0], 1)
@@ -321,7 +283,13 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 label = np.concatenate((label, label_actual), axis=0)
                 
     # Accuracy
-    if args_dict.att == 'all':
+    if symbol_task:
+        acc = acc_sample / acc_possible
+        acc_symbols = symbols_detected / symbols_possible
+
+        print('Symbols detected {acc}'.format(acc=acc_symbols))
+
+    elif args_dict.att == 'all':
         acc_type = np.sum(out_type == label_type)/len(out_type)
         acc_school = np.sum(out_school == label_school) / len(out_school)
         acc_tf = np.sum(out_time == label_tf) / len(out_time)
@@ -332,8 +300,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         acc = np.sum(out == label) / len(out)
 
     # Print validation info
-    print('Validation set: Average loss: {:.4f}\t'
-          'Accuracy {acc}'.format(losses.avg, acc=acc))
+    print('Accuracy {acc}'.format(acc=acc))
     #plotter.plot('closs', 'val', 'Class Loss', epoch, losses.avg)
     #plotter.plot('acc', 'val', 'Class Accuracy', epoch, acc)
 
@@ -364,14 +331,14 @@ def train_knowledgegraph_classifier(args_dict):
     # Define model
     if args_dict.embedds == 'graph':
         if args_dict.append == 'append':
-            model = KGM(len(att2i))
+            model = KGM(len(att2i), end_dim=N_CLUSTERS)
         else:
-            model = KGM_append(len(att2i))
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
     else:
         if args_dict.append != 'append':
             model = KGM(len(att2i), end_dim=N_CLUSTERS)
         else:
-            model = KGM_append(len(att2i))
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()

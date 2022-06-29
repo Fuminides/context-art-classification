@@ -165,29 +165,30 @@ def __load_semart_proxy(mode='train'):
     args_dict.csvtrain =  'semart_train.csv'
     return load_semart_symbols(args_dict)
 
-def load_semart_symbols(args_dict):
+def load_semart_symbols(args_dict, dataset):
     # Load data
-    if args_dict.mode == 'train':
+    if dataset == 'train':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
-    elif args_dict.mode == 'val':
+    elif dataset == 'val':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvval)
-    elif args_dict.mode == 'test':
+    elif dataset == 'test':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
     
     try:
         symbol_canon_list = args_dict.canon_list
     except:
         symbol_canon_list = load_terms()
+    print('Loading file... ' + str(textfile))
 
     df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
     names = df['TITLE']
     descriptions = df['TITLE'] + ' ' + df['DESCRIPTION'] # Load the contextual annotations
 
-    hash_cached = str(hash(str(df)))
+    hash_cached = str(hashlib.sha224(str.encode(str(df))).hexdigest())
 
     
     if os.path.exists('cache/' + hash_cached):
-        dictionary_painting_symbol = pd.read_csv('cache/' + hash_cached)
+        dictionary_painting_symbol = pd.read_csv('cache/' + hash_cached, index_col=0).values
     else:
         dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
         for ix, description in enumerate(descriptions):
@@ -411,7 +412,7 @@ class Gallery:
 
 if __name__ == '__main__':
     symbol_context, paintings_names, symbols_names = __load_semart_proxy(mode='train')
-    semart_Gallery = Gallery(symbols_names, paintings_names, symbol_context, args_dict.dir_dataset)
+    semart_Gallery = Gallery(symbols_names, paintings_names, symbol_context, '../SemArt/')
 
     #res = symbol_report(symbol_context, symbol_names=symbols_names, painting_names=paintings_names)
     res = semart_gen_symbol_graph(symbol_context)

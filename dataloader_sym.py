@@ -1,3 +1,4 @@
+from unicodedata import name
 import numpy as np
 import torch.utils.data as data
 import pandas as pd
@@ -38,7 +39,8 @@ class ArtDatasetSym(data.Dataset):
         myth_edges = an.load_edges_myth()
         myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
         args_dict.canon_list = myth_entities
-        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict)
+        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set)
+        print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set)
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
 
 
@@ -74,4 +76,28 @@ class ArtDatasetSym(data.Dataset):
         return [image], symbols
 
 #def filter_symbols():
+if __name__ == '__main__':
+    import params
     
+
+    from attributes import load_att_class
+    args_dict = params.get_parser()
+
+    args_dict.dir_data = 'Data'
+    args_dict.mode = 'train'
+    args_dict.vocab_type = 'type2ind.csv'
+    args_dict.vocab_school = 'school2ind.csv'
+    args_dict.vocab_time = 'time2ind.csv'
+    args_dict.vocab_author = 'author2ind.csv'
+    args_dict.embedds = 'tfidf'
+    args_dict.dir_dataset = '/home/javierfumanal/Documents/GitHub/SemArt/'
+    args_dict.csvtrain = 'semart_train.csv'
+    args_dict.csvval = 'semart_val.csv'
+    args_dict.dir_images = 'Images'
+
+
+    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+
+    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode)
+    for batch_idx, (input, target) in enumerate(semart_val_loader):
+        print(batch_idx, len(input), target.shape)
