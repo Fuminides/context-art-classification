@@ -20,6 +20,30 @@ class dummyPlug: #EVA 01: YURI, DONT DO THIS TO ME!
         pass
 
 
+## FUNCTIONS RELATED TO THE ARTEMIS DATASET
+def load_artemis_df():
+    return pd.read_csv('Data/artemis_dataset_release_v0.csv')
+
+def check_symbols_feelings():
+    if os.path.exists('Data/feelings_symbols.csv'):
+        return pd.read_csv('Data/feelings_symbols.csv')
+    else:
+        artemis_df = load_artemis_df()
+        emotions = artemis_df['emotion'].unique()
+
+        symbols_names = load_terms()
+        res = pd.DataFrame(np.zeros((len(symbols_names), len(emotions))), index=symbols_names, columns=emotions)
+
+        for ix, row in artemis_df.iterrows():
+            text, feeling = row['utterance'], row['emotion']
+            words = text.split()
+            words = [word.lower() for word in words]
+
+            for symbol in symbols_names:
+                if symbol.lower() in words:
+                    res.loc[symbol, feeling] += 1
+    
+    return res
 
 ## FUNCTIONS RELATED TO THE MYTH GRAPHS
 def edges2adjacency_df(edges_df,symmetry=False):
