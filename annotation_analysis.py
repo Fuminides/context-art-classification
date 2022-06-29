@@ -45,6 +45,13 @@ def check_symbols_feelings():
     
     return res
 
+def most_striking_symbols(k=10):
+    '''
+    Returns the symbols with the highest number of occurrences in the myth graph.
+    '''
+    return list(zip(load_artemis_df().sum(axis=1).sort_values(ascending=False).index[:k],
+                load_artemis_df().sum(axis=1).sort_values(ascending=False).values[:k]))
+
 ## FUNCTIONS RELATED TO THE MYTH GRAPHS
 def edges2adjacency_df(edges_df,symmetry=False):
     '''
