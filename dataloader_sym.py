@@ -11,7 +11,7 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, transform = None):
+    def __init__(self, args_dict, set, transform=None, canon_list=None):
         """
         Args:
             args_dict: parameters dictionary
@@ -36,15 +36,18 @@ class ArtDatasetSym(data.Dataset):
 
         self.imageurls = list(df['IMAGE_FILE'])
 
-        import re
-        pattern = re.compile('[^a-zA-Z]+')
-        myth_edges = an.load_edges_myth()
-        source_names = np.unique(list(myth_edges['Source']))
-        source_names = [pattern.sub('', name) for name in source_names]
-        target_names = np.unique(list(myth_edges['Target']))
-        target_names = [pattern.sub('', name) for name in target_names]
-        myth_entities = np.unique(source_names + target_names)
-        args_dict.canon_list = myth_entities
+        if canon_list is None:
+            import re
+            pattern = re.compile('[^a-zA-Z]+')
+            myth_edges = an.load_edges_myth()
+            source_names = np.unique(list(myth_edges['Source']))
+            source_names = [pattern.sub('', name) for name in source_names]
+            target_names = np.unique(list(myth_edges['Target']))
+            target_names = [pattern.sub('', name) for name in target_names]
+            myth_entities = np.unique(source_names + target_names)
+            args_dict.canon_list = myth_entities
+        else:
+            args_dict.canon_list = canon_list
 
         self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set != 'train')
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set)
