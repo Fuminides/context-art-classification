@@ -151,7 +151,7 @@ def test_knowledgegraph(args_dict):
             out = predicted.data.cpu().numpy()
             label = target[0].cpu().numpy()
             scores = conf.data.cpu().numpy()
-        else:
+        elif (not args_dict.symbol_task):
             out = np.concatenate((out,predicted.data.cpu().numpy()), axis=0)
             label = np.concatenate((label,target[0].cpu().numpy()), axis=0)
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
