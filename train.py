@@ -563,7 +563,7 @@ def train_symbol_classifier(args_dict):
     
 
     # Define model
-    model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
+    model = SymModel(semart_train_loader.symbol_context.shape[1], model=args_dict.architecture)
     if torch.cuda.is_available():
         model.cuda()
 
