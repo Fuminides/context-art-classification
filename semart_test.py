@@ -29,11 +29,12 @@ def test_knowledgegraph(args_dict):
     elif args_dict.att == 'author':
         att2i = author2idx
     N_CLUSTERS = args_dict.clusters
+    symbol_task = args_dict.symbol_task
     semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
     # Define model
-    if args_dict.symbol_task:
+    if symbol_task:
         model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
-    if args_dict.embedds == 'graph':
+    elif args_dict.embedds == 'graph':
         if args_dict.append != 'append':
             model = KGM(len(att2i))
         else:
@@ -46,7 +47,7 @@ def test_knowledgegraph(args_dict):
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
-    symbol_task = args_dict.symbol_task
+    
     # Load best model
 
     print("=> loading checkpoint '{}'".format(args_dict.model_path))
