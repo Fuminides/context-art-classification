@@ -108,6 +108,9 @@ if __name__ == '__main__':
 
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
 
-    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode)
+    
+    semart_train_loader = ArtDatasetSym(args_dict, set='train')
+
+    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode, canon_list=semart_train_loader.symbols_names)
     for batch_idx, (input, target) in enumerate(semart_val_loader):
         print(batch_idx, len(input), target.shape)
