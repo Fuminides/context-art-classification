@@ -139,16 +139,15 @@ def test_knowledgegraph(args_dict):
             label_actual = target.cpu().numpy()
             symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
             symbols_possible += np.sum(label_actual, axis=None)
-            absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
-            absence_possible += np.sum(np.logical_not(label_actual), axis=None)
-
             acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
             acc_possible += pred.shape[0] * pred.shape[1]
+            absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
+            absence_possible += np.sum(np.logical_not(label_actual), axis=None)
         else:
             conf, predicted = torch.max(output, 1)
 
         # Store embeddings
-        if i==0:
+        if (not args_dict.symbol_task) and (i==0):
             out = predicted.data.cpu().numpy()
             label = target[0].cpu().numpy()
             scores = conf.data.cpu().numpy()
