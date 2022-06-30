@@ -3,12 +3,14 @@ from __future__ import division
 import numpy as np
 import torch
 from torchvision import transforms
+from dataloader_sym import ArtDatasetSym
 
 from model_mtl import MTL
 from model_kgm import KGM, KGM_append
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
+from model_sym import SymModel
 
 #from model_gcn import GCN, 
 NODE2VEC_OUTPUT = 128
@@ -27,8 +29,10 @@ def test_knowledgegraph(args_dict):
     elif args_dict.att == 'author':
         att2i = author2idx
     N_CLUSTERS = args_dict.clusters
-
+    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
     # Define model
+    if args_dict.symbol_task:
+        model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
     if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
             model = KGM(len(att2i))
