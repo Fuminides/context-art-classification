@@ -35,9 +35,14 @@ class ArtDatasetSym(data.Dataset):
         self.transform = transform
 
         self.imageurls = list(df['IMAGE_FILE'])
-
+        import re
+        pattern = re.compile('[^a-zA-Z]+')
         myth_edges = an.load_edges_myth()
-        myth_entities = np.unique(list(myth_edges['Source']) + list(myth_edges['Target']))
+        source_names = np.unique(list(myth_edges['Source']))
+        source_names = [pattern.sub('', name) for name in source_names]
+        target_names = np.unique(list(myth_edges['Target']))
+        target_names = [pattern.sub('', name) for name in target_names]
+        myth_entities = np.unique(source_names + target_names)
         args_dict.canon_list = myth_entities
         self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set)
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set)
