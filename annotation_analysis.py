@@ -196,7 +196,7 @@ def __load_semart_proxy(mode='train'):
     args_dict.csvtrain =  'semart_train.csv'
     return load_semart_symbols(args_dict)
 
-def load_semart_symbols(args_dict, dataset):
+def load_semart_symbols(args_dict, dataset, strict_names=False):
     # Load data
     if dataset == 'train':
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
@@ -206,7 +206,10 @@ def load_semart_symbols(args_dict, dataset):
         textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
     
     try:
-        symbol_canon_list = list(set([each_string.lower() for each_string in load_terms()]) & set(args_dict.canon_list)) 
+        if strict_names:
+            args_dict.canon_list
+        else:
+            symbol_canon_list = list(set([each_string.lower() for each_string in load_terms()]) & set(args_dict.canon_list)) 
     except:
         symbol_canon_list = load_terms()
     print('Loading file... ' + str(textfile))

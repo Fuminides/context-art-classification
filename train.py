@@ -569,9 +569,9 @@ def train_symbol_classifier(args_dict):
 
     # Loss and optimizer
     if torch.cuda.is_available():
-        class_loss = nn.CrossEntropyLoss().cuda()
+        class_loss = nn.BCEWithLogitsLoss().cuda()
     else:
-        class_loss = nn.CrossEntropyLoss()
+        class_loss = nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
