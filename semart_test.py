@@ -73,9 +73,14 @@ def test_knowledgegraph(args_dict):
 
     # Data Loaders for test
     if torch.cuda.is_available():
-        test_loader = torch.utils.data.DataLoader(
-            ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
-            batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+        if not args_dict.symbol_task:
+            test_loader = torch.utils.data.DataLoader(
+                    ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+                    batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+        else:
+            test_loader = torch.utils.data.DataLoader(
+                        ArtDatasetSym(args_dict, set='test', transform=test_transforms),
+                        batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
     else:
         test_loader = torch.utils.data.DataLoader(
             ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
