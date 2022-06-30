@@ -78,8 +78,9 @@ def test_knowledgegraph(args_dict):
                     ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
                     batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
         else:
+            semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
             test_loader = torch.utils.data.DataLoader(
-                        ArtDatasetSym(args_dict, set='test', transform=test_transforms),
+                        ArtDatasetSym(args_dict, set='test', transform=test_transforms, canon_list=args_dict.canon_list),
                         batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
     else:
         test_loader = torch.utils.data.DataLoader(
