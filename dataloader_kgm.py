@@ -40,9 +40,9 @@ class ArtDatasetKGM(data.Dataset):
                 self.chosen_coded_semart_test, clusters=clusters)
             
         elif self.embedds == 'frbc':
-            self.chosen_coded_semart_train = pd.read_csv('Data/rule_embds_train.csv').values
-            self.chosen_coded_semart_val = pd.read_csv('Data/rule_embds_val.csv').values
-            self.chosen_coded_semart_test = pd.read_csv('Data/rule_embds_test.csv').values 
+            self.chosen_coded_semart_train = pd.read_csv('Data/rule_embds_train.csv', index=0).values
+            self.chosen_coded_semart_val = pd.read_csv('Data/rule_embds_val.csv', index=0).values
+            self.chosen_coded_semart_test = pd.read_csv('Data/rule_embds_test.csv', index=0).values 
        
 
         elif self.embedds == 'tfidf':

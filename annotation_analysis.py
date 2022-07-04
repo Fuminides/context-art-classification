@@ -194,7 +194,7 @@ def __load_semart_proxy(mode='train'):
     args_dict.mode = 'train'
     args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt'
     args_dict.csvtrain =  'semart_train.csv'
-    return load_semart_symbols(args_dict)
+    return load_semart_symbols(args_dict, dataset='train')
 
 def load_semart_symbols(args_dict, dataset, strict_names=False):
     # Load data
