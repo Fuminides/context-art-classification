@@ -1,4 +1,0 @@
-python main.py --mode test --workers 0 --model kgm --att author --dir_dataset "../SemArt/" --batch_size 126 --nepochs 300 --embedds fcm --resume "./Models/fcm_author_best_model.pth.tar" | grep Accuracy
-python main.py --mode test --workers 0 --model kgm --att type --dir_dataset "../SemArt/" --batch_size 126 --nepochs 300 --embedds fcm --resume "./Models/fcm_type_best_model.pth.tar" | grep Accuracy
-python main.py --mode test --workers 0 --model kgm --att time --dir_dataset "../SemArt/" --batch_size 126 --nepochs 300 --embedds fcm --resume "./Models/fcm_time_best_model.pth.tar" | grep Accuracy
-python main.py --mode test --workers 0 --model kgm --att school --dir_dataset "../SemArt/" --batch_size 126 --nepochs 300 --embedds fcm --resume "./Models/fcm_school_best_model.pth.tar" | grep Accuracy

@@ -6,7 +6,7 @@ def get_parser():
 
     parser.add_argument('--mode', default='gen_graph_dataset', type=str, help='Mode (train | test)')
     parser.add_argument('--model', default='kgm', type=str, help='Model (mtl | kgm). mlt for multitask learning model. kgm for knowledge graph model.' )
-    parser.add_argument('--att', default='time', type=str, help='Attribute classifier (type | school | time | author) (only kgm model).')
+    parser.add_argument('--att', default='time', type=str, help='Attribute classifier (type | school | time | author| all) (only kgm model).')
 
     # Directories
     parser.add_argument('--dir_data', default='Data')
@@ -32,29 +32,38 @@ def get_parser():
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--workers', default=8, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
-    parser.add_argument('--patience', default=30, type=int)
+    parser.add_argument('--patience', default=100, type=int)
     parser.add_argument('--nepochs', default=300, type=int)
+
+    
 
     # KGM model
     parser.add_argument('--graph_embs', default='semart-artgraph-node2vec.model')
     parser.add_argument('--lambda_c', default=0.9, type=float)
     parser.add_argument('--lambda_e', default=0.1, type=float)
     parser.add_argument('--embedds', default='graph', type=str)
+    parser.add_argument('--append', default='gradient')
 
     # FCM model
     parser.add_argument('--k', default=100, type=int)
-    parser.add_argument('--clusters', default=150, type=int)
+    parser.add_argument('--clusters', default=128, type=int)
 
     # GCN model
-    parser.add_argument('--feature_matrix', default='Data/semart.emd', type=str)
-    parser.add_argument('--feature_matrix_val', default='Data/semart_val.emd', type=str)
-    parser.add_argument('--feature_matrix_test', default='Data/semart_test.csv', type=str)
+    parser.add_argument('--feature_matrix', default='Data/feature_train_128_semart.csv', type=str)
+    parser.add_argument('--val_feature_matrix', default='Data/feature_val_128_semart.csv', type=str)
+    parser.add_argument('--test_feature_matrix', default='Data/feature_test_128_semart.csv', type=str)
+
     parser.add_argument('--edge_list_train', default='Data/kg_semart.csv', type=str)
     parser.add_argument('--edge_list_val', default='Data/kg_semart_val.csv', type=str)
     parser.add_argument('--edge_list_test', default='Data/kg_semart_test.csv', type=str)
     
+    # MTL model
+    parser.add_argument('--architecture', default='resnet', type=str)
     # Test
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
     parser.add_argument('--no_cuda', action='store_true')
+
+    #Symbol task
+    parser.add_argument('--symbol_task', default=False, type=bool)
 
     return parser

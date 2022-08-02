@@ -26,12 +26,25 @@ def load_csv_as_dict(csv_path):
     
     return mydict
 
-        
+def emd_to_csv(emd_path):
+    name_csv = ''.join(emd_path.split('.')[:-1]) + '.csv'
+    emd_data = pd.read_csv(emd_path, skiprows=1, sep=' ', header=None, index_col=0)
+    emd_data = emd_data.sort_index()
+    emd_data.columns = np.arange(emd_data.shape[1])
+
+
+    emd_data.to_csv(name_csv)
+
 def save_att_as_csv(data, csv_path):
     aux = pd.DataFrame.from_dict(data, orient='index')
     aux['key'] = aux.index
     aux.to_csv(csv_path, header=None, index=None)
     
+
+#### GRAPH MATCHING AND COMPARISON
+def graph_similarity(g1, g2):
+    return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] * g1.shape[1])
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
