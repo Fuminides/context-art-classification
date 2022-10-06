@@ -425,7 +425,8 @@ class Gallery:
         return list(self.symbols_names[self.symbol_context[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]])
     
     def most_repeated_symbols(self, k=10):
-        return list(self.symbols_names[self.symbol_context.sum(axis=0).argsort()[::-1][0:k]])
+        symbols_args = self.symbol_context.sum(axis=0).argsort()[::-1][0:k]
+        return [list(self.symbols_names)[ix] for ix in symbols_args]
 
 
     def most_connected_symbols(self, k=10):
