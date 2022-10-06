@@ -192,7 +192,7 @@ def __load_semart_proxy(mode='train'):
     
     args_dict = dummyPlug()
     args_dict.mode = 'train'
-    args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt'
+    args_dict.dir_dataset = r'C:/Users/jf22881/Documents/SemArt'
     args_dict.csvtrain =  'semart_train.csv'
     return load_semart_symbols(args_dict, dataset='train')
 
@@ -240,9 +240,10 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
 
             dictionary_painting_symbol[ix, :] = symbols_painting
 
-        useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
-        dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
-        symbol_canon_list = [x for x in symbol_canon_list if x in useful_symbols]
+        if not strict_names:
+            useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
+            dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
+            symbol_canon_list = [x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]]
 
         pd.DataFrame(dictionary_painting_symbol).to_csv('cache/' + hash_cached)
 
