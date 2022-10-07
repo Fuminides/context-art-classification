@@ -11,7 +11,7 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, transform=None, canon_list=None):
+    def __init__(self, args_dict, set, transform=None, canon_list=None, symbol_detect=None):
         """
         Args:
             args_dict: parameters dictionary
@@ -53,6 +53,9 @@ class ArtDatasetSym(data.Dataset):
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set)
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
 
+        self.subset = symbol_detect is not None
+        self.target_index_list = symbol_detect
+
 
 
     def __len__(self):
@@ -79,7 +82,11 @@ class ArtDatasetSym(data.Dataset):
 
         # Attribute class
         try:
-            symbols = self.symbol_context[index, :]
+            if self.subset:
+                symbols = self.symbol_context[index, :]
+                symbols = np.array([symbols[x] for x in self.target_index_list])
+            else:
+                symbols = self.symbol_context[index, :]
         except Exception as e:
             print(e, self.set, index)
 
@@ -100,17 +107,18 @@ if __name__ == '__main__':
     args_dict.vocab_time = 'time2ind.csv'
     args_dict.vocab_author = 'author2ind.csv'
     args_dict.embedds = 'tfidf'
-    args_dict.dir_dataset = '/home/javierfumanal/Documents/GitHub/SemArt/'
+    args_dict.dir_dataset = r'C:\Users\jf22881\Documents\SemArt'
     args_dict.csvtrain = 'semart_train.csv'
     args_dict.csvval = 'semart_val.csv'
     args_dict.dir_images = 'Images'
+    targets = [10, 20, 30]
 
-
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    #type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
 
     
-    semart_train_loader = ArtDatasetSym(args_dict, set='train')
+    semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=targets)
+    
 
-    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode, canon_list=semart_train_loader.symbols_names)
-    for batch_idx, (input, target) in enumerate(semart_val_loader):
+    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode, canon_list=semart_train_loader.symbols_names, symbol_detect=targets)
+    for batch_idx, (input, target) in enumerate(semart_train_loader):
         print(batch_idx, len(input), target.shape)
