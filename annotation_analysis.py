@@ -194,7 +194,7 @@ def __load_semart_proxy(mode='train'):
     args_dict.mode = 'train'
     args_dict.dir_dataset = r'C:/Users/jf22881/Documents/SemArt'
     args_dict.csvtrain =  'semart_train.csv'
-    return load_semart_symbols(args_dict, dataset='train')
+    return load_semart_symbols(args_dict, dataset='train', strict_names=True)
 
 def load_semart_symbols(args_dict, dataset, strict_names=False):
     # Load data
@@ -358,7 +358,8 @@ class Gallery:
 
         name = self.df['TITLE'].iloc[painting_arg]
         symbols = self.symbol_context[painting_arg, :]
-        symbols_names_painting = self.symbols_names[symbols.astype(np.bool)]
+        print(len(self.symbols_names), len(symbols))
+        symbols_names_painting = [x for ix, x in enumerate(self.symbols_names) if symbols.astype(np.bool)[ix]] # self.symbols_names[symbols.astype(np.bool)]
 
 
         #plt.figure()
