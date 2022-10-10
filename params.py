@@ -1,5 +1,5 @@
 import argparse
-
+import ast
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -65,5 +65,7 @@ def get_parser():
 
     #Symbol task
     parser.add_argument('--symbol_task', default=False, type=bool)
+    parser.add_argument('--targets', type=ast.literal_eval)
+
 
     return parser

@@ -111,7 +111,7 @@ if __name__ == '__main__':
     args_dict.csvtrain = 'semart_train.csv'
     args_dict.csvval = 'semart_val.csv'
     args_dict.dir_images = 'Images'
-    targets = [10, 20, 30]
+    args_dict.targets = [10, 20, 30]
 
     #type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
 
