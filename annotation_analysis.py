@@ -1,6 +1,7 @@
 import os
 import pickle
 import itertools
+import csv
 
 import pandas as pd
 import numpy as np
@@ -224,6 +225,8 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
     if os.path.exists('cache/' + hash_cached):
         print('Symbols cached... ')
         dictionary_painting_symbol = pd.read_csv('cache/' + hash_cached, index_col=0).values
+        symbol_canon_list = pd.read_csv('cache/' + hash_cached + 'names', index_col=0)
+
     else:
         print('Computing Symbols matrix... ')
         dictionary_painting_symbol = np.zeros((df.shape[0], len(symbol_canon_list)))
@@ -240,11 +243,13 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
 
             dictionary_painting_symbol[ix, :] = symbols_painting
 
-        if not strict_names:
-            useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
-            dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
-            symbol_canon_list = [x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]]
+            if not strict_names:
+                useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
+                dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
+                symbol_canon_list = [x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]]
+            
 
+        symbol_canon_list.to_csv('cache/' + hash_cached + 'names')    
         pd.DataFrame(dictionary_painting_symbol).to_csv('cache/' + hash_cached)
 
     return dictionary_painting_symbol.astype(np.bool), names, symbol_canon_list
