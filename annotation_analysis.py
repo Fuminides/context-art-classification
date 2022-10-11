@@ -438,6 +438,11 @@ class Gallery:
         symbols_args = self.symbol_context.sum(axis=0).argsort()[::-1][0:k]
         return symbols_args
 
+    def ratio_symbol(self, index):
+        means = self.symbol_context.mean(axis=1)
+        
+        return means[index]
+
 
     def most_connected_symbols(self, k=10):
         idx = (self.symbol_context.sum(axis=0)*-1).argsort()[0:k]
