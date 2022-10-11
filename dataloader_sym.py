@@ -50,7 +50,7 @@ class ArtDatasetSym(data.Dataset):
             args_dict.canon_list = canon_list
 
         self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set != 'train')
-        print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(self.symbols_names))
+        print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(len(self.symbols_names)))
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
 
         self.subset = symbol_detect is not None
@@ -116,9 +116,9 @@ if __name__ == '__main__':
     #type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
 
     
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=targets)
+    semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=args_dict.targets)
     
 
-    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode, canon_list=semart_train_loader.symbols_names, symbol_detect=targets)
+    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
     for batch_idx, (input, target) in enumerate(semart_train_loader):
         print(batch_idx, len(input), target.shape)
