@@ -306,7 +306,7 @@ def pair_graph_load():
 
 class Gallery:
 
-    def __init__(self,symbols_names, paintings_names, symbol_context, path):
+    def __init__(self, symbols_names, paintings_names, symbol_context, path):
         self.symbols_names = symbols_names
         self.painting_names = paintings_names
         self.symbol_context = symbol_context
