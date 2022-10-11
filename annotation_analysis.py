@@ -425,7 +425,7 @@ class Gallery:
         chosen_paintings = self.df['TYPE'] == theme
         return list(self.symbols_names[self.symbol_context[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]])
     
-    def most_repeated_symbols(self, k=10):
+    def most_repeated_symbols_name(self, k=10):
         symbols_args = self.most_repeated_symbols(k=10)
         return [list(self.symbols_names)[ix] for ix in symbols_args]
     

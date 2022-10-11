@@ -21,6 +21,7 @@ from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from dataloader_sym import ArtDatasetSym
 from attributes import load_att_class
+from my_focal_loss import sigmoid_focal_loss
 
 #from torch_geometric.loader import DataLoader
 if torch.cuda.is_available():
@@ -569,9 +570,9 @@ def train_symbol_classifier(args_dict):
 
     # Loss and optimizer
     if torch.cuda.is_available():
-        class_loss = nn.BCEWithLogitsLoss().cuda()
+        class_loss = sigmoid_focal_loss.cuda() # nn.BCEWithLogitsLoss().cuda()
     else:
-        class_loss = nn.BCEWithLogitsLoss()
+        class_loss = sigmoid_focal_loss# nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
