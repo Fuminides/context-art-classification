@@ -49,7 +49,7 @@ class ArtDatasetSym(data.Dataset):
         else:
             args_dict.canon_list = canon_list
 
-        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set != 'train')
+        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=True)
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(len(self.symbols_names)))
         self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
 
