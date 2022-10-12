@@ -246,7 +246,7 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
             if not strict_names:
                 useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
                 dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
-                symbol_canon_list = [x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]]
+                symbol_canon_list = pd.DataFrame([x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]])
             
 
         symbol_canon_list.to_csv('cache/' + hash_cached + 'names')    
@@ -440,7 +440,7 @@ class Gallery:
 
     def ratio_symbol(self, index):
         means = self.symbol_context.mean(axis=1)
-        
+
         return means[index]
 
 
