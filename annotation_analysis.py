@@ -439,7 +439,7 @@ class Gallery:
         return symbols_args
 
     def ratio_symbol(self, index):
-        means = self.symbol_context.mean(axis=1)
+        means = self.symbol_context.mean(axis=0)
 
         return means[index]
 
