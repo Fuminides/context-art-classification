@@ -573,7 +573,7 @@ def train_symbol_classifier(args_dict):
 
     # Loss and optimizer
     if torch.cuda.is_available():
-        class_loss = sigmoid_focal_loss.cuda() # nn.BCEWithLogitsLoss().cuda()
+        class_loss = sigmoid_focal_loss # nn.BCEWithLogitsLoss().cuda()
     else:
         class_loss = sigmoid_focal_loss# nn.BCEWithLogitsLoss()
 
