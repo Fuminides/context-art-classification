@@ -95,7 +95,7 @@ class ArtDatasetSym(data.Dataset):
         except Exception as e:
             print(e, self.set, index)
 
-        return [image], symbols
+        return [image], np.squeeze(symbols)
 
 #def filter_symbols():
 if __name__ == '__main__':

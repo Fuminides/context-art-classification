@@ -38,4 +38,4 @@ class SymModel(nn.Module):
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         out_type = self.class_type(visual_emb)
         
-        return out_type
+        return torch.squeeze(out_type)
