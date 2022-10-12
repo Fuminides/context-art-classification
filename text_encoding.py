@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from collections import Counter
+import clip
 
 def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', top=True, explain=False):
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
@@ -49,6 +50,40 @@ def bow_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', t
         else:
             return chosen_coded_semart_train, chosen_coded_semart_val, chosen_coded_semart_test
 
+def clip_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', top=True, explain=False):
+    import torch
+    semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding = "ISO-8859-1", sep='\t')
+    semart_val = pd.read_csv(semart_path + 'semart_val.csv', encoding = "ISO-8859-1", sep='\t')
+    semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, preprocess = clip.load("ViT-B/32", device=device)
+
+    semart_train_desc = semart_train['DESCRIPTION']
+    semart_val_desc = semart_val['DESCRIPTION']
+    semart_test_desc = semart_test['DESCRIPTION']
+
+    MAX_LEN_CLIP = 77
+    train_mat = np.zeros((len(semart_train_desc), MAX_LEN_CLIP))
+    for ix, context_text in enumerate(semart_train_desc):
+        slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
+        text_train = clip.tokenize(slices).to(device).numpy().max(axis=0)
+        train_mat[ix, :] = text_train
+
+    val_mat = np.zeros((len(semart_val_desc), MAX_LEN_CLIP))
+    for ix, context_text in enumerate(semart_val_desc):
+        slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
+        text_train = clip.tokenize(slices).to(device).numpy().max(axis=0)
+        val_mat[ix, :] = text_train
+
+    test_mat = np.zeros((len(semart_test_desc), MAX_LEN_CLIP))
+    for ix, context_text in enumerate(semart_test_desc):
+        slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
+        text_train = clip.tokenize(slices).to(device).numpy().max(axis=0)
+        test_mat[ix, :] = text_train
+
+
+    return train_mat, val_mat, test_mat
 
 def tf_idf_load_train_text_corpus(semart_path='../SemArt/', k=10, append='append', top=True, explain=False):
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -116,7 +151,7 @@ def prune_corpus(corpus):
 def fcm_coded_context(chosen_coded_semart, clusters):
     from skfuzzy.cluster import cmeans
 
-    cntr, u, u0, d, jm, p, fpc = cmeans(chosen_coded_semart.toarray().T, clusters, 2, 0.01, 200)
+    cntr, u, u0, d, jm, p, fpc = cmeans(chosen_coded_semart.T, clusters, 2, 0.01, 200)
 
     return u.T
 
@@ -127,9 +162,12 @@ def myplot(score,coeff,labels=None):
     ys = score[:,1]
     n = coeff.shape[0]
 
+    plt.figure()
     plt.scatter(xs ,ys, c = labels) #without scaling
     plt.xticks([])
     plt.yticks([])
+    plt.show()
+    print('Biplot done')
 
     '''for i in range(n):
         plt.arrow(0, 0, coeff[i,0], coeff[i,1],color = 'r',alpha = 0.5)
@@ -141,7 +179,7 @@ def myplot(score,coeff,labels=None):
 def silhoutte_progress():
     from sklearn.metrics import silhouette_score
 
-    chosen_coded_semart_train = bow_load_train_text_corpus(k=10)
+    chosen_coded_semart_train = clip_load_train_text_corpus(k=10)
     silhouttes = []
     for cluster in np.arange(2, 200):
         sol = fcm_coded_context(chosen_coded_semart_train, cluster)
@@ -157,7 +195,7 @@ def biplot():
     from sklearn.manifold import TSNE
 
     chosen_coded_semart_train = fcm_coded_context(
-                    bow_load_train_text_corpus(k=10, append=False), clusters=128)
+                    clip_load_train_text_corpus(k=10, append=False)[0], clusters=128)
     pca = PCA()
     pca.fit(chosen_coded_semart_train)
     print(pca.explained_variance_ratio_[0:2])
@@ -177,4 +215,4 @@ def biplot_tfidf():
     myplot(x_new[:, 0:2], pca.components_)
 
 if __name__ == '__main__':
-    biplot_tfidf()
+    biplot()
