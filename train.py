@@ -550,8 +550,8 @@ def train_symbol_classifier(args_dict):
 
 
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms)
-    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, canon_list=semart_train_loader.symbols_names)
+    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms, symbol_detect=args_dict.targets)
+    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
@@ -564,7 +564,10 @@ def train_symbol_classifier(args_dict):
     
 
     # Define model
-    model = SymModel(semart_train_loader.symbol_context.shape[1], model=args_dict.architecture)
+    if args_dict.targets is None:
+        model = SymModel(semart_train_loader.symbol_context.shape[1], model=args_dict.architecture)
+    else:
+        model = SymModel(len(args_dict.targets), model=args_dict.architecture)
     if torch.cuda.is_available():
         model.cuda()
 

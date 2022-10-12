@@ -52,12 +52,14 @@ class ArtDatasetSym(data.Dataset):
         self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train')
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(len(self.symbols_names)))
         
-        self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
-        ratios = [self.semart_Gallery.ratio_symbol(target_x) for target_x in target]
-        print('Target density: ' + str(ratios))
         
+
         self.subset = symbol_detect is not None
         self.target_index_list = symbol_detect
+
+        self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
+        ratios = [self.semart_Gallery.ratio_symbol(target_x) for target_x in self.target_index_list]
+        print('Target density: ' + str(ratios))
 
 
 
