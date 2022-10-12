@@ -243,10 +243,10 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
 
             dictionary_painting_symbol[ix, :] = symbols_painting
 
-            if not strict_names:
-                useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
-                dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
-                symbol_canon_list = pd.DataFrame([x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]])
+        if not strict_names:
+            useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
+            dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
+            symbol_canon_list = pd.DataFrame([x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]])
             
 
         symbol_canon_list.to_csv('cache/' + hash_cached + 'names')    
