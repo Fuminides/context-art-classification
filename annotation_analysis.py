@@ -210,7 +210,7 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
         if strict_names:
             symbol_canon_list = args_dict.canon_list
         else:
-            symbol_canon_list = list(set([each_string.lower() for each_string in load_terms()]) & set(args_dict.canon_list)) 
+            symbol_canon_list = pd.DataFrame(list(set([each_string.lower() for each_string in load_terms()]) & set(args_dict.canon_list)) )
     except:
         symbol_canon_list = load_terms()
     print('Loading file... ' + str(textfile))
