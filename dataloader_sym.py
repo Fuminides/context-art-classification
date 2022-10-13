@@ -49,7 +49,7 @@ class ArtDatasetSym(data.Dataset):
         else:
             args_dict.canon_list = canon_list
 
-        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train')
+        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train', )
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(len(self.symbols_names)))
         
         
@@ -115,15 +115,22 @@ if __name__ == '__main__':
     args_dict.dir_dataset = r'C:\Users\jf22881\Documents\SemArt'
     args_dict.csvtrain = 'semart_train.csv'
     args_dict.csvval = 'semart_val.csv'
+    args_dict.csvtest = 'semart_test.csv'
     args_dict.dir_images = 'Images'
-    args_dict.targets = [47]
+    args_dict.targets = [10, 20 ,30]
 
     #type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-
-    
     semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=args_dict.targets)
-    
+    semart_val_loader = ArtDatasetSym(args_dict, set='val', symbol_detect=args_dict.targets, canon_list=semart_train_loader.symbols_names) 
+    semart_test_loader = ArtDatasetSym(args_dict, set='test', symbol_detect=args_dict.targets, canon_list=semart_train_loader.symbols_names) 
 
-    semart_val_loader = ArtDatasetSym(args_dict, set=args_dict.mode, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
-    for batch_idx, (input, target) in enumerate(semart_train_loader):
-        print(batch_idx, len(input), target.shape)
+    semart_Gallery = an.Gallery(semart_train_loader.symbols_names, semart_train_loader.paintings_names, semart_train_loader.symbol_context, args_dict.dir_dataset)
+    val_Gallery = an.Gallery(semart_val_loader.symbols_names, semart_val_loader.paintings_names, semart_val_loader.symbol_context, args_dict.dir_dataset)
+    test_Gallery = an.Gallery(semart_test_loader.symbols_names, semart_test_loader.paintings_names, semart_test_loader.symbol_context, args_dict.dir_dataset)
+    
+    train_presence = semart_train_loader.symbol_context.sum(axis=0) > 0
+    val_presence = semart_val_loader.symbol_context.sum(axis=0) > 0
+    test_presence = semart_test_loader.symbol_context.sum(axis=0) > 0
+
+    global_presence = train_presence * val_presence * test_presence
+    print('Hola')

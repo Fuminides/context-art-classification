@@ -432,7 +432,7 @@ class Gallery:
     
     def most_repeated_symbols_name(self, k=10):
         symbols_args = self.most_repeated_symbols(k=10)
-        return [list(self.symbols_names)[ix] for ix in symbols_args]
+        return [self.symbols_names.values[ix] for ix in symbols_args]
     
     def most_repeated_symbols(self, k=10):
         symbols_args = self.symbol_context.sum(axis=0).argsort()[::-1][0:k]
