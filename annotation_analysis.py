@@ -234,7 +234,8 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
         
             symbols_painting = np.zeros((len(symbol_canon_list),))
 
-            for jx, symbol in symbol_canon_list.iterrows():
+            for jx, row in enumerate(symbol_canon_list.iterrows()):
+                symbol = row[1]
                 symbol = symbol.iloc[0].lower()
                 description = description.lower()
 
@@ -246,7 +247,7 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
         if not strict_names:
             useful_symbols = np.sum(dictionary_painting_symbol, axis=0) > 0
             dictionary_painting_symbol = dictionary_painting_symbol[:, useful_symbols]
-            symbol_canon_list = pd.DataFrame([x for ix, x in enumerate(symbol_canon_list) if useful_symbols[ix]])
+            symbol_canon_list = pd.DataFrame([x for ix, x in symbol_canon_list.iterrows() if useful_symbols[ix]])
             
 
         symbol_canon_list.to_csv('cache/' + hash_cached + 'names')    
