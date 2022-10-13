@@ -227,7 +227,11 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
             symbols_possible += np.sum(label_actual, axis=None)
             acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
-            acc_possible += pred.shape[0] * pred.shape[1]
+            try:
+                acc_possible += pred.shape[0] * pred.shape[1]
+            except IndexError:
+                acc_possible += pred.shape[0]
+                
             absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
             absence_possible += np.sum(np.logical_not(label_actual), axis=None)
 
