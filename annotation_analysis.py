@@ -234,8 +234,8 @@ def load_semart_symbols(args_dict, dataset, strict_names=False):
         
             symbols_painting = np.zeros((len(symbol_canon_list),))
 
-            for jx, symbol in enumerate(symbol_canon_list):
-                symbol = symbol.lower()
+            for jx, symbol in symbol_canon_list.iterrows():
+                symbol = symbol.iloc[0].lower()
                 description = description.lower()
 
                 if symbol in description.split():
