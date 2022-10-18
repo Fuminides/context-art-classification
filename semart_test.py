@@ -152,10 +152,12 @@ def test_knowledgegraph(args_dict):
             out = predicted.data.cpu().numpy()
             label = target[0].cpu().numpy()
             scores = conf.data.cpu().numpy()
+            logits = output.data.cpu().numpy()
         elif (not args_dict.symbol_task):
             out = np.concatenate((out,predicted.data.cpu().numpy()), axis=0)
             label = np.concatenate((label,target[0].cpu().numpy()), axis=0)
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
+            logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
 
     # Compute Accuracy
     # Accuracy
@@ -169,6 +171,7 @@ def test_knowledgegraph(args_dict):
     else:
         acc = np.sum(out == label)/len(out)
     print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
+    pd.DataFrame(logits).to_csv('logits_' + str(args_dict.att) + '.csv')
 
 
 def test_multitask(args_dict):

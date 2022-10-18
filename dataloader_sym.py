@@ -133,4 +133,17 @@ if __name__ == '__main__':
     test_presence = semart_test_loader.symbol_context.sum(axis=0) > 0
 
     global_presence = train_presence * val_presence * test_presence
+
+    train_symbol_mat = semart_train_loader.symbol_context[:, global_presence]
+    val_symbol_mat = semart_val_loader.symbol_context[:, global_presence]
+    test_symbol_mat = semart_test_loader.symbol_context[:, global_presence]
+
+    canon_names = semart_train_loader.symbols_names    
+
+    pd.DataFrame(train_symbol_mat).to_csv('Data/global_train_symbol_mat.csv')
+    pd.DataFrame(val_symbol_mat).to_csv('Data/global_val_symbol_mat.csv')
+    pd.DataFrame(test_symbol_mat).to_csv('Data/global_test_symbol_mat.csv')
+
+    canon_names.iloc[global_presence].to_csv('Data/global_canon_names.csv')
+
     print('Hola')
