@@ -52,7 +52,7 @@ class ArtDatasetSym(data.Dataset):
         if not cache_mode:
             self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train')
         else:
-            self.symbol_context = pd.read_csv('Data/global_' + self.set + '_symbol_mat.csv', index_col=0)
+            self.symbol_context = np.array(pd.read_csv('Data/global_' + self.set + '_symbol_mat.csv', index_col=0))
             self.symbols_names = pd.read_csv('Data/global_canon_names.csv', index_col=0)
             self.symbols_names.index = np.arange(self.symbols_names.shape[0])
             self.paintings_names = df['TITLE']
