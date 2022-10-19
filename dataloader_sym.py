@@ -11,7 +11,7 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, transform=None, canon_list=None, symbol_detect=None):
+    def __init__(self, args_dict, set, transform=None, canon_list=None, symbol_detect=None, cache_mode=True):
         """
         Args:
             args_dict: parameters dictionary
@@ -49,9 +49,15 @@ class ArtDatasetSym(data.Dataset):
         else:
             args_dict.canon_list = canon_list
 
-        self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train', )
+        if not cache_mode:
+            self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train')
+        else:
+            self.symbol_context = pd.read_csv('Data/global_' + self.set + '_symbol_mat.csv', index_col=0)
+            self.symbols_names = pd.read_csv('Data/global_canon_names.csv', index_col=0)
+            self.symbols_names.index = np.arange(self.symbols_names.shape[0])
+            self.paintings_names = df['TITLE']
+            
         print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(len(self.symbols_names)))
-        
         
 
         self.subset = symbol_detect is not None
