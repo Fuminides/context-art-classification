@@ -125,7 +125,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     train_loss = args_dict.lambda_c * class_loss + \
                          args_dict.lambda_e * encoder_loss
                 elif symbol_task:
-                    train_loss = criterion(output, target_var)
+                    train_loss = criterion(output, torch.squeeze(target_var))
                 else: 
                     train_loss = multi_class_loss(criterion, target_var, output)
             else:
@@ -232,7 +232,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             except IndexError:
                 acc_possible += pred.shape[0]
                 
-            absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
+            absence_detected += np.sum(np.logical_and(pred.cpu().numpy()<1), 
+                                       label_actual<1, axis=None) 
             absence_possible += np.sum(np.logical_not(label_actual), axis=None)
 
         elif args_dict.att == 'all':
@@ -583,6 +584,9 @@ def train_symbol_classifier(args_dict):
             class_loss = class_loss.cuda()    
     else:
         class_loss = nn.CrossEntropyLoss()
+        
+        if torch.cuda.is_available():
+            class_loss = class_loss.cuda()
 
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
