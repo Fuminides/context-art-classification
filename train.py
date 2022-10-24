@@ -117,25 +117,11 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         if args_dict.model != 'kgm':
 
             if args_dict.att == 'all':
-                if args_dict.model == 'rmtl':
-                    class_loss = multi_class_loss(criterion[0], target_var, output)
-            
-                    encoder_loss = criterion[1](output[4], output[5])
-              
-                    train_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
-                elif symbol_task:
+                if symbol_task:
                     train_loss = criterion(output, target_var)
                 else: 
                     train_loss = multi_class_loss(criterion, target_var, output)
             else:
-              if args_dict.model == 'rmtl':
-                class_loss = criterion[0](output, target_var)
-                encoder_loss = criterion[1](output[-2], output[-1])
-
-                train_loss = args_dict.lambda_c * class_loss + \
-                         args_dict.lambda_e * encoder_loss
-              else:
                 train_loss = criterion(output, target_var)
 
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))

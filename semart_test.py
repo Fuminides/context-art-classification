@@ -12,6 +12,7 @@ from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 from model_sym import SymModel
 
+import pandas as pd
 #from model_gcn import GCN, 
 NODE2VEC_OUTPUT = 128
 
