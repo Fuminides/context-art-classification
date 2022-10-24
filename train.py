@@ -117,6 +117,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         else:
             output = model(input_var[0])
 
+       
         if args_dict.model != 'kgm':
 
             if args_dict.att == 'all':
@@ -133,6 +134,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
         # It is a Context-based model
         else:
+            feat = model.features(input_var)
+            features_matrix[actual_index:actual_index+args_dict.batch_size] = feat
+            actual_index += args_dict.batch_size
+            
             if args_dict.att == 'all': # TODO
                 class_loss = multi_class_loss(criterion, target_var, output)
                 
@@ -151,7 +156,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     train_loss = args_dict.lambda_c * class_loss + \
                                 args_dict.lambda_e * encoder_loss
                     
-                    features_matrix[actual_index:actual_index+args_dict.batch_size] = output[0] #.data.cpu().numpy()
+                
                     
 
                 
@@ -170,7 +175,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # Plot
     #plotter.plot('closs', 'train', 'Class Loss', epoch, losses.avg)
-    if args_dict.model != 'kgm':
+    if args_dict.model == 'kgm':
         pd.DataFrame(features_matrix.cpu().numpy()).to_csv('feature_matrix_train.csv')
 
 def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):

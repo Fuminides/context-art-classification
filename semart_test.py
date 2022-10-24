@@ -99,6 +99,9 @@ def test_knowledgegraph(args_dict):
     absence_detected = 0
     absence_possible = 0
 
+    features_matrix = torch.zeros((1069, model.deep_feature_size))
+    actual_index = 0
+
     for i, (input, target) in enumerate(test_loader):
 
         # Inputs to Variable type
@@ -159,6 +162,8 @@ def test_knowledgegraph(args_dict):
             label = np.concatenate((label,target[0].cpu().numpy()), axis=0)
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
+        
+        features_matrix[actual_index:actual_index+args_dict.batch_size] = output[0]
 
     # Compute Accuracy
     # Accuracy
