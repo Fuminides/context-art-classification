@@ -82,6 +82,9 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # switch to train mode
     model.train()
+    features_matrix = torch.zeros((19224, model.deep_feature_size))
+    actual_index = 0
+
     for batch_idx, (input, target) in enumerate(train_loader):
 
         # Inputs to Variable type
@@ -147,6 +150,9 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
                     train_loss = args_dict.lambda_c * class_loss + \
                                 args_dict.lambda_e * encoder_loss
+                    
+                    features_matrix[actual_index:actual_index+args_dict.batch_size] = output[0] #.data.cpu().numpy()
+                    
 
                 
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
@@ -164,7 +170,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # Plot
     #plotter.plot('closs', 'train', 'Class Loss', epoch, losses.avg)
-
+    if args_dict.model != 'kgm':
+        pd.DataFrame(features_matrix.cpu().numpy()).to_csv('feature_matrix_train.csv')
 
 def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
@@ -176,7 +183,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     acc_possible = 0
     absence_detected = 0
     absence_possible = 0
-
+    val_deep_features = []
 
     for batch_idx, (input, target) in enumerate(val_loader):
         # Inputs to Variable type
@@ -394,6 +401,8 @@ def train_knowledgegraph_classifier(args_dict):
     # Now, let's start the training process!
     print('Start training KGM model...')
     pat_track = 0
+
+        
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
         # Compute a training epoch
@@ -844,229 +853,6 @@ def _load_labels(df_path, att2i):
     return tipei, schooli, timei, authori
     
 
-def train_gcn_classifier(args_dict):    
-    from model_gcn import GCN, NODE2VEC_OUTPUT
-    from model_gat import GAT
-    from torch_geometric.loader import DataLoader, NeighborSampler
-    
-
-    target = 'time'
-    # Load classes
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-    att2i = [type2idx, school2idx, time2idx, author2idx]
-    
-    # Dataloaders for training and validation
-    target_var_train = _load_labels(args_dict.dir_dataset + '/semart_train.csv', att2i)
-    target_var_val = _load_labels(args_dict.dir_dataset + '/semart_val.csv', att2i)
-    target_var_test = _load_labels(args_dict.dir_dataset + '/semart_test.csv', att2i)
-    og_train_size = len(target_var_train[0])
-    val_size = len(target_var_val[0])
-
-    data = load_gcn_data(args_dict, og_train_size, val_size)
-    loader = NeighborSampler(
-        data.edge_index, node_idx=data.train_mask,#+data.val_mask,
-        sizes=[10, 5], batch_size=int(args_dict.batch_size), shuffle=True, num_workers=0)
-    
-    '''if torch.cuda.is_available():
-        train_edge_list = torch.tensor(np.array(train_edge_list).reshape(2, train_edge_list.shape[0])).cuda()
-        val_edge_list = torch.tensor(np.array(val_edge_list).reshape(2, val_edge_list.shape[0])).cuda()
-        tensor_val_edge_list = tensor_val_edge_list.cuda()
-        train_mask = train_mask.cuda()'''
-
-    # Define model
-    if args_dict.model == 'gcn':
-      model = GCN(NODE2VEC_OUTPUT, 16, num_classes,target_class=target)
-    elif args_dict.model == 'gat':
-      model = GAT(NODE2VEC_OUTPUT, 16, num_classes,target_class=target)
-
-    if torch.cuda.is_available():
-        model.cuda()
-
-    # Loss and optimizer
-    if torch.cuda.is_available():
-        criterion = nn.CrossEntropyLoss().cuda()
-    else:
-        criterion = nn.CrossEntropyLoss()
-    
-    optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
-                                lr=args_dict.lr,
-                                momentum=args_dict.momentum)
-    #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 100)
-
-    # Resume training if needed
-    best_val, model, optimizer = resume(args_dict, model, optimizer)
-
-    column_key = {'type':0, 'school':1, 'time':2, 'author':3}
-
-    # Now, let's start the training process!
-    print_classes(type2idx, school2idx, time2idx, author2idx)
-
-    print('Start training GCN model...')
-    pat_track = 0
-    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
-        print(epoch)
-
-        for batch in loader:
-        # Targets to Variable type
-            batch_size, n_id, adjs = batch
-            #if torch.cuda.is_available():
-                #adjs = [adj.cuda() for adj in adjs]
-
-            # edge_index, e_id, size = adjs[1]
-
-            target_var = list()
-            for j in range(len(target_var_train)):
-                if torch.cuda.is_available():
-                    aux = torch.tensor(target_var_train[j]).cuda(non_blocking=True)
-                else:
-                    aux = torch.tensor(target_var_train[j])
-
-                target_var.append(torch.autograd.Variable(aux))
-
-            # Compute a training epoch
-            optimizer.zero_grad()
-
-            output = model(data.x[n_id], adjs)
-            index_loss_bool = n_id < og_train_size
-            index_loss = index_loss[index_loss_bool]
-            if target == 'all':
-                train_loss = multi_class_loss(criterion, target_var, output, index_loss)
-            else:
-                train_loss = criterion(output[index_loss], target_var[column_key[target]][index_loss])
-            #print(train_loss)
-            train_loss.backward()
-            optimizer.step()
-            #scheduler.step()
-
-        print('************')
-        if target == 'all' or target == 'type':
-          acc_type = np.mean(np.equal(torch.argmax(output[0][0:og_train_size]).data.cpu().numpy(), target_var_train[0]))
-          print('Train Type: ' + str(acc_type))
-
-        elif target == 'all' or target == 'school':
-          acc_school = np.mean(np.equal(torch.argmax(output[1][0:og_train_size]).data.cpu().numpy(), target_var_train[1]))
-          print('Train School: ' + str(acc_school))
-
-        elif target == 'all' or target == 'time':
-          acc_tf = np.mean(np.equal(torch.argmax(output[2][0:og_train_size]).data.cpu().numpy(), target_var_train[2])) 
-          print('Train TimeFrame: ' + str(acc_tf))
-
-        elif target == 'all' or target == 'author':
-          acc_author = np.mean(np.equal(torch.argmax(output[3][0:og_train_size]).data.cpu().numpy(), target_var_train[3])) 
-          print('Train Author: ' + str(acc_author))
-
-        if target == 'all':
-          accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
-          print('Train: ' + str(accval))
-        print('************')
-        
-        # Compute a validation epoch
-        label_type = target_var_val[0]#.cpu().numpy()
-        label_school = target_var_val[1]#.cpu().numpy()
-        label_tf = target_var_val[2]#.cpu().numpy()
-        label_author = target_var_val[3]#.cpu().numpy()
-
-        # accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
-        output = model(data.x[data.val_mask], data.val_edge_index)
-        if target == 'all' or target == 'type':
-          pred_type = torch.argmax(output[0], 1) if target == 'all' else torch.argmax(output, 1)
-          out_type = pred_type.data.cpu().numpy()[-val_size:]
-          acc_type = np.mean(np.equal(out_type, label_type))
-          accval = acc_type
-        elif target == 'all' or target == 'school':
-          pred_school = torch.argmax(output[1], 1) if target == 'all' else torch.argmax(output, 1)
-          out_school = pred_school.data.cpu().numpy()[-val_size:]
-          acc_school = np.mean(np.equal(out_school, label_school)) 
-          accval = acc_school
-        elif target == 'all' or target == 'time':
-          pred_time = torch.argmax(output[2], 1) if target == 'all' else torch.argmax(output, 1)
-          out_time = pred_time.data.cpu().numpy()[-val_size:]
-          acc_tf = np.mean(np.equal(out_time, label_tf))
-          accval = acc_tf
-        elif target == 'all' or target == 'author':  
-          pred_author = torch.argmax(output[3], 1) if target == 'all' else torch.argmax(output, 1)
-          out_author = pred_author.data.cpu().numpy()[-val_size:]
-          acc_author = np.mean(np.equal(out_author, label_author))
-          accval = acc_author
-
-        if target == 'all':
-          accval = np.mean((acc_type, acc_school, acc_tf, acc_author))
-        output = model(data.x, data.val_edge_index)
-        accval = compute_preds_val(target, val_size, output, label_type, label_school, label_tf, label_author)
-
-        # check patience
-        if accval <= best_val:
-            pat_track += 1
-        else:
-            pat_track = 0
-        if pat_track >= args_dict.patience:
-            break
-
-        # save if it is the best validation accuracy
-        is_best = accval > best_val
-        best_val = max(accval, best_val)
-        if is_best:
-            save_model(args_dict, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_val': best_val,
-                'optimizer': optimizer.state_dict(),
-                'valtrack': pat_track,
-                'curr_val': accval,
-            }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
-
-        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
-
-def load_gcn_data(args_dict, og_train_size, val_size):
-    # Load semart knowledge graphs
-    train_edge_list = pd.read_csv(args_dict.edge_list_train, index_col=None, sep=' ', header=None)
-    val_edge_list = pd.read_csv(args_dict.edge_list_val, index_col=None, sep=' ', header=None)
-    val_edge_list = pd.concat([train_edge_list, val_edge_list], axis=0)
-
-    tensor_train_edge_list = torch.tensor(np.array(train_edge_list).reshape((2, train_edge_list.shape[0])), dtype=torch.long)
-    tensor_val_edge_list = torch.tensor(np.array(val_edge_list).reshape((2, val_edge_list.shape[0])), dtype=torch.long)
-    
-    # Load the feature matrix from the vis+node2vec representations
-    train_feature_matrix = pd.read_csv(args_dict.feature_matrix, sep=',', header=None, skiprows=1, index_col=0)
-    train_size = train_feature_matrix.shape[0]
-    val_feature_matrix = pd.read_csv(args_dict.val_feature_matrix, sep=',',  header=None, skiprows=1, index_col=0)
-    
-    #torch_train_feature_matrix = torch.tensor(train_feature_matrix)
-    total_samples = torch.tensor(np.array(pd.concat([train_feature_matrix, val_feature_matrix], axis=0))).float()
-    n_samples = total_samples.shape[0]
-
-    # Gen the train/val/test indexes
-    train_mask = np.array([0] * n_samples)
-    train_mask[0:train_size] = 1
-    train_mask = torch.tensor(train_mask, dtype=torch.uint8)
-
-    og_train_mask = np.array([0] * n_samples)
-    og_train_mask[0:og_train_size] = 1
-    og_train_mask = torch.tensor(og_train_mask, dtype=torch.uint8)
-
-    val_mask = np.array([0] * n_samples)
-    val_mask[train_size:train_size+val_size] = 1
-    val_mask = torch.tensor(val_mask, dtype=torch.uint8)
-    val_mask = torch.logical_or(train_mask, val_mask)
-
-    test_mask = np.array([0] * n_samples)
-    test_mask[train_size + val_size:] = 1
-    test_mask = torch.tensor(test_mask, dtype=torch.uint8)
-
-    if torch.cuda.is_available():
-        tensor_train_edge_list = tensor_train_edge_list.cuda()
-        tensor_val_edge_list = tensor_val_edge_list.cuda()
-        total_samples = total_samples.cuda()
-
-    #Load all the data as Data object for pytorch geometric
-    data = Data(x=total_samples, edge_index=tensor_train_edge_list, val_edge_index=tensor_val_edge_list)
-    data.train_mask = train_mask
-    data.val_mask = val_mask
-    data.test_mask = test_mask
-    data.og_train_mask = og_train_mask
-
-    return data
 
 def compute_preds_val(target, val_size, output, label_type, label_school, label_tf, label_author):
     if target == 'all' or target == 'type':
