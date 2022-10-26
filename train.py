@@ -75,14 +75,13 @@ def resume(args_dict, model, optimizer):
     return best_val, model, optimizer
 
 
-def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symbol_task=None):
+def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symbol_task=None, final_epoch=True):
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
 
     # switch to train mode
     model.train()
-    features_matrix = torch.zeros((19224, model.deep_feature_size))
     actual_index = 0
 
     for batch_idx, (input, target) in enumerate(train_loader):
@@ -135,7 +134,11 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         # It is a Context-based model
         else:
             feat = model.features(input_var)
-            features_matrix[actual_index:actual_index+args_dict.batch_size] = feat
+
+            if final_epoch:
+                pd.DataFrame(feat.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '.csv')
+                pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '.csv')
+            
             actual_index += args_dict.batch_size
             
             if args_dict.att == 'all': # TODO
@@ -188,7 +191,6 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     acc_possible = 0
     absence_detected = 0
     absence_possible = 0
-    val_deep_features = []
 
     for batch_idx, (input, target) in enumerate(val_loader):
         # Inputs to Variable type
@@ -411,7 +413,7 @@ def train_knowledgegraph_classifier(args_dict):
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
         # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch, symbol_task=args_dict.symbol_task)
+        trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch, symbol_task=args_dict.symbol_task, final_epoch=False)
 
         # Compute a validation epoch
         accval = valEpoch(args_dict, val_loader, model, loss, epoch, symbol_task=args_dict.symbol_task)
@@ -422,6 +424,7 @@ def train_knowledgegraph_classifier(args_dict):
         else:
             pat_track = 0
         if pat_track >= args_dict.patience:
+            trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch, symbol_task=args_dict.symbol_task, final_epoch=True)
             break
 
         # save if it is the best model
