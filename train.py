@@ -75,7 +75,7 @@ def resume(args_dict, model, optimizer):
     return best_val, model, optimizer
 
 
-def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symbol_task=None, final_epoch=True):
+def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symbol_task=None, final_epoch=False):
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
@@ -133,9 +133,12 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
         # It is a Context-based model
         else:
-            feat = model.features(input_var[0])
+            
 
             if final_epoch:
+                print('Saving features...')
+                feat = model.features(input_var[0])
+
                 pd.DataFrame(feat.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '.csv')
                 pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '.csv')
             
