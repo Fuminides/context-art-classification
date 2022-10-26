@@ -133,7 +133,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
         # It is a Context-based model
         else:
-            feat = model.features(input_var)
+            feat = model.features(input_var[0])
 
             if final_epoch:
                 pd.DataFrame(feat.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '.csv')
