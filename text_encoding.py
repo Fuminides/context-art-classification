@@ -79,7 +79,7 @@ def clip_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', 
     test_mat = np.zeros((len(semart_test_desc), MAX_LEN_CLIP))
     for ix, context_text in enumerate(semart_test_desc):
         slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
-        text_train = clip.tokenize(slices).to(device).numpy().max(axis=0)
+        text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
         test_mat[ix, :] = text_train
 
 
