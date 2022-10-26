@@ -178,8 +178,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # Plot
     #plotter.plot('closs', 'train', 'Class Loss', epoch, losses.avg)
-    if args_dict.model == 'kgm':
-        pd.DataFrame(features_matrix.cpu().numpy()).to_csv('feature_matrix_train.csv')
+
 
 def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
