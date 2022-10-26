@@ -426,7 +426,7 @@ def train_knowledgegraph_classifier(args_dict):
         else:
             pat_track = 0
         if pat_track >= args_dict.patience:
-            trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch, symbol_task=args_dict.symbol_task, final_epoch=True)
+            
             break
 
         # save if it is the best model
@@ -442,6 +442,8 @@ def train_knowledgegraph_classifier(args_dict):
                 'curr_val': accval,
             }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
+    
+    trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch, symbol_task=args_dict.symbol_task, final_epoch=True)
 
 
 def train_multitask_classifier(args_dict):
