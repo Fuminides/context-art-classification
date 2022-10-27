@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 from torchvision import transforms
+import torchvision.ops
 
 import numpy as np
 import pandas as pd
@@ -75,7 +76,7 @@ def resume(args_dict, model, optimizer):
     return best_val, model, optimizer
 
 
-def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symbol_task=None, final_epoch=False):
+def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symbol_task=False, final_epoch=False):
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
@@ -582,6 +583,7 @@ def train_symbol_classifier(args_dict):
         model = SymModel(semart_train_loader.symbol_context.shape[1], model=args_dict.architecture)
     else:
         model = SymModel(len(args_dict.targets), model=args_dict.architecture)
+
     if torch.cuda.is_available():
         model.cuda()
 
@@ -592,7 +594,8 @@ def train_symbol_classifier(args_dict):
         if torch.cuda.is_available():
             class_loss = class_loss.cuda()    
     else:
-        class_loss = nn.CrossEntropyLoss()
+        
+        class_loss = torchvision.ops.sigmoid_focal_loss()
         
         if torch.cuda.is_available():
             class_loss = class_loss.cuda()
