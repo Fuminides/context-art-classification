@@ -602,6 +602,7 @@ def train_symbol_classifier(args_dict):
                 class_loss = class_loss.cuda()
         except AttributeError:
             pass
+
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
                                 momentum=args_dict.momentum)
