@@ -131,7 +131,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 train_loss = criterion(output, target_var)
 
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
-
+        elif args_dict.symbol_task:
+            train_loss = criterion(output, torch.squeeze(target_var))
         # It is a Context-based model
         else:
             
@@ -595,11 +596,12 @@ def train_symbol_classifier(args_dict):
             class_loss = class_loss.cuda()    
     else:
         
-        class_loss = torchvision.ops.sigmoid_focal_loss()
-        
-        if torch.cuda.is_available():
-            class_loss = class_loss.cuda()
-
+        class_loss = nn.CrossEntropyLoss()
+        try:
+            if torch.cuda.is_available():
+                class_loss = class_loss.cuda()
+        except AttributeError:
+            pass
     optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
                                 lr=args_dict.lr,
                                 momentum=args_dict.momentum)
@@ -916,10 +918,6 @@ def run_train(args_dict):
         train_knowledgegraph_classifier(args_dict)
     elif args_dict.model == 'rmtl':
         vis_encoder_train(args_dict)
-    elif args_dict.model == 'gcn':
-        train_gcn_classifier(args_dict)
-    elif args_dict.model == 'gat':
-        train_gcn_classifier(args_dict)
     else:
         assert False, 'Incorrect model type'
 
