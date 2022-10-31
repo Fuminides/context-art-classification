@@ -135,7 +135,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
             train_loss = criterion(output, torch.squeeze(target_var))
         # It is a Context-based model
         else:
-            
 
             if final_epoch:
                 print('Saving features...')
@@ -345,7 +344,11 @@ def train_knowledgegraph_classifier(args_dict):
         att2i = time2idx
     elif args_dict.att == 'author':
         att2i = author2idx
-    N_CLUSTERS = args_dict.clusters
+
+    if args_dict.embedds == 'clip':
+        N_CLUSTERS = 77
+    else:
+        N_CLUSTERS = args_dict.clusters
 
     # Define model
     if args_dict.embedds == 'graph':
