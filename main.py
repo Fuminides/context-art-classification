@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if args_dict.model == 'mtl':
         args_dict.att = 'all'
     args_dict.name = '{}-{}'.format(args_dict.model, args_dict.att)
-
+    args_dict.symbol_task=False
     opts = vars(args_dict)
     print('------------ Options -------------')
     for k, v in sorted(opts.items()):

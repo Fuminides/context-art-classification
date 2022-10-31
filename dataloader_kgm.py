@@ -39,6 +39,10 @@ class ArtDatasetKGM(data.Dataset):
             self.chosen_coded_semart_test = text_encoding.fcm_coded_context(
                 self.chosen_coded_semart_test, clusters=clusters)
             
+            pd.DataFrame(self.chosen_coded_semart_train).to_csv('train_semart_fcm_'+str(clusters)+'.csv')
+            pd.DataFrame(self.chosen_coded_semart_val).to_csv('val_semart_fcm_'+str(clusters)+'.csv')
+            pd.DataFrame(self.chosen_coded_semart_test).to_csv('test_semart_fcm_'+str(clusters)+'.csv')
+            
         elif self.embedds == 'frbc':
             self.chosen_coded_semart_train = pd.read_csv('Data/rule_embds_train.csv', index_col=0).values
             self.chosen_coded_semart_val = pd.read_csv('Data/rule_embds_val.csv', index_col=0).values

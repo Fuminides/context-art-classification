@@ -595,7 +595,7 @@ def train_symbol_classifier(args_dict):
             class_loss = class_loss.cuda()    
     else:
         
-        class_loss = torchvision.ops.sigmoid_focal_loss()
+        class_loss = torchvision.ops.sigmoid_focal_loss
         
         if torch.cuda.is_available():
             class_loss = class_loss.cuda()
