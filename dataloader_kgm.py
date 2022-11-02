@@ -64,12 +64,7 @@ class ArtDatasetKGM(data.Dataset):
             self.chosen_coded_semart_train, self.chosen_coded_semart_val, self.chosen_coded_semart_test = \
             text_encoding.clip_load_train_text_corpus(args_dict.dir_dataset, append='append', k=k)
 
-            self.chosen_coded_semart_train = text_encoding.fcm_coded_context(
-                self.chosen_coded_semart_train, clusters=clusters)
-            self.chosen_coded_semart_val = text_encoding.fcm_coded_context(
-                self.chosen_coded_semart_val, clusters=clusters)
-            self.chosen_coded_semart_test = text_encoding.fcm_coded_context(
-                self.chosen_coded_semart_test, clusters=clusters)
+
 
         if self.set == 'train':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtrain)
