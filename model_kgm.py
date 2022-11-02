@@ -31,7 +31,7 @@ class KGM(nn.Module):
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         pred_class = self.classifier1(visual_emb)
-        pred_class = self.classifier2(pred_class)
+        #pred_class = self.classifier2(pred_class)
         graph_proj = self.nodeEmb(visual_emb)
 
         return [pred_class, graph_proj]
