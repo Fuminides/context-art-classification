@@ -55,11 +55,6 @@ argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gra
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
 
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model mtl --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
-
 # BoW + FCM append
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume  ./Models/bow_append_author_best_model.pth.tar >salidas/author_out_append.txt 2>salidas/author_error_append.txt"
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append append --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --resume  ./Models/fcm_bow_append_school_best_model.pth.tar >salidas/school_out_append.txt 2>salidas/school_error_append.txt"
