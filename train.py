@@ -140,8 +140,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 print('Saving features...')
                 feat = model.features(input_var[0])
 
-                pd.DataFrame(feat.data.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '_' + str(args_dict.att) +'.csv')
-                pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '.csv')
+                pd.DataFrame(feat.data.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+                pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
             
             actual_index += args_dict.batch_size
             
@@ -477,15 +477,6 @@ def train_multitask_classifier(args_dict):
     best_val, model, optimizer = resume(args_dict, model, optimizer)
 
     # Data transformation for training (with data augmentation) and validation
-    train_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
 
     val_transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
