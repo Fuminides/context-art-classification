@@ -11,17 +11,20 @@ class ImageSymbol(nn.Module):
         self.model = model
         # Load pre-trained visual model
         if model == 'resnet':
-            resnet = models.resnet50(pretrained=True)
+            architecture = models.resnet50(pretrained=True)
             embedding_size = 2048
         elif model == 'vgg':
-            resnet = models.vgg16(pretrained=True)
+            architecture = models.vgg16(pretrained=True)
             embedding_size = 25088
         elif model == 'clip':
-            resnet, _ = clip.load("ViT-B/32")
+            architecture, _ = clip.load("ViT-B/32")
             embedding_size = 512
+        elif model == 'vit':
+            from pytorch_pretrained_vit import ViT
+            model_name = 'B_16_imagenet1k'
+            architecture = ViT(model_name, pretrained=True)
 
-
-        self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+        self.resnet = nn.Sequential(*list(architecture.children())[:-1])
             
         
         # Classifiers
