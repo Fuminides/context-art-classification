@@ -23,12 +23,12 @@ class SymModel(nn.Module):
         elif model == 'vit':
             from pytorch_pretrained_vit import ViT
             model_name = 'B_16_imagenet1k'
-            self.og_nmodel = ViT(model_name, pretrained=True)
-            self.tfms = transforms.Compose([transforms.Resize(self.og_nmodel.image_size)])
+            self.resnet = ViT(model_name, pretrained=True)
+            self.tfms = transforms.Compose([transforms.Resize(self.resnet.image_size)])
 
-            embedding_size = 768
+            embedding_size = 1000
 
-        self.resnet = nn.Sequential(*list(self.og_nmodel.children())[:-1])
+        #self.resnet = nn.Sequential(*list(self.og_nmodel.children())[:-1])
             
         
         # Classifiers
