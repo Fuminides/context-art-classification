@@ -19,6 +19,10 @@ class SymModel(nn.Module):
         elif model == 'clip':
             resnet, _ = clip.load("ViT-B/32")
             embedding_size = 512
+        elif model == 'vit':
+            from pytorch_pretrained_vit import ViT
+            model_name = 'B_16_imagenet1k'
+            resnet = ViT(model_name, pretrained=True)
 
 
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
