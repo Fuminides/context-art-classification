@@ -128,7 +128,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 else: 
                     train_loss = multi_class_loss(criterion, target_var, output)
             else:
-                train_loss = criterion(output, target_var)
+                train_loss = criterion(output, torch.squeeze(target_var))
 
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
         elif args_dict.symbol_task:
@@ -228,7 +228,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                 output = model(input_var[0])
         if symbol_task:
             pred = output > 0.5
-            label_actual = target.cpu().numpy()
+            label_actual = torch.squeeze(target).cpu().numpy()
             symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
             symbols_possible += np.sum(label_actual, axis=None)
             acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
@@ -237,8 +237,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             except IndexError:
                 acc_possible += pred.shape[0]
                 
-            absence_detected += np.sum(np.logical_and(pred.cpu().numpy()<1), 
-                                       label_actual<1, axis=None) 
+            absence_detected += np.sum(np.logical_and(pred.cpu().numpy()<1, label_actual<1), axis=None)
             absence_possible += np.sum(np.logical_not(label_actual), axis=None)
 
         elif args_dict.att == 'all':
