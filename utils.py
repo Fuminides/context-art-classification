@@ -61,10 +61,10 @@ def format_features(path='./DeepFeatures/'):
         
         return max_num
     
-    def get_X(path1, dataset='train'):
+    def get_X(path1, dataset='train', task='author'):
         ix = 0
         for file in os.listdir(path1):
-            if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset):
+            if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[-1].split('.')[0] == task):
                 x_file = pd.read_csv(path + file, index_col=0)
 
                 if ix == 0:
@@ -126,6 +126,25 @@ def performance_classifier_tasks(clf, path):
         print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_train), y_train.to_numpy()[:,task]))))
         print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))))
 
+def performance_classifier_tasks_append(clf, path):
+    X_train_author, y_train_author, X_test_author, y_test_author = format_features(path, task='author')
+    X_train_type, y_train_type, X_test_type, y_test_type = format_features(path, task='type')
+    X_train_time, y_train_time, X_test_time, y_test_time = format_features(path, task='time')
+    X_train_school, y_train_school, X_test_school, y_test_school = format_features(path, task='school')
+
+    X_train = np.concatenate([X_train_author.T, X_train_type.T, X_train_time.T, X_train_school.T]).T
+    X_test = np.concatenate([X_test_author.T, X_test_type.T, X_test_time.T, X_test_school.T]).T
+
+    tasks = ['Type', 'Time', 'Author', 'School']
+    y_train = y_train_author #All the ys are the same
+    y_test = y_test_author
+
+    for task in range(4):
+        clf.fit(X_train, y_train.to_numpy()[:,task])
+
+        print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_train), y_train.to_numpy()[:,task]))))
+        print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))))
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self):
@@ -167,6 +186,6 @@ if __name__ == '__main__':
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
 
-    clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1, max_depth=1, random_state=0)
+    clf = svm.SVC()
     performance_classifier_tasks(clf, path)
     
