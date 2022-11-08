@@ -23,7 +23,7 @@ class SymModel(nn.Module):
         elif model == 'vit':
             from pytorch_pretrained_vit import ViT
             model_name = 'B_16_imagenet1k'
-            og_nmodel = ViT(model_name, pretrained=True)
+            self.og_nmodel = ViT(model_name, pretrained=True)
             self.tfms = transforms.Compose([transforms.Resize(self.og_nmodel.image_size)])
 
             embedding_size = 768
@@ -41,7 +41,7 @@ class SymModel(nn.Module):
             img = self.tfms(img)
 
         if self.model != 'clip':
-            visual_emb = self.og_nmodel(img)
+            visual_emb = self.resnet(img)
         else:
             visual_emb = self.resnet.encode_image(img)
 
