@@ -23,6 +23,7 @@ class ImageSymbol(nn.Module):
             from pytorch_pretrained_vit import ViT
             model_name = 'B_16_imagenet1k'
             architecture = ViT(model_name, pretrained=True)
+            embedding_size = 768
 
         self.resnet = nn.Sequential(*list(architecture.children())[:-1])
             

@@ -345,6 +345,7 @@ class Gallery:
             x_add = 0.30
             y_add = -0.1
             for symbol in symbols_names_list:
+                symbol = symbol[0] #Comes as a list of 1 element
                 plt.text(start_x, start_y, symbol, fontsize=14, transform=plt.gcf().transFigure)
 
                 start_y += y_add
@@ -364,8 +365,7 @@ class Gallery:
 
         name = self.df['TITLE'].iloc[painting_arg]
         symbols = self.symbol_context[painting_arg, :]
-        print(len(self.symbols_names), len(symbols))
-        symbols_names_painting = [x for ix, x in enumerate(self.symbols_names) if symbols.astype(np.bool)[ix]] # self.symbols_names[symbols.astype(np.bool)]
+        symbols_names_painting = [x for ix, x in enumerate(self.symbols_names.values.tolist()) if symbols.astype(np.bool)[ix]] # self.symbols_names[symbols.astype(np.bool)]
 
 
         #plt.figure()
@@ -373,6 +373,7 @@ class Gallery:
         ax = plt.gca()
         ax.axes.xaxis.set_visible(False)
         ax.axes.yaxis.set_visible(False)
+
         if symbols_mode:
             write_symbols(symbols_names_painting)
 
@@ -432,7 +433,7 @@ class Gallery:
         return list(self.symbols_names[self.symbol_context[chosen_paintings, :].sum(axis=0).argsort()[::-1][0:k]])
     
     def most_repeated_symbols_name(self, k=10):
-        symbols_args = self.most_repeated_symbols(k=10)
+        symbols_args = self.most_repeated_symbols(k=k)
         return [self.symbols_names.values[ix] for ix in symbols_args]
     
     def most_repeated_symbols(self, k=10):
