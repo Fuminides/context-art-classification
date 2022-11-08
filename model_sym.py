@@ -2,6 +2,7 @@ import torch.nn as nn
 from torchvision import models
 import torch
 import clip
+from torchvision import transforms
 
 class SymModel(nn.Module):
     # Inputs an image and ouputs the predictions for each classification task
@@ -11,21 +12,23 @@ class SymModel(nn.Module):
         self.model = model
         # Load pre-trained visual model
         if model == 'resnet':
-            resnet = models.resnet50(pretrained=True)
+            self.og_nmodel = models.resnet50(pretrained=True)
             embedding_size = 2048
         elif model == 'vgg':
-            resnet = models.vgg16(pretrained=True)
+            self.og_nmodel = models.vgg16(pretrained=True)
             embedding_size = 25088
         elif model == 'clip':
-            resnet, _ = clip.load("ViT-B/32")
+            self.og_nmodel, _ = clip.load("ViT-B/32")
             embedding_size = 512
         elif model == 'vit':
             from pytorch_pretrained_vit import ViT
             model_name = 'B_16_imagenet1k'
-            resnet = ViT(model_name, pretrained=True)
+            og_nmodel = ViT(model_name, pretrained=True)
+            self.tfms = transforms.Compose([transforms.Resize(self.og_nmodel.image_size)])
 
+            embedding_size = 768
 
-        self.resnet = nn.Sequential(*list(resnet.children())[:-1])
+        self.resnet = nn.Sequential(*list(self.og_nmodel.children())[:-1])
             
         
         # Classifiers
@@ -34,8 +37,11 @@ class SymModel(nn.Module):
 
     def forward(self, img):
 
+        if self.model == 'vit':
+            img = self.tfms(img)
+
         if self.model != 'clip':
-            visual_emb = self.resnet(img)
+            visual_emb = self.og_nmodel(img)
         else:
             visual_emb = self.resnet.encode_image(img)
 
