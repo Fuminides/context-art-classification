@@ -117,12 +117,23 @@ def format_features(path='./DeepFeatures/'):
 
     return X, y_final, X_test, y_final_test
     
-def performance_classifier_tasks(clf, path):
+def performance_classifier_tasks(clf, path, feature_select=True):
+    from sklearn.feature_selection import SelectFromModel
+
     X_train, y_train, X_test, y_test = format_features(path)
     tasks = ['Type', 'Time', 'Author', 'School']
 
     for task in range(4):
         clf.fit(X_train, y_train.to_numpy()[:,task])
+        if feature_select:
+            model = SelectFromModel(clf, prefit=True)
+            X_train = model.transform(X_train)
+            X_test = model.transform(X_test)
+            
+            print('New features are size: ' + str(X_train.shape[1]))
+            clf.fit(X_train, y_train.to_numpy()[:,task])
+
+
         print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_train), y_train.to_numpy()[:,task]))))
         print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))))
 
@@ -186,6 +197,6 @@ if __name__ == '__main__':
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
 
-    clf = svm.SVC()
+    clf = svm.LinearSVC()
     performance_classifier_tasks(clf, path)
     
