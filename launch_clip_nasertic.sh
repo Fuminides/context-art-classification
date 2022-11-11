@@ -45,10 +45,10 @@ conda activate pytorch
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
 
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
 
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds graph --clusters 128 --k 100"
@@ -74,4 +74,4 @@ argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gra
 
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --k 100 --append append
 
-srun python main.py ${argumentos[SLURM_ARRAY_TASK_ID-1]} 2>error_SLURM_ARRAY_TASK_ID.txt
+srun python main.py ${argumentos[SLURM_ARRAY_TASK_ID-1]} 2>error_$SLURM_ARRAY_TASK_ID.txt
