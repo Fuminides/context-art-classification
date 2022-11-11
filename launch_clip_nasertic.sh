@@ -2,7 +2,7 @@
 #SBATCH --partition=power_std
 #SBATCH --account=acc_ure_power_std
 #SBATCH --gres=gpu:v100:1
-#SBATCH --array=1-20
+#SBATCH --array=1-8
 # Activate the conda environment named "pytorch"
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate pytorch
@@ -35,15 +35,15 @@ conda activate pytorch
 #argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
 
 # TF-IDF + FRBC
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds frbc --clusters 39"
 
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att time   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
+#argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att type   --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds bow --clusters 128 --k 100"
 
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att author --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
 argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --append gradient --att school --dir_dataset ../SemArt/ --batch_size 128 --nepochs 300 --embedds clip --clusters 128 --k 100"
