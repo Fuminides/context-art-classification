@@ -57,31 +57,39 @@ def clip_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', 
     semart_test = pd.read_csv(semart_path + 'semart_test.csv', encoding="ISO-8859-1", sep='\t')
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model, preprocess = clip.load("ViT-B/32", device=device)
+    #model, preprocess = clip.load("ViT-B/32", device=device)
 
     semart_train_desc = semart_train['DESCRIPTION']
     semart_val_desc = semart_val['DESCRIPTION']
     semart_test_desc = semart_test['DESCRIPTION']
 
     MAX_LEN_CLIP = 77 # TODO: CACHE THESE FEATURES
-    train_mat = np.zeros((len(semart_train_desc), MAX_LEN_CLIP))
-    for ix, context_text in enumerate(semart_train_desc):
-        slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
-        text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
-        train_mat[ix, :] = text_train
+    try:
+        train_mat = pd.read_csv('cache/clip_train.csv')
+        val_mat = pd.read_csv('cache/clip_val.csv')
+        test_mat = pd.read_csv('cache/clip_test.csv')
+    except:
+        train_mat = np.zeros((len(semart_train_desc), MAX_LEN_CLIP))
+        for ix, context_text in enumerate(semart_train_desc):
+            slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
+            text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
+            train_mat[ix, :] = text_train
 
-    val_mat = np.zeros((len(semart_val_desc), MAX_LEN_CLIP))
-    for ix, context_text in enumerate(semart_val_desc):
-        slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
-        text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
-        val_mat[ix, :] = text_train
+        val_mat = np.zeros((len(semart_val_desc), MAX_LEN_CLIP))
+        for ix, context_text in enumerate(semart_val_desc):
+            slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
+            text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
+            val_mat[ix, :] = text_train
 
-    test_mat = np.zeros((len(semart_test_desc), MAX_LEN_CLIP))
-    for ix, context_text in enumerate(semart_test_desc):
-        slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
-        text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
-        test_mat[ix, :] = text_train
+        test_mat = np.zeros((len(semart_test_desc), MAX_LEN_CLIP))
+        for ix, context_text in enumerate(semart_test_desc):
+            slices = [context_text[i:i+MAX_LEN_CLIP] for i in range(0, len(context_text), MAX_LEN_CLIP)]
+            text_train = clip.tokenize(slices).cpu().numpy().max(axis=0)
+            test_mat[ix, :] = text_train
 
+        pd.DataFrame(train_mat).to_csv('cache/clip_train.csv')
+        pd.DataFrame(val_mat).to_csv('cache/clip_val.csv')
+        pd.DataFrame(test_mat).to_csv('cache/clip_test.csv')
 
     return train_mat, val_mat, test_mat
 
