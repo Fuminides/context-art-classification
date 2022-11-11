@@ -65,9 +65,9 @@ def clip_load_train_text_corpus(semart_path='../SemArt/', k=10, append='False', 
 
     MAX_LEN_CLIP = 77 # TODO: CACHE THESE FEATURES
     try:
-        train_mat = pd.read_csv('cache/clip_train.csv')
-        val_mat = pd.read_csv('cache/clip_val.csv')
-        test_mat = pd.read_csv('cache/clip_test.csv')
+        train_mat = pd.read_csv('cache/clip_train.csv', index_col=0)
+        val_mat = pd.read_csv('cache/clip_val.csv', index_col=0)
+        test_mat = pd.read_csv('cache/clip_test.csv', index_col=0)
     except:
         train_mat = np.zeros((len(semart_train_desc), MAX_LEN_CLIP))
         for ix, context_text in enumerate(semart_train_desc):
