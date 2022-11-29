@@ -69,6 +69,7 @@ def format_features(path='./DeepFeatures/'):
 
                 if ix == 0:
                     res = x_file
+                    ix += 1
                 else:
                     res = pd.concat([res, x_file])
         
@@ -78,13 +79,13 @@ def format_features(path='./DeepFeatures/'):
         ix = 0
         for file in os.listdir(path1):
             if (file.split('_')[1] == 'y') and (file.split('_')[-1].split('.')[0] == task) and (file.split('_')[0] == dataset):
-                x_file = pd.read_csv(path + file)
+                x_file = pd.read_csv(path + file, index_col=0)
 
                 if ix == 0:
                     res = x_file
+                    ix += 1
                 else:
                     res = pd.concat([res, x_file])
-                    ix=+1
         
         return res
 
@@ -102,18 +103,19 @@ def format_features(path='./DeepFeatures/'):
     y_school_test = get_y(path, 'test', 'school')
 
 
-    y_final = pd.DataFrame(np.zeros((y_type.iloc[:, 0].shape[0], 4)))
-    y_final.iloc[:, 0] = y_type.iloc[:, 1]
-    y_final.iloc[:, 1] = y_time.iloc[:, 1]
-    y_final.iloc[:, 2] = y_author.iloc[:, 1]
-    y_final.iloc[:, 3] = y_school.iloc[:, 1]
-
-    y_final_test = pd.DataFrame(np.zeros((y_type_test.iloc[:, 0].shape[0], 4)))
-    y_final_test.iloc[:, 0] = y_type_test.iloc[:, 1]
-    y_final_test.iloc[:, 1] = y_time_test.iloc[:, 1]
-    y_final_test.iloc[:, 2] = y_author_test.iloc[:, 1]
-    y_final_test.iloc[:, 3] = y_school_test.iloc[:, 1]
-
+    y_final = np.zeros((y_type.iloc[:, 0].shape[0], 4))
+    y_final[:, 0] = np.squeeze(y_type.values)
+    y_final[:, 1] = np.squeeze(y_time.values)
+    y_final[:, 2] = np.squeeze(y_author.values)
+    y_final[:, 3] = np.squeeze(y_school.values)
+    y_final = pd.DataFrame(y_final)
+    
+    y_final_test = np.zeros((y_type_test.iloc[:, 0].shape[0], 4))
+    y_final_test[:, 0] = np.squeeze(y_type_test.values)
+    y_final_test[:, 1] = np.squeeze(y_time_test.values)
+    y_final_test[:, 2] = np.squeeze(y_author_test.values)
+    y_final_test[:, 3] = np.squeeze(y_school_test.values)
+    y_final_test = pd.DataFrame(y_final_test)
 
     return X, y_final, X_test, y_final_test
     
@@ -196,6 +198,7 @@ if __name__ == '__main__':
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
+    X_train, y_train, X_test, y_test = format_features(path)
 
     clf = svm.LinearSVC()
     performance_classifier_tasks(clf, path)
