@@ -19,8 +19,8 @@ class KGM(nn.Module):
         self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
 
         # Classifier
-        self.classifier1 = nn.Sequential(nn.Linear(2048, num_class))
-        #self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, end_dim))
+        self.classifier1 = nn.Sequential(nn.Linear(2048, self.deep_feature_size))
+        self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, end_dim))
 
         # Graph space encoder
         self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
@@ -31,7 +31,7 @@ class KGM(nn.Module):
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         pred_class = self.classifier1(visual_emb)
-        #pred_class = self.classifier2(pred_class)
+        pred_class = self.classifier2(pred_class)
         graph_proj = self.nodeEmb(visual_emb)
 
         return [pred_class, graph_proj]
@@ -42,7 +42,7 @@ class KGM(nn.Module):
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         pred_class = self.classifier1(visual_emb)
 
-        return pred_class
+        return visual_emb
 
 class KGM_append(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
