@@ -31,7 +31,6 @@ def test_knowledgegraph(args_dict):
         att2i = author2idx
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
-
     # Define model
     if symbol_task:
         semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
@@ -138,8 +137,6 @@ def test_knowledgegraph(args_dict):
             else:
                 output = model(input_var[0])
 
-            feat = model.features(input_var[0])
-
             #outsoftmax = torch.nn.functional.softmax(output[0])
         
         if symbol_task:
@@ -166,7 +163,7 @@ def test_knowledgegraph(args_dict):
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         
-        features_matrix[actual_index:actual_index+input_var[0].shape[0]] = feat
+        features_matrix[actual_index:actual_index+args_dict.batch_size] = output[0]
 
     # Compute Accuracy
     # Accuracy
