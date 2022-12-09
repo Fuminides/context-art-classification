@@ -46,7 +46,7 @@ def graph_similarity(g1, g2):
     return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] * g1.shape[1])
 
 #### DEEP FEATURES TO UNIQUE CSV
-def format_features(path='./DeepFeatures/'):
+def format_features(path='./DeepFeatures/', task='author'):
     import os
 
     get_file_num = lambda a: int(a.split('_')[2])
@@ -64,7 +64,7 @@ def format_features(path='./DeepFeatures/'):
     def get_X(path1, dataset='train', task='author'):
         ix = 0
         for file in os.listdir(path1):
-            if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[-1].split('.')[0] == task):
+            if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3].split('.')[0] == task):
                 x_file = pd.read_csv(path + file, index_col=0)
 
                 if ix == 0:
@@ -89,7 +89,7 @@ def format_features(path='./DeepFeatures/'):
         
         return res
 
-    X = get_X(path, 'train')
+    X = get_X(path, 'train', task=task)
     X_test = get_X(path, 'test')
 
     y_author = get_y(path, 'train', 'author')
@@ -194,7 +194,7 @@ class VisdomLinePlotter(object):
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name, update = 'append')
 
 if __name__ == '__main__':
-    path = 'C:/Users/jf22881/Downloads/Clip_features/DeepFeatures/'
+    path = 'C:/Users/jf22881/Documents/GitHub/context-art-classification/DeepFeaturesBoW/'
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier

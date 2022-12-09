@@ -31,9 +31,10 @@ def test_knowledgegraph(args_dict):
         att2i = author2idx
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
+    
     # Define model
     if symbol_task:
+        semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
         model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
     elif args_dict.embedds == 'graph':
         if args_dict.append != 'append':
