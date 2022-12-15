@@ -1,0 +1,4 @@
+--mode train --workers 0 --model kgm --append append --att author --dir_dataset ../SemArt/ --batch_size 16 --nepochs 300 --embedds bow --resume  ./Models/bow_gradient_author_best_model.pth.tar
+--mode train --workers 0 --model kgm --append append --att school --dir_dataset ../SemArt/ --batch_size 16 --nepochs 300 --embedds bow --resume  ./Models/bow_gradient_school_best_model.pth.tar
+--mode train --workers 0 --model kgm --append append --att type --dir_dataset ../SemArt/ --batch_size 16 --nepochs 300 --embedds bow --resume  ./Models/bow_gradient_type_best_model.pth.tar
+--mode train --workers 0 --model kgm --append append --att time --dir_dataset ../SemArt/ --batch_size 16 --nepochs 300 --embedds bow --resume  ./Models/bow_gradient_time_best_model.pth.tar

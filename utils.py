@@ -119,25 +119,30 @@ def format_features(path='./DeepFeatures/', task='author'):
 
     return X, y_final, X_test, y_final_test
     
-def performance_classifier_tasks(clf, path, feature_select=True):
+def performance_classifier_tasks(clf0, path, feature_select=True):
     from sklearn.feature_selection import SelectFromModel
 
-    X_train, y_train, X_test, y_test = format_features(path)
+    X_train0, y_train, X_test0, y_test = format_features(path)
     tasks = ['Type', 'Time', 'Author', 'School']
+    final_features_mask = np.zeros((len(tasks), X_train0.shape[1]))
 
     for task in range(4):
-        clf.fit(X_train, y_train.to_numpy()[:,task])
-        if feature_select:
-            model = SelectFromModel(clf, prefit=True)
-            X_train = model.transform(X_train)
-            X_test = model.transform(X_test)
-            
-            print('New features are size: ' + str(X_train.shape[1]))
-            clf.fit(X_train, y_train.to_numpy()[:,task])
+        clf = clf0()
+        clf.fit(X_train0, y_train.to_numpy()[:,task])
+        model = SelectFromModel(clf, prefit=True, threshold=1)
+        final_features_mask[task, :] = model.get_support()
 
+        X_train = model.transform(X_train0)
+        X_test = model.transform(X_test0)
+        
+        print('New features are size: ' + str(X_train.shape[1]))
+        clf2 = clf0()
+        clf2.fit(X_train, y_train.to_numpy()[:,task])       
 
-        print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_train), y_train.to_numpy()[:,task]))))
-        print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))))
+        print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf2.predict(X_train), y_train.to_numpy()[:,task]))))
+        print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf2.predict(X_test), y_test.to_numpy()[:,task]))))
+    
+    return final_features_mask
 
 def performance_classifier_tasks_append(clf, path):
     X_train_author, y_train_author, X_test_author, y_test_author = format_features(path, task='author')
@@ -194,12 +199,17 @@ class VisdomLinePlotter(object):
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name, update = 'append')
 
 if __name__ == '__main__':
-    path = 'C:/Users/jf22881/Documents/GitHub/context-art-classification/DeepFeaturesBoW/'
+    path = 'C:/Users/jf22881/Downloads/Clip_features/DeepFeatures/'
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
+    import matplotlib.pyplot as plt
+
     X_train, y_train, X_test, y_test = format_features(path)
 
-    clf = svm.LinearSVC()
-    performance_classifier_tasks(clf, path)
+    clf = svm.LinearSVC
+    features_used = performance_classifier_tasks(clf, path)
+    aux = [np.sum(np.sum(features_used, axis=0) >= x) for x in range(4)]
+    plt.bar([1, 2, 3, 4], np.sum(aux, axis=0)); plt.xticks([1, 2, 3, 4]); plt.xlabel('Number of tasks'); plt.ylabel('Features used'); plt.title('Features used in at least x tasks');plt.show()
+    print('Done!')
     
