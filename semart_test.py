@@ -165,8 +165,8 @@ def test_knowledgegraph(args_dict):
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         
-        print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
-        features_matrix[actual_index:actual_index+args_dict.batch_size] = feat_cache
+        # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
+        features_matrix[actual_index:actual_index+feat_cache.shape[0]] = feat_cache
 
     # Compute Accuracy
     # Accuracy
