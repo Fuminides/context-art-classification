@@ -180,7 +180,7 @@ def test_knowledgegraph(args_dict):
     else:
         acc = np.sum(out == label)/len(out)
     print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
-    pd.DataFrame(logits).to_csv('logits_' + str(args_dict.att) + '.csv')
+    pd.DataFrame(features_matrix).to_csv('DeepFeatures/' + str(args_dict.embedds) + '_' + str(args_dict.att) + '.csv')
 
 
 def test_multitask(args_dict):
