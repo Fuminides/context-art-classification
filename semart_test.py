@@ -132,8 +132,10 @@ def test_knowledgegraph(args_dict):
                 output = model(input_var[0])
             elif args_dict.append == 'append':
                 output = model((input_var[0], target[1]))
+                feat_cache = model.features((input_var[0], target[1]))   
             elif args_dict.model == 'kgm':
-                output, _ = model(input_var[0])    
+                output, _ = model(input_var[0]) 
+                feat_cache = model.features(input_var[0])   
             else:
                 output = model(input_var[0])
 
@@ -163,7 +165,7 @@ def test_knowledgegraph(args_dict):
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         
-        features_matrix[actual_index:actual_index+args_dict.batch_size] = output[0]
+        features_matrix[actual_index:actual_index+args_dict.batch_size] = feat_cache
 
     # Compute Accuracy
     # Accuracy
