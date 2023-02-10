@@ -20,7 +20,7 @@ class KGM(nn.Module):
 
         # Classifier
         self.classifier1 = nn.Sequential(nn.Linear(2048, self.deep_feature_size))
-        self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, end_dim))
+        self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, num_class))
 
         # Graph space encoder
         self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
