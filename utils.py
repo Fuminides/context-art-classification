@@ -199,7 +199,7 @@ class VisdomLinePlotter(object):
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name, update = 'append')
 
 if __name__ == '__main__':
-    path = 'C:/Users/jf22881/Downloads/Clip_features/DeepFeatures/'
+    path = 'C:/Users/jf22881/Documents/GitHub/context-art-classification/DeepFeaturesCLIP/DeepFeatures/'
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
