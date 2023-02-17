@@ -46,7 +46,7 @@ def graph_similarity(g1, g2):
     return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] * g1.shape[1])
 
 #### DEEP FEATURES TO UNIQUE CSV
-def format_features(path='./DeepFeatures/', task='author'):
+def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
     import os
 
     get_file_num = lambda a: int(a.split('_')[2])
@@ -61,24 +61,36 @@ def format_features(path='./DeepFeatures/', task='author'):
         
         return max_num
     
-    def get_X(path1, dataset='train', task='author'):
+    def get_X(path1, dataset='train', task='author', embedds='bow'):
         ix = 0
         for file in os.listdir(path1):
-            if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3].split('.')[0] == task):
-                x_file = pd.read_csv(path + file, index_col=0)
+            if dataset == 'train':
+                if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
+                    x_file = pd.read_csv(path + file, index_col=0)
 
-                if ix == 0:
-                    res = x_file
-                    ix += 1
-                else:
-                    res = pd.concat([res, x_file])
+                    if ix == 0:
+                        res = x_file
+                        ix += 1
+                    else:
+                        res = pd.concat([res, x_file])
+            elif dataset == 'test':
+                if (dataset in file) and (task in file) and (embedds in file) and (file.split('_')[1] == 'x'):
+                    x_file = pd.read_csv(path + file, index_col=0)
+
+                    if ix == 0:
+                        res = x_file
+                        ix += 1
+                    else:
+                        res = pd.concat([res, x_file])
+
+
         
         return res
 
-    def get_y(path1, dataset, task):
+    def get_y(path1, dataset, task, embedds='bow'):
         ix = 0
         for file in os.listdir(path1):
-            if (file.split('_')[1] == 'y') and (file.split('_')[-1].split('.')[0] == task) and (file.split('_')[0] == dataset):
+            if (file.split('_')[1] == 'y') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
                 x_file = pd.read_csv(path + file, index_col=0)
 
                 if ix == 0:
@@ -199,13 +211,13 @@ class VisdomLinePlotter(object):
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name, update = 'append')
 
 if __name__ == '__main__':
-    path = 'C:/Users/jf22881/Documents/GitHub/context-art-classification/DeepFeaturesCLIP/DeepFeatures/'
+    path = '/home/javierfumanal/Documents/DeepFeatures/'
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
     import matplotlib.pyplot as plt
 
-    X_train, y_train, X_test, y_test = format_features(path)
+    X_train, y_train, X_test, y_test = format_features(path, embedds='clip')
 
     clf = svm.LinearSVC
     features_used = performance_classifier_tasks(clf, path)
