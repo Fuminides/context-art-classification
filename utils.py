@@ -63,56 +63,52 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
     
     def get_X(path1, dataset='train', task='author', embedds='bow'):
         ix = 0
-        for file in os.listdir(path1):
-            if dataset == 'train':
-                if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
-                    x_file = pd.read_csv(path + file, index_col=0)
+        if dataset == 'test':
+            x_file = pd.read_csv(path + dataset + '_' + 'x_' + task + '_' + embedds + '.csv', index_col=0)
+        else:
+            for file in os.listdir(path1):
+                if dataset == 'train':
+                    if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
+                        x_file = pd.read_csv(path + file, index_col=0)
 
-                    if ix == 0:
-                        res = x_file
-                        ix += 1
-                    else:
-                        res = pd.concat([res, x_file])
-            elif dataset == 'test':
-                if (dataset in file) and (task in file) and (embedds in file) and (file.split('_')[1] == 'x'):
-                    x_file = pd.read_csv(path + file, index_col=0)
-
-                    if ix == 0:
-                        res = x_file
-                        ix += 1
-                    else:
-                        res = pd.concat([res, x_file])
-
+                        if ix == 0:
+                            res = x_file
+                            ix += 1
+                        else:
+                            res = pd.concat([res, x_file])
 
         
         return res
 
     def get_y(path1, dataset, task, embedds='bow'):
         ix = 0
-        for file in os.listdir(path1):
-            if (file.split('_')[1] == 'y') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
-                x_file = pd.read_csv(path + file, index_col=0)
+        if dataset == 'test':
+            x_file = pd.read_csv(path + dataset + '_' + 'y' + task + '_' + embedds + '.csv', index_col=0)
+        else:
+            for file in os.listdir(path1):
+                if (file.split('_')[1] == 'y') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
+                    x_file = pd.read_csv(path + file, index_col=0)
 
-                if ix == 0:
-                    res = x_file
-                    ix += 1
-                else:
-                    res = pd.concat([res, x_file])
+                    if ix == 0:
+                        res = x_file
+                        ix += 1
+                    else:
+                        res = pd.concat([res, x_file])
         
         return res
 
     X = get_X(path, 'train', task=task)
     X_test = get_X(path, 'test')
 
-    y_author = get_y(path, 'train', 'author')
-    y_type = get_y(path, 'train', 'type')
-    y_time = get_y(path, 'train', 'time')
-    y_school = get_y(path, 'train', 'school')
+    y_author = get_y(path, 'train', 'author', embedds=embedds)
+    y_type = get_y(path, 'train', 'type', embedds=embedds)
+    y_time = get_y(path, 'train', 'time', embedds=embedds)
+    y_school = get_y(path, 'train', 'school', embedds=embedds)
 
-    y_author_test = get_y(path, 'test', 'author')
-    y_type_test = get_y(path, 'test', 'type')
-    y_time_test = get_y(path, 'test', 'time')
-    y_school_test = get_y(path, 'test', 'school')
+    y_author_test = get_y(path, 'test', 'author', embedds=embedds)
+    y_type_test = get_y(path, 'test', 'type', embedds=embedds)
+    y_time_test = get_y(path, 'test', 'time', embedds=embedds)
+    y_school_test = get_y(path, 'test', 'school', embedds=embedds)
 
 
     y_final = np.zeros((y_type.iloc[:, 0].shape[0], 4))
