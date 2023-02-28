@@ -11,7 +11,7 @@ class KGM(nn.Module):
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
-        self.deep_feature_size = 512
+        self.deep_feature_size = 20
         # Classifiers
         '''self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))
         self.class_school = nn.Sequential(nn.Linear(2048, num_class[1]))
