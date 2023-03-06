@@ -17,12 +17,10 @@ import utils
 from model_mtl import MTL
 from model_sym import SymModel 
 from model_kgm import KGM, KGM_append
-from model_rmtl import RMTL
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from dataloader_sym import ArtDatasetSym
 from attributes import load_att_class
-from my_focal_loss import sigmoid_focal_loss
 
 #from torch_geometric.loader import DataLoader
 if torch.cuda.is_available():
@@ -344,6 +342,9 @@ def train_knowledgegraph_classifier(args_dict):
     mtl_mode = args_dict.att == 'all'
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    # Load classes
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+
     if args_dict.att == 'type':
         att2i = type2idx
     elif args_dict.att == 'school':
@@ -361,7 +362,10 @@ def train_knowledgegraph_classifier(args_dict):
     # Define model
     if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
     else:
