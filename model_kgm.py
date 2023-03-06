@@ -33,9 +33,20 @@ class KGM(nn.Module):
 
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
-        pred_class = self.classifier1(visual_emb)
-        pred_class = self.classifier2(pred_class)
-        graph_proj = self.nodeEmb(visual_emb)
+
+        if multi_task:
+            pred_type = self.class_type(visual_emb)
+            pred_school = self.class_school(visual_emb)
+            pred_tf = self.class_tf(visual_emb)
+            pred_author = self.class_author(visual_emb)
+            graph_proj = self.nodeEmb(visual_emb)
+
+            return [pred_type, pred_school, pred_tf, pred_author, graph_proj]
+
+        else:
+            pred_class = self.classifier1(visual_emb)
+            pred_class = self.classifier2(pred_class)
+            graph_proj = self.nodeEmb(visual_emb)
 
         return [pred_class, graph_proj]
     
