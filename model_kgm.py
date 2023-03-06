@@ -13,8 +13,9 @@ class KGM(nn.Module):
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
         self.deep_feature_size = 20
         self.classifier1 = nn.Sequential(nn.Linear(2048, self.deep_feature_size))
-
-        if multi_task:            
+        self.multi_task = multi_task
+        
+        if self.multi_task:            
             # Classifiers
             self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))
             self.class_school = nn.Sequential(nn.Linear(2048, num_class[1]))
@@ -34,7 +35,7 @@ class KGM(nn.Module):
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
 
-        if multi_task:
+        if self.multi_task:
             pred_type = self.class_type(visual_emb)
             pred_school = self.class_school(visual_emb)
             pred_tf = self.class_tf(visual_emb)
