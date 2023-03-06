@@ -65,6 +65,10 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
         ix = 0
         if dataset == 'test':
             x_file = pd.read_csv(path + dataset + '_' + 'x_' + task + '_' + embedds + '.csv', index_col=0)
+            def foo_bar(x):
+                return float(x[7:-1])
+                
+            res = x_file.applymap(foo_bar)
         else:
             for file in os.listdir(path1):
                 if dataset == 'train':
@@ -83,7 +87,9 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
     def get_y(path1, dataset, task, embedds='bow'):
         ix = 0
         if dataset == 'test':
-            x_file = pd.read_csv(path + dataset + '_' + 'y' + task + '_' + embedds + '.csv', index_col=0)
+            x_file = pd.read_csv(path + dataset + '_' + 'y_' + task + '_' + embedds + '.csv', index_col=0)
+            res = x_file
+
         else:
             for file in os.listdir(path1):
                 if (file.split('_')[1] == 'y') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (embedds in file):
@@ -97,8 +103,8 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
         
         return res
 
-    X = get_X(path, 'train', task=task)
-    X_test = get_X(path, 'test')
+    X = get_X(path, 'train', task=task, embedds=embedds)
+    X_test = get_X(path, 'test', embedds=embedds)
 
     y_author = get_y(path, 'train', 'author', embedds=embedds)
     y_type = get_y(path, 'train', 'type', embedds=embedds)
@@ -127,28 +133,34 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
 
     return X, y_final, X_test, y_final_test
     
-def performance_classifier_tasks(clf0, path, feature_select=True):
+def performance_classifier_tasks(clf0, path, feature_select=True, embedds='bow', og_task='author'):
     from sklearn.feature_selection import SelectFromModel
 
-    X_train0, y_train, X_test0, y_test = format_features(path)
+    X_train0, y_train, X_test0, y_test = format_features(path, embedds=embedds, task=og_task)
     tasks = ['Type', 'Time', 'Author', 'School']
     final_features_mask = np.zeros((len(tasks), X_train0.shape[1]))
 
     for task in range(4):
-        clf = clf0()
+        clf = clf0
         clf.fit(X_train0, y_train.to_numpy()[:,task])
-        model = SelectFromModel(clf, prefit=True, threshold=1)
-        final_features_mask[task, :] = model.get_support()
+        if feature_select:
+            model = SelectFromModel(clf, prefit=True, threshold=1)
+            final_features_mask[task, :] = model.get_support()
 
-        X_train = model.transform(X_train0)
-        X_test = model.transform(X_test0)
+            X_train = model.transform(X_train0)
+            X_test = model.transform(X_test0)
+            
+            print('New features are size: ' + str(X_train.shape[1]))
+            clf2 = clf0()
+            clf2.fit(X_train, y_train.to_numpy()[:,task])       
+            clf = clf2
         
-        print('New features are size: ' + str(X_train.shape[1]))
-        clf2 = clf0()
-        clf2.fit(X_train, y_train.to_numpy()[:,task])       
-
-        print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf2.predict(X_train), y_train.to_numpy()[:,task]))))
-        print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf2.predict(X_test), y_test.to_numpy()[:,task]))))
+        else:
+            X_train = X_train0
+            X_test = X_test0
+        print('Task ' + tasks[task])    
+        print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_train), y_train.to_numpy()[:,task]))))
+        print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))))
     
     return final_features_mask
 
@@ -212,12 +224,61 @@ if __name__ == '__main__':
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
     import matplotlib.pyplot as plt
+    from sklearn.linear_model import SGDClassifier
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.pipeline import make_pipeline
 
-    X_train, y_train, X_test, y_test = format_features(path, embedds='clip')
+    embedds = 'clip'
+    # X_train, y_train, X_test, y_test = format_features(path, embedds=embedds)
 
-    clf = svm.LinearSVC
-    features_used = performance_classifier_tasks(clf, path)
-    aux = [np.sum(np.sum(features_used, axis=0) >= x) for x in range(4)]
+    clf = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3))
+    print('Clip')
+    print('Non optimized features')
+    print('Author')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
+    print('Type')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='type')
+    print('Time')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
+    print('School')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')
+
+    '''print()
+    print('Optimized features')
+    print('Author')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='author')
+    print('Type')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='type')
+    print('Time')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='time')
+    print('School')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='school')'''
+
+    embedds = 'bow'
+    print()
+    print('BoW')
+    print('Non optimized features')
+    print('Author')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
+    print('Type')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='type')
+    print('Time')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
+    print('School')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')
+
+    '''print()
+    print('Optimized features')
+    print('Author')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='author')
+    print('Type')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='type')
+    print('Time')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='time')
+    print('School')s
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='school')'''
+
+    '''aux = [np.sum(np.sum(features_used, axis=0) >= x) for x in range(4)]
     plt.bar([1, 2, 3, 4], np.sum(aux, axis=0)); plt.xticks([1, 2, 3, 4]); plt.xlabel('Number of tasks'); plt.ylabel('Features used'); plt.title('Features used in at least x tasks');plt.show()
-    print('Done!')
+    print('Done!')'''
     

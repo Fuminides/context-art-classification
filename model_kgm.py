@@ -5,22 +5,25 @@ from torch import cat
 class KGM(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
 
-    def __init__(self, num_class, end_dim=128):
+    def __init__(self, num_class, end_dim=128, multi_task=False):
         super(KGM, self).__init__()
 
         # Load pre-trained visual model
         resnet = models.resnet50(pretrained=True)
         self.resnet = nn.Sequential(*list(resnet.children())[:-1])
         self.deep_feature_size = 20
-        # Classifiers
-        '''self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))
-        self.class_school = nn.Sequential(nn.Linear(2048, num_class[1]))
-        self.class_tf = nn.Sequential(nn.Linear(2048, num_class[2]))
-        self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
+        self.classifier1 = nn.Sequential(nn.Linear(2048, self.deep_feature_size))
+
+        if multi_task:            
+            # Classifiers
+            self.class_type = nn.Sequential(nn.Linear(2048, num_class[0]))
+            self.class_school = nn.Sequential(nn.Linear(2048, num_class[1]))
+            self.class_tf = nn.Sequential(nn.Linear(2048, num_class[2]))
+            self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))
 
         # Classifier
-        self.classifier1 = nn.Sequential(nn.Linear(2048, self.deep_feature_size))
-        self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, num_class))
+        else:
+            self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, num_class))
 
         # Graph space encoder
         self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
@@ -43,6 +46,7 @@ class KGM(nn.Module):
         pred_class = self.classifier1(visual_emb)
 
         return pred_class
+
 
 class KGM_append(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space

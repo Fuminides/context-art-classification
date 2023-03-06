@@ -106,9 +106,18 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
                 target_var.append(torch.autograd.Variable(target[j]))
         else:
-            target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
+            if args_dict.att == 'all':
+                target_var = torch.tensor(np.array(target[:-1], dtype=np.float), dtype=torch.float32)
+                target_embd = torch.tensor(np.array(target[-1], dtype=np.float), dtype=torch.float32)
+                if torch.cuda.is_available():
+                    target_var = target_embd.cuda(non_blocking=True)
+            
+
+            else:
+                target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
+
             if torch.cuda.is_available():
-                    target_var = target_var.cuda(non_blocking=True)
+                target_var = target_var.cuda(non_blocking=True)
             
 
         # Output of the model
@@ -145,10 +154,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
             
             actual_index += args_dict.batch_size
             
-            if args_dict.att == 'all': # TODO
+            if args_dict.att == 'all':
                 class_loss = multi_class_loss(criterion, target_var, output)
                 
-                encoder_loss = criterion[1](output[4], target_var[-1].long())
+                encoder_loss = criterion[1](output[4], target_embd.long())
                 train_loss = args_dict.lambda_c * class_loss + \
                             args_dict.lambda_e * encoder_loss
 
@@ -332,7 +341,7 @@ def multi_class_loss(criterion, target_var, output):
 
 
 def train_knowledgegraph_classifier(args_dict):
-
+    mtl_mode = args_dict.att == 'all'
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     if args_dict.att == 'type':
@@ -352,14 +361,14 @@ def train_knowledgegraph_classifier(args_dict):
     # Define model
     if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
-            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
     else:
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
-            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -398,8 +407,12 @@ def train_knowledgegraph_classifier(args_dict):
     k = args_dict.k
 
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, clusters=N_CLUSTERS, k=k)
-    semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, clusters=N_CLUSTERS, k=k)
+    if mtl_mode:
+        semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms, clusters=N_CLUSTERS, k=k)
+        semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms, clusters=N_CLUSTERS, k=k)
+    else:
+        semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, clusters=N_CLUSTERS, k=k)
+        semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, clusters=N_CLUSTERS, k=k)
 
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
@@ -731,112 +744,6 @@ def gen_embeds(args_dict, vis_encoder, data_partition='train'):
     
     return features_matrix_end
 
-def vis_encoder_train(args_dict):
-
-    # Load classes
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-    att2i = [type2idx, school2idx, time2idx, author2idx]
-
-    # Define model
-    model = RMTL(num_classes)
-    if torch.cuda.is_available():
-        model.cuda()
-
-    # Loss and optimizer
-    if torch.cuda.is_available():
-        class_loss = nn.CrossEntropyLoss().cuda()
-    else:
-        class_loss = nn.CrossEntropyLoss()
-
-    encoder_loss = nn.SmoothL1Loss()
-    loss = [class_loss, encoder_loss]
-
-    optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
-                                lr=args_dict.lr,
-                                momentum=args_dict.momentum)
-
-    # Resume training if needed
-    best_val, model, optimizer = resume(args_dict, model, optimizer)
-
-    # Data transformation for training (with data augmentation) and validation
-    train_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-    val_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(224),  # we get only the center of that rescaled
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-
-    # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
-    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % semart_train_loader.__len__())
-
-    val_loader = torch.utils.data.DataLoader(
-        semart_val_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % semart_val_loader.__len__())
-
-    # Now, let's start the training process!
-    print_classes(type2idx, school2idx, time2idx, author2idx)
-    print('Start training RMTL model...')
-    pat_track = 0
-    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
-
-        # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch)
-
-        # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, loss, epoch)
-
-        # check patience
-        if accval <= best_val:
-            pat_track += 1
-        else:
-            pat_track = 0
-        if pat_track >= args_dict.patience:
-            break
-
-        # save if it is the best validation accuracy
-        is_best = accval > best_val
-        best_val = max(accval, best_val)
-        if is_best:
-            save_model(args_dict, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_val': best_val,
-                'optimizer': optimizer.state_dict(),
-                'valtrack': pat_track,
-                'curr_val': accval,
-            }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
-
-            feature_matrix = gen_embeds(args_dict, model, 'train')
-            print(feature_matrix[0:2, :][:10])
-            pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
-
-            feature_matrix = gen_embeds(args_dict, model, 'val')
-            pd.DataFrame(feature_matrix).to_csv('Data/feature_val_128_semart.csv')
-
-            feature_matrix = gen_embeds(args_dict, model, 'test')
-            pd.DataFrame(feature_matrix).to_csv('Data/feature_test_128_semart.csv')
-
-
-        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 def _load_labels(df_path, att2i):
     def class_from_name(name, vocab):
