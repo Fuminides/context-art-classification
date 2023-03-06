@@ -344,7 +344,7 @@ def train_knowledgegraph_classifier(args_dict):
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     # Load classes
     num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-
+    
     if args_dict.att == 'type':
         att2i = type2idx
     elif args_dict.att == 'school':
@@ -418,7 +418,6 @@ def train_knowledgegraph_classifier(args_dict):
     # Dataloaders for training and validation
     if mtl_mode:
         semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms, clusters=N_CLUSTERS, k=k)
-        ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
         semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms, clusters=N_CLUSTERS, k=k)
     else:
         semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, clusters=N_CLUSTERS, k=k)
