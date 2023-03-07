@@ -232,7 +232,7 @@ if __name__ == '__main__':
     # X_train, y_train, X_test, y_test = format_features(path, embedds=embedds)
 
     clf = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3))
-    print('Clip')
+    """print('Clip')
     print('Non optimized features')
     print('Author')
     features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
@@ -241,7 +241,7 @@ if __name__ == '__main__':
     print('Time')
     features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
     print('School')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')
+    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')"""
 
     '''print()
     print('Optimized features')
