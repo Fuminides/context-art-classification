@@ -198,6 +198,7 @@ if __name__ == '__main__':
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
+    from sklearn.feature_selection import SelectFromModel
     X_train, y_train, X_test, y_test = format_features(path)
 
     clf = svm.LinearSVC()
