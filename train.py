@@ -78,7 +78,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
-
+    mtl_mode = args_dict.att == 'all'
     # switch to train mode
     model.train()
     actual_index = 0
