@@ -158,7 +158,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
             if args_dict.att == 'all':
                 class_loss = multi_class_loss(criterion[0], target_var, output)
                 
-                encoder_loss = criterion[1](output[4], target_var[-1].long())
+                encoder_loss = criterion[1](output[4], target_var[-1].float())
                 train_loss = args_dict.lambda_c * class_loss + \
                             args_dict.lambda_e * encoder_loss
 
