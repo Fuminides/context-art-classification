@@ -151,7 +151,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 if not mtl_mode:
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
-                    pd.DataFrame(target_var.cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+                    pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
+                    pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
+                    pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
+                    pd.DataFrame(target_var[3].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('author') + '_' + str(args_dict.embedds) + '.csv')
             
             actual_index += args_dict.batch_size
             
