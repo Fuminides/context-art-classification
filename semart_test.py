@@ -147,7 +147,7 @@ def test_knowledgegraph(args_dict):
                 target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
 
             if j == 0:
-              target[j] = torch.tensor(np.array(target[j], dtype=np.int32))
+              target[j] = torch.tensor(np.array(target[j].cpu(), dtype=np.int32))
             else:
               target[j] = target_var # torch.tensor(target[j])
             
