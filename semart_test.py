@@ -32,6 +32,7 @@ def test_knowledgegraph(args_dict):
         att2i = author2idx
     elif args_dict.att == 'all':
         att2i = [type2idx, school2idx, time2idx, author2idx]
+        num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
 
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
