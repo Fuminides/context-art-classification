@@ -93,7 +93,7 @@ def test_knowledgegraph(args_dict):
         if not args_dict.symbol_task:
             if mtl_mode:
                 test_loader = torch.utils.data.DataLoader(
-                    ArtDatasetMTL(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+                    ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=test_transforms, clusters=128),
                     batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
             else:
                 test_loader = torch.utils.data.DataLoader(
