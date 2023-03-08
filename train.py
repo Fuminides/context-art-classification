@@ -108,7 +108,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 target_var = torch.tensor(np.array(target[:-1], dtype=np.float), dtype=torch.float32)
                 target_embd = torch.tensor(np.array(target[-1], dtype=np.float), dtype=torch.float32)
                 if torch.cuda.is_available():
-                    target_var = target_embd.cuda(non_blocking=True)
+                    target_var = target_var.cuda(non_blocking=True)
+                    target_embd = target_embd.cuda(non_blocking=True)
             
 
             else:
