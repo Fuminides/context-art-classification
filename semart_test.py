@@ -21,6 +21,7 @@ def test_knowledgegraph(args_dict):
 
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    mtl_mode = args_dict.att == 'all'
     if args_dict.att == 'type':
         att2i = type2idx
     elif args_dict.att == 'school':
@@ -29,6 +30,9 @@ def test_knowledgegraph(args_dict):
         att2i = time2idx
     elif args_dict.att == 'author':
         att2i = author2idx
+    elif args_dict.att == 'all':
+        att2i = [type2idx, school2idx, time2idx, author2idx]
+
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
     # Define model
@@ -39,7 +43,10 @@ def test_knowledgegraph(args_dict):
         if args_dict.append != 'append':
             model = KGM(len(att2i))
         else:
-            model = KGM_append(len(att2i))
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
     else:
         if args_dict.append != 'append':
             model = KGM(len(att2i), end_dim=N_CLUSTERS)
