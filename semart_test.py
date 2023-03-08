@@ -138,18 +138,16 @@ def test_knowledgegraph(args_dict):
         target_var = list()
         for j in range(len(target)):
             if args_dict.att == 'all':
-                target_var = torch.tensor(np.array(target[:-1], dtype=np.float), dtype=torch.float32)
-                target_embd = torch.tensor(np.array(target[-1], dtype=np.float), dtype=torch.float32)
+                target[j] = torch.tensor(np.array(target[j][:-1], dtype=np.uint8))
                 if torch.cuda.is_available():
-                    target_var = target_var.cuda(non_blocking=True)
-                    target_embd = target_embd.cuda(non_blocking=True)
-            
+                    target[j] = target[j].cuda(non_blocking=True)
 
+            
             else:
                 target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
 
             if j == 0:
-              target[j] = target_var #torch.tensor(np.array(target[j], dtype=np.int32))
+              target[j] = torch.tensor(np.array(target[j], dtype=np.int32))
             else:
               target[j] = target_var # torch.tensor(target[j])
             
