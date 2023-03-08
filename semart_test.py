@@ -50,9 +50,17 @@ def test_knowledgegraph(args_dict):
                 model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
     else:
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+              
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
-            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+              
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -83,9 +91,15 @@ def test_knowledgegraph(args_dict):
     # Data Loaders for test
     if torch.cuda.is_available():
         if not args_dict.symbol_task:
-            test_loader = torch.utils.data.DataLoader(
+            if mtl_mode:
+                test_loader = torch.utils.data.DataLoader(
+                    ArtDatasetMTL(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+                    batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+            else:
+                test_loader = torch.utils.data.DataLoader(
                     ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
                     batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+            
         else:
             semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
             test_loader = torch.utils.data.DataLoader(
@@ -189,8 +203,13 @@ def test_knowledgegraph(args_dict):
         acc = np.sum(out == label)/len(out)
 
     print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
-    pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    if not mtl_mode:
+        pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+        pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    else:
+        pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+        pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+        
 
 def test_multitask(args_dict):
 
