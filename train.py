@@ -402,7 +402,7 @@ def train_knowledgegraph_classifier(args_dict):
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
+                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
         else:
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
 
