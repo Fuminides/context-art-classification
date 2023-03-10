@@ -16,11 +16,12 @@ import utils
 #from model_gcn import GCN
 from model_mtl import MTL
 from model_sym import SymModel 
-from model_kgm import KGM, KGM_append
+from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from dataloader_sym import ArtDatasetSym
 from attributes import load_att_class
+import lenet
 
 #from torch_geometric.loader import DataLoader
 if torch.cuda.is_available():
@@ -53,6 +54,24 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     torch.save(state, filename)
 
 
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx):
+    grad_classifier_path = args_dict.grad_cam_model_path
+    checkpoint = torch.load(grad_classifier_path)
+    lenet_model = lenet.LeNet() 
+    lenet_model.load_state_dict(checkpoint['state_dict'])
+
+    grad_cam_images = get_gradcam(visual_model, data, target_var)
+    lenet_model = lenet_model.to(device)
+    lenet_model.eval()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    grad_cam_preds = lenet_model(grad_cam_images)
+    pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    
+    
+    
+
+    
 def resume(args_dict, model, optimizer):
 
     best_val = float(0)
@@ -152,10 +171,11 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 if not mtl_mode:
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
-                    pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
-                    pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
-                    pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
-                    pd.DataFrame(target_var[3].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('author') + '_' + str(args_dict.embedds) + '.csv')
+                    extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx)
+                    # pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
+                    # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
+                    # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
+                    # pd.DataFrame(target_var[3].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('author') + '_' + str(args_dict.embedds) + '.csv')
             
             actual_index += args_dict.batch_size
             
@@ -374,7 +394,7 @@ def train_knowledgegraph_classifier(args_dict):
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
-                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
+                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
     else:

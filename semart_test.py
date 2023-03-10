@@ -6,7 +6,8 @@ from torchvision import transforms
 from dataloader_sym import ArtDatasetSym
 
 from model_mtl import MTL
-from model_kgm import KGM, KGM_append
+from model_kgm import KGM, KGM_append, get_gradcam
+import lenet
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
@@ -16,6 +17,20 @@ import pandas as pd
 #from model_gcn import GCN, 
 NODE2VEC_OUTPUT = 128
 
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx):
+    grad_classifier_path = args_dict.grad_cam_model_path
+    checkpoint = torch.load(grad_classifier_path)
+    lenet_model = lenet.LeNet() 
+    lenet_model.load_state_dict(checkpoint['state_dict'])
+
+    grad_cam_images = get_gradcam(visual_model, data, target_var)
+    lenet_model = lenet_model.to(device)
+    lenet_model.eval()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    grad_cam_preds = lenet_model(grad_cam_images)
+    pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    
 
 def test_knowledgegraph(args_dict):
 
@@ -232,7 +247,8 @@ def test_knowledgegraph(args_dict):
         print('Absence detected {acc}'.format(acc=acc_absence))
     else:
         if not mtl_mode:
-          acc = np.sum(out == label)/len(out)
+          # acc = np.sum(out == label)/len(out)
+          extract_grad_cam_features(model, input_var[0], target_var, args_dict, i)
 
 
           print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
