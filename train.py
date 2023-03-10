@@ -402,7 +402,7 @@ def train_knowledgegraph_classifier(args_dict):
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
-                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
+                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
 
@@ -691,94 +691,6 @@ def train_symbol_classifier(args_dict):
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
-
-def gen_embeds(args_dict, vis_encoder, data_partition='train'):
-    '''
-    Generates the proper dataset to train the GCN model.
-        1. A file containing the embeddings for each category and painting for train, validation and test.
-        
-        
-        NOTE: remember that the pseudo-labels for validation and test are computed
-        using another classification model.
-    '''
-    from torchvision import transforms
-
-    transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-    # Load classes
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-    att2i = [type2idx, school2idx, time2idx, author2idx]
-
-    from PIL import Image
-    from model_rmtl import RMTL
-
-    #if args_dict.embedds == 'graph':
-    if data_partition == 'train':
-        train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
-    else:
-        train_node2vec_emb = pd.read_csv('Data/semart_' + data_partition + '.emd', skiprows=1, sep=' ', header=None, index_col=0)
-
-
-    vis_encoder.eval()
-    if torch.cuda.is_available():
-        vis_encoder = vis_encoder.cuda()
-
-    # feature_matrix = np.zeros(train_node2vec_emb.shape)
-    print('Starting the process... ')
-    semart_train_loader = ArtDatasetMTL(args_dict, set=data_partition, att2i=att2i, transform=transforms)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-
-    type_label = []
-    school_label = []
-    time_label = []
-    author_label = []
-
-    for batch_idx, (input, target) in enumerate(train_loader):
-
-        # Inputs to Variable type
-        input_var = list()
-        type_label.append(target[0])
-        school_label.append(target[0])
-        time_label.append(target[0])
-        author_label.append(target[0])
-
-        for j in range(len(input)):
-            if torch.cuda.is_available():
-                input_var.append(torch.autograd.Variable(input[j]).cuda())
-            else:
-                input_var.append(torch.autograd.Variable(input[j]))
-
-        if batch_idx == 0:
-            features_matrix = vis_encoder.reduce(input_var[0])
-            features_matrix = features_matrix.data.cpu().numpy()
-        else:
-            features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
-
-        print(
-            'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(semart_train_loader)))
-
-    #if args_dict.embedds == 'graph':
-    features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
-    '''elif args_dict.embedds == 'avg':
-        # Gen the feature for each category using the avg of all their representatives
-        additional_entities = np.zeros((train_node2vec_emb - len(semart_train_loader), train_node2vec_emb.shape[1]))
-        for entity in range(additional_entities.shape[0]):
-            entity
-        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)'''
-    
-    assert train_node2vec_emb.shape == features_matrix_end.shape
-    
-    return features_matrix_end
 
 
 def _load_labels(df_path, att2i):
