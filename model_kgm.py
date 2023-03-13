@@ -8,6 +8,12 @@ import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 
 
+def translate_dict(state_dict):
+    for key, elem in state_dict.items():
+        if 'visual_resnet' in key or 'avg_pooling_resnet' in key:
+            state_dict[key.replace('visual_resnet', 'resnet')] = elem
+            del state_dict[key]
+            
 def get_gradcam(model, image, target_class_index):
         image = torch.unsqueeze(image, 0)
 
