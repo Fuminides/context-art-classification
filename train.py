@@ -94,7 +94,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     grad_classifier_path = args_dict.grad_cam_model_path
     checkpoint = torch.load(grad_classifier_path)
     
-    lenet_model = lenet.LeNet() 
+    lenet_model = lenet.LeNet([256, 256, 3], [4, 2])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     lenet_model.load_state_dict(checkpoint['state_dict'])
     lenet_model = lenet_model.to(device)
