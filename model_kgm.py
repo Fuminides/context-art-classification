@@ -150,7 +150,7 @@ class GradCamKGM(nn.Module):
         pred_school = self.class_school(resnet_emb2)
         pred_tf = self.class_tf(resnet_emb2)
         pred_author = self.class_author(resnet_emb2)
-        
+
         graph_proj = self.nodeEmb(resnet_emb1)
 
         return [pred_type, pred_school, pred_tf, pred_author, graph_proj]
@@ -168,6 +168,7 @@ class GradCamKGM(nn.Module):
     def get_activations(self, x):
       visual_emb = self.visual_resnet(x)
       
+      
       return visual_emb
 
 
@@ -175,12 +176,9 @@ class GradCamKGM(nn.Module):
         resnet_emb = self.visual_resnet(img)
         resnet_emb = self.avg_pooling_resnet(resnet_emb)
         resnet_emb1 = resnet_emb.view(resnet_emb.size(0), -1)
+        resnet_emb2 = self.classifier2(resnet_emb1)
 
-        visual_emb = self.resnet(img)
-        visual_emb = visual_emb.view(visual_emb.size(0), -1)
-        pred_class = self.classifier1(visual_emb)
-
-        return pred_class
+        return resnet_emb2
 
     
 class KGM_append(nn.Module):
