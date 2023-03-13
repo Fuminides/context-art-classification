@@ -54,16 +54,9 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     torch.save(state, filename)
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx):
-    grad_classifier_path = args_dict.grad_cam_model_path
-    checkpoint = torch.load(grad_classifier_path)
-    lenet_model = lenet.LeNet() 
-    lenet_model.load_state_dict(checkpoint['state_dict'])
-
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
     grad_cam_images = get_gradcam(visual_model, data, target_var)
-    lenet_model = lenet_model.to(device)
-    lenet_model.eval()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     
     grad_cam_preds = lenet_model(grad_cam_images)
     pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
@@ -98,6 +91,14 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     # switch to train mode
     model.train()
     actual_index = 0
+    grad_classifier_path = args_dict.grad_cam_model_path
+    checkpoint = torch.load(grad_classifier_path)
+    
+    lenet_model = lenet.LeNet() 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    lenet_model.load_state_dict(checkpoint['state_dict'])
+    lenet_model = lenet_model.to(device)
+    lenet_model.eval()
 
     for batch_idx, (input, target) in enumerate(train_loader):
 
@@ -168,7 +169,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 if not mtl_mode:
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
-                    extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx)
+                    extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, lenet_model)
                     # pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
