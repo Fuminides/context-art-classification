@@ -13,7 +13,9 @@ def translate_dict(state_dict):
         if 'visual_resnet' in key or 'avg_pooling_resnet' in key:
             state_dict[key.replace('visual_resnet', 'resnet')] = elem
             del state_dict[key]
-            
+    
+    return state_dict
+
 def get_gradcam(model, image, target_class_index):
         image = torch.unsqueeze(image, 0)
 

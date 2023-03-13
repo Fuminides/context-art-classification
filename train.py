@@ -69,9 +69,6 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
     
     
-    
-
-    
 def resume(args_dict, model, optimizer):
 
     best_val = float(0)
