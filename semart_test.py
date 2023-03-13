@@ -6,7 +6,7 @@ from torchvision import transforms
 from dataloader_sym import ArtDatasetSym
 
 from model_mtl import MTL
-from model_kgm import KGM, KGM_append, get_gradcam, translate_dict
+from model_kgm import KGM, KGM_append, get_gradcam
 import lenet
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
@@ -22,7 +22,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     grad_classifier_path = args_dict.grad_cam_model_path
     checkpoint = torch.load(grad_classifier_path)
     lenet_model = lenet.LeNet() 
-    lenet_model.load_state_dict(translate_dict(checkpoint['state_dict']))
+    lenet_model.load_state_dict(checkpoint['state_dict'])
 
     grad_cam_images = get_gradcam(visual_model, data, target_var)
     lenet_model = lenet_model.to(device)

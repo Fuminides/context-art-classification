@@ -16,7 +16,7 @@ import utils
 #from model_gcn import GCN
 from model_mtl import MTL
 from model_sym import SymModel 
-from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam, translate_dict
+from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from dataloader_sym import ArtDatasetSym
@@ -79,7 +79,7 @@ def resume(args_dict, model, optimizer):
             checkpoint = torch.load(args_dict.resume)
             args_dict.start_epoch = checkpoint['epoch']
             best_val = checkpoint['best_val']
-            model.load_state_dict(translate_dict(checkpoint['state_dict']))
+            model.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args_dict.resume, checkpoint['epoch']))
