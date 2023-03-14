@@ -58,7 +58,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     res_quant = np.zeros((data.shape[0], 4))
     res_size = np.zeros((data.shape[0], 4))
     for ix, image in enumerate(data):
-        grad_cam_image = get_gradcam(visual_model, image, target_var)
+        grad_cam_image = get_gradcam(visual_model, image, target_var[ix])
         [quantity, size] = lenet_model(grad_cam_image)
 
         res_quant[ix] = quantity.cpu().numpy()
@@ -106,7 +106,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         lenet_model.load_state_dict(checkpoint['state_dict'])
     except KeyError:
         lenet_model.load_state_dict(checkpoint)
-        
+
     lenet_model = lenet_model.to(device)
     lenet_model.eval()
 
@@ -410,6 +410,7 @@ def train_knowledgegraph_classifier(args_dict):
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
+                print('Grad cam enabled model!')
                 model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
         else:
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)

@@ -6,7 +6,7 @@ from torchvision import transforms
 from dataloader_sym import ArtDatasetSym
 
 from model_mtl import MTL
-from model_kgm import KGM, KGM_append, get_gradcam
+from model_kgm import KGM, KGM_append, get_gradcam, GradCamKGM
 import lenet
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
@@ -22,7 +22,14 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     res_quant = np.zeros((data.shape[0], 4))
     res_size = np.zeros((data.shape[0], 4))
     for ix, image in enumerate(data):
-        grad_cam_image = get_gradcam(visual_model, image, target_var)
+        ix_0 = int(target_var[0][ix].cpu().numpy())
+        ix_1 = int(target_var[1][ix].cpu().numpy())
+        ix_2 = int(target_var[2][ix].cpu().numpy())
+        ix_3 = int(target_var[3][ix].cpu().numpy())
+        grad_cam_image = 0.25 * get_gradcam(visual_model, image, ix_0, 0) + \
+                        0.25 * get_gradcam(visual_model, image, ix_1, 1) + \
+                        0.25 * get_gradcam(visual_model, image, ix_2, 2) + \
+                        0.25 * get_gradcam(visual_model, image, ix_3, 3)
         [quantity, size] = lenet_model(grad_cam_image)
 
         res_quant[ix] = quantity.cpu().numpy()
@@ -57,25 +64,24 @@ def test_knowledgegraph(args_dict):
         model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
     elif args_dict.embedds == 'graph':
         if args_dict.append != 'append':
-            model = KGM(len(att2i))
+            model = GradCamKGM(len(att2i))
         else:
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
-                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
+                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
     else:
         if args_dict.append != 'append':
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
               
-                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
+                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
         else:
             if not mtl_mode:
                 model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
             else:
-              
-                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
+                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -260,7 +266,7 @@ def test_knowledgegraph(args_dict):
         print('Symbols detected {acc}'.format(acc=acc_symbols))
         print('Absence detected {acc}'.format(acc=acc_absence))
     else:
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i)
+        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model)
         if not mtl_mode:
           # acc = np.sum(out == label)/len(out)
           acc = np.mean(np.equal(out_type, label_type))

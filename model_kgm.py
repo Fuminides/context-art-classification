@@ -135,6 +135,7 @@ class GradCamKGM(nn.Module):
         self.class_author = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[3]))
         
         
+        
         # Graph space encoder
         self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
       
