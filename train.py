@@ -262,12 +262,12 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                     target_var = target_var.cuda(non_blocking=True)
 
         # Predictions
-        with torch.no_grad():
-            # Output of the model
-            if args_dict.append == 'append':
-                output = model((input_var[0], target[1]))
-            else:
-                output = model(input_var[0])
+        # with torch.no_grad():
+        # Output of the model
+        if args_dict.append == 'append':
+            output = model((input_var[0], target[1]))
+        else:
+            output = model(input_var[0])
         if symbol_task:
             pred = output > 0.5
             label_actual = torch.squeeze(target).cpu().numpy()
