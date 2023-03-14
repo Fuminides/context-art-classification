@@ -96,7 +96,11 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     
     lenet_model = lenet.LeNet([256, 256, 3], [4, 2])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    lenet_model.load_state_dict(checkpoint['state_dict'])
+    try:
+        lenet_model.load_state_dict(checkpoint['state_dict'])
+    except KeyError:
+        lenet_model.load_state_dict(checkpoint)
+        
     lenet_model = lenet_model.to(device)
     lenet_model.eval()
 
