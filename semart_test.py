@@ -18,19 +18,18 @@ import pandas as pd
 NODE2VEC_OUTPUT = 128
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx):
-    grad_classifier_path = args_dict.grad_cam_model_path
-    checkpoint = torch.load(grad_classifier_path)
-    lenet_model = lenet.LeNet() 
-    lenet_model.load_state_dict(checkpoint['state_dict'])
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
+    res_quant = np.zeros((data.shape[0], 4))
+    res_size = np.zeros((data.shape[0], 4))
+    for ix, image in enumerate(data):
+        grad_cam_image = get_gradcam(visual_model, image, target_var)
+        [quantity, size] = lenet_model(grad_cam_image)
 
-    grad_cam_images = get_gradcam(visual_model, data, target_var)
-    lenet_model = lenet_model.to(device)
-    lenet_model.eval()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    grad_cam_preds = lenet_model(grad_cam_images)
-    pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+        res_quant[ix] = quantity.cpu().numpy()
+        res_size[ix] = size.cpu().numpy()
+
+    pd.DataFrame(res_quant.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_test_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    pd.DataFrame(res_size.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_test_size' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
     
 
 def test_knowledgegraph(args_dict):
@@ -139,6 +138,20 @@ def test_knowledgegraph(args_dict):
 
     features_matrix = torch.zeros((1069, model.deep_feature_size))
     actual_index = 0
+
+    grad_classifier_path = args_dict.grad_cam_model_path
+    checkpoint_lenet = torch.load(grad_classifier_path)
+    
+
+    lenet_model = lenet.LeNet([256, 256, 3], [4, 2])
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    try:
+        lenet_model.load_state_dict(checkpoint_lenet['state_dict'])
+    except KeyError:
+        lenet_model.load_state_dict(checkpoint_lenet)
+
+    lenet_model = lenet_model.to(device)
+    lenet_model.eval()
 
     for i, (input, target) in enumerate(test_loader):
         # Inputs to Variable type
