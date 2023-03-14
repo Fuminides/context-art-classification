@@ -260,11 +260,10 @@ def test_knowledgegraph(args_dict):
         print('Symbols detected {acc}'.format(acc=acc_symbols))
         print('Absence detected {acc}'.format(acc=acc_absence))
     else:
+        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i)
         if not mtl_mode:
           # acc = np.sum(out == label)/len(out)
-          extract_grad_cam_features(model, input_var[0], target_var, args_dict, i)
-
-
+          acc = np.mean(np.equal(out_type, label_type))
           print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
     if not mtl_mode:
         pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
