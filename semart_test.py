@@ -6,7 +6,8 @@ from torchvision import transforms
 from dataloader_sym import ArtDatasetSym
 
 from model_mtl import MTL
-from model_kgm import KGM, KGM_append
+from model_kgm import KGM, KGM_append, get_gradcam
+import lenet
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
@@ -17,10 +18,26 @@ import pandas as pd
 NODE2VEC_OUTPUT = 128
 
 
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx):
+    grad_classifier_path = args_dict.grad_cam_model_path
+    checkpoint = torch.load(grad_classifier_path)
+    lenet_model = lenet.LeNet() 
+    lenet_model.load_state_dict(checkpoint['state_dict'])
+
+    grad_cam_images = get_gradcam(visual_model, data, target_var)
+    lenet_model = lenet_model.to(device)
+    lenet_model.eval()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    grad_cam_preds = lenet_model(grad_cam_images)
+    pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    
+
 def test_knowledgegraph(args_dict):
 
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    mtl_mode = args_dict.att == 'all'
     if args_dict.att == 'type':
         att2i = type2idx
     elif args_dict.att == 'school':
@@ -29,6 +46,10 @@ def test_knowledgegraph(args_dict):
         att2i = time2idx
     elif args_dict.att == 'author':
         att2i = author2idx
+    elif args_dict.att == 'all':
+        att2i = [type2idx, school2idx, time2idx, author2idx]
+        num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
     # Define model
@@ -39,12 +60,23 @@ def test_knowledgegraph(args_dict):
         if args_dict.append != 'append':
             model = KGM(len(att2i))
         else:
-            model = KGM_append(len(att2i))
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
     else:
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+              
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
         else:
-            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
+            if not mtl_mode:
+                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
+            else:
+              
+                model = KGM(num_classes, end_dim=N_CLUSTERS, multi_task=mtl_mode)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -75,9 +107,15 @@ def test_knowledgegraph(args_dict):
     # Data Loaders for test
     if torch.cuda.is_available():
         if not args_dict.symbol_task:
-            test_loader = torch.utils.data.DataLoader(
+            if mtl_mode:
+                test_loader = torch.utils.data.DataLoader(
+                    ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=test_transforms, clusters=128),
+                    batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+            else:
+                test_loader = torch.utils.data.DataLoader(
                     ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
                     batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+            
         else:
             semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
             test_loader = torch.utils.data.DataLoader(
@@ -103,7 +141,6 @@ def test_knowledgegraph(args_dict):
     actual_index = 0
 
     for i, (input, target) in enumerate(test_loader):
-
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
@@ -115,16 +152,27 @@ def test_knowledgegraph(args_dict):
         # Targets to Variable type
         target_var = list()
         for j in range(len(target)):
-            if j == 0:
-              target[j] = torch.tensor(np.array(target[j], dtype=np.int32))
-            else:
-              target[j] = torch.tensor(target[j])
+            if args_dict.att == 'all':
+                target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
+                if torch.cuda.is_available():
+                    target[j] = target[j].cuda(non_blocking=True)
+
             
-            if torch.cuda.is_available():
-                target[j] = target[j].cuda(non_blocking=True)
+
+            else:
+                target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
+
+                if j == 0:
+                  target[j] = torch.tensor(np.array(target[j].cpu(), dtype=np.int32))
+                else:
+                  target[j] = target_var # torch.tensor(target[j])
+                
+#                print(target)
+                if torch.cuda.is_available():
+                    target[j] = target[j].cuda(non_blocking=True)
 
             target_var.append(torch.autograd.Variable(target[j]))
-
+ #       print(target_var)
         # Output of the model
         with torch.no_grad():
             # Output of the model
@@ -134,8 +182,8 @@ def test_knowledgegraph(args_dict):
                 output = model((input_var[0], target[1]))
                 feat_cache = model.features((input_var[0], target[1]))   
             elif args_dict.model == 'kgm':
-                output, _ = model(input_var[0]) 
-                feat_cache = model.features(input_var[0])   
+                pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
+                # feat_cache = model.features(input_var[0])   
             else:
                 output = model(input_var[0])
 
@@ -151,22 +199,43 @@ def test_knowledgegraph(args_dict):
             absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
             absence_possible += np.sum(np.logical_not(label_actual), axis=None)
         else:
-            conf, predicted = torch.max(output, 1)
+            conf, predicted_type = torch.max(pred_type, 1)
+            conf, predicted_school = torch.max(pred_school, 1)
+            conf, predicted_time = torch.max(pred_tf, 1)
+            conf, predicted_author = torch.max(pred_author, 1)
 
         # Store embeddings
         if (not args_dict.symbol_task) and (i==0):
-            out = predicted.data.cpu().numpy()
-            label = target[0].cpu().numpy()
+            out_type = predicted_type.data.cpu().numpy()
+            out_school = predicted_school.data.cpu().numpy()
+            out_time = predicted_time.data.cpu().numpy()
+            out_author = predicted_author.data.cpu().numpy()
+
+            label_type = target[0].cpu().numpy()
+            label_school = target[1].cpu().numpy()
+            label_time = target[2].cpu().numpy()
+            label_author = target[3].cpu().numpy()
+
             scores = conf.data.cpu().numpy()
-            logits = output.data.cpu().numpy()
+            # logits = output.data.cpu().numpy()
+
         elif (not args_dict.symbol_task):
-            out = np.concatenate((out,predicted.data.cpu().numpy()), axis=0)
-            label = np.concatenate((label,target[0].cpu().numpy()), axis=0)
+            out_type = np.concatenate((out_type,predicted_type.data.cpu().numpy()), axis=0)
+            out_school = np.concatenate((out_school,predicted_school.data.cpu().numpy()), axis=0)
+            out_time = np.concatenate((out_time,predicted_time.data.cpu().numpy()), axis=0)
+            out_author = np.concatenate((out_author,predicted_author.data.cpu().numpy()), axis=0)
+
+
+            label_type = np.concatenate((label_type,target[0].cpu().numpy()),axis=0)
+            label_school = np.concatenate((label_school,target[1].cpu().numpy()),axis=0)
+            label_time = np.concatenate((label_time,target[2].cpu().numpy()),axis=0)
+            label_author = np.concatenate((label_author,target[3].cpu().numpy()),axis=0)
+
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
-            logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
+            # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
-        features_matrix[actual_index:actual_index+feat_cache.shape[0]] = feat_cache
+        # features_matrix[actual_index:actual_index+feat_cache.shape[0]] = feat_cache
 
     # Compute Accuracy
     # Accuracy
@@ -178,11 +247,30 @@ def test_knowledgegraph(args_dict):
         print('Symbols detected {acc}'.format(acc=acc_symbols))
         print('Absence detected {acc}'.format(acc=acc_absence))
     else:
-        acc = np.sum(out == label)/len(out)
+        if not mtl_mode:
+          # acc = np.sum(out == label)/len(out)
+          extract_grad_cam_features(model, input_var[0], target_var, args_dict, i)
 
-    print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
-    pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+
+          print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
+    if not mtl_mode:
+        pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+        pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    else:
+       # Compute Accuracy
+      acc_type = np.mean(np.equal(out_type, label_type))
+      acc_school = np.mean(np.equal(out_school, label_school))
+      acc_tf = np.mean(np.equal(out_time, label_time))
+      acc_author = np.mean(np.equal(out_author, label_author))
+
+      # Print test accuracy
+      print('------------ Test Accuracy -------------')
+      print('Type Accuracy %.03f' % acc_type)
+      print('School Accuracy %.03f' % acc_school)
+      print('Timeframe Accuracy %.03f' % acc_tf)
+      print('Author Accuracy %.03f' % acc_author)
+      print('----------------------------------------')
+        
 
 def test_multitask(args_dict):
 

@@ -115,8 +115,8 @@ class ArtDatasetMTL(data.Dataset):
         time_idclass = self.class_from_name(self.time_vocab, self.time[index])
         author_idclass = self.class_from_name(self.author_vocab, self.author[index])
 
-        
 
+        
 
         # Graph embedding (only training samples)
         if self.set == 'train':
@@ -127,11 +127,6 @@ class ArtDatasetMTL(data.Dataset):
 
             graph_emb = torch.FloatTensor(graph_emb)
 
-            if self.args_dict.att == 'all':
-                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
-            else:
-                return [image], [idclass, graph_emb]
-
 
         elif self.set == 'val':
             if self.embedds == 'graph':
@@ -141,10 +136,6 @@ class ArtDatasetMTL(data.Dataset):
 
             graph_emb = torch.FloatTensor(graph_emb)
 
-            if self.args_dict.att == 'all':
-                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
-            else:
-                return [image], [idclass, graph_emb]
         
         elif self.set == 'test':
             if self.embedds == 'graph':
@@ -155,4 +146,7 @@ class ArtDatasetMTL(data.Dataset):
             graph_emb = torch.FloatTensor(graph_emb)
 
 
-        return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+        if self.args_dict.att == 'all':
+            return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+        else:
+            return [image], [idclass, graph_emb]
