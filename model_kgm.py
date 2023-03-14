@@ -16,7 +16,7 @@ def translate_dict(state_dict):
     
     return state_dict
 
-def get_gradcam(model, image, target_class_index):
+def get_gradcam(model, image, target_class_index, task):
         if image.shape[0] != 1:
             image = torch.unsqueeze(image, 0)
 
@@ -27,11 +27,10 @@ def get_gradcam(model, image, target_class_index):
         img = image
 
         # get the most likely prediction of the model
-        print('Img', img.shape)
         pred = model(img)
 
         # get the gradient of the output with respect to the parameters of the model
-        pred[:, target_class_index].backward()
+        pred[task][:, target_class_index].backward()
 
         # pull the gradients out of the model
         gradients = model.get_activations_gradient()
