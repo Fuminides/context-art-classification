@@ -58,7 +58,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     res_quant = np.zeros((data.shape[0], 4))
     res_size = np.zeros((data.shape[0], 4))
     for ix, image in enumerate(data):
-        grad_cam_image = get_gradcam(visual_model, image, target_var[ix])
+        grad_cam_image = get_gradcam(visual_model, image, target_var[ix], ix)
         [quantity, size] = lenet_model(grad_cam_image)
 
         res_quant[ix] = quantity.cpu().numpy()

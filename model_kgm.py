@@ -140,8 +140,8 @@ class GradCamKGM(nn.Module):
       
     def forward(self, img):
         resnet_emb = self.visual_resnet(img)
-        if self.training:
-          h = resnet_emb.register_hook(self.activations_hook)
+
+        h = resnet_emb.register_hook(self.activations_hook)
 
         resnet_emb = self.avg_pooling_resnet(resnet_emb)
         resnet_emb1 = resnet_emb.view(resnet_emb.size(0), -1)
@@ -168,7 +168,6 @@ class GradCamKGM(nn.Module):
 
     def get_activations(self, x):
       visual_emb = self.visual_resnet(x)
-      
       
       return visual_emb
 
