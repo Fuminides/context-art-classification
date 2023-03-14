@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import csv
 import pandas as pd
-
+from sklearn import preprocessing
 
 def save_obj(obj, filename):
     f = open(filename, 'wb')
@@ -68,7 +68,7 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
             def foo_bar(x):
                 return float(x[7:-1])
                 
-            res = x_file.applymap(foo_bar)
+            res = x_file #.applymap(foo_bar)
         else:
             for file in os.listdir(path1):
                 if dataset == 'train':
@@ -139,19 +139,32 @@ def performance_classifier_tasks(clf0, path, feature_select=True, embedds='bow',
     X_train0, y_train, X_test0, y_test = format_features(path, embedds=embedds, task=og_task)
     tasks = ['Type', 'Time', 'Author', 'School']
     final_features_mask = np.zeros((len(tasks), X_train0.shape[1]))
+    scaler = preprocessing.StandardScaler().fit(X_train0)
+    X_train0 = np.array(X_train0)
+
+    res = np.zeros((4, ))
 
     for task in range(4):
         clf = clf0
+        
         clf.fit(X_train0, y_train.to_numpy()[:,task])
         if feature_select:
-            model = SelectFromModel(clf, prefit=True, threshold=1)
-            final_features_mask[task, :] = model.get_support()
+            finish = False
+            threshold = 0.4
+            while not finish:
+                model = SelectFromModel(clf, prefit=True, threshold=threshold)
+                final_features_mask[task, :] = model.get_support()
 
-            X_train = model.transform(X_train0)
-            X_test = model.transform(X_test0)
+                X_train = model.transform(X_train0)
+                X_test = model.transform(X_test0)
+
+                if X_train.shape[1] > 2:
+                    finish = True
+                else:
+                    threshold -= 0.1
             
             print('New features are size: ' + str(X_train.shape[1]))
-            clf2 = clf0()
+            clf2 = clf0
             clf2.fit(X_train, y_train.to_numpy()[:,task])       
             clf = clf2
         
@@ -161,8 +174,9 @@ def performance_classifier_tasks(clf0, path, feature_select=True, embedds='bow',
         print('Task ' + tasks[task])    
         print('Task train performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_train), y_train.to_numpy()[:,task]))))
         print('Task test performance ' + tasks[task] +': '+ str(np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))))
-    
-    return final_features_mask
+        res[task] = np.mean(np.equal(clf.predict(X_test), y_test.to_numpy()[:,task]))
+
+    return final_features_mask, res
 
 def performance_classifier_tasks_append(clf, path):
     X_train_author, y_train_author, X_test_author, y_test_author = format_features(path, task='author')
@@ -232,54 +246,60 @@ if __name__ == '__main__':
 
     embedds = 'clip'
     # X_train, y_train, X_test, y_test = format_features(path, embedds=embedds)
+    from sklearn.linear_model import LogisticRegression
 
-    clf = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3))
+    clf = LogisticRegression() #SGDClassifier(max_iter=1000, tol=1e-3)
     """print('Clip')
     print('Non optimized features')
     print('Author')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
+    features_used, res_author = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
     print('Type')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='type')
+    features_used, res_type = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='type')
     print('Time')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
+    features_used, res_time = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
     print('School')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')"""
+    features_used, res_school = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')"""
 
     '''print()
     print('Optimized features')
     print('Author')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='author')
+    features_used, res_author = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='author')
     print('Type')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='type')
+    features_used, res_type = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='type')
     print('Time')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='time')
+    features_used, res_time = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='time')
     print('School')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='school')'''
+    features_used, res_school = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='school')'''
 
-    embedds = 'bow'
+    embedds = 'clip'
     print()
-    print('BoW')
-    print('Non optimized features')
+    print('CLIP')
+    """print('Non optimized features')
     print('Author')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
+    features_used, res_author = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='author')
     print('Type')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='type')
+    features_used, res_type = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='type')
     print('Time')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
+    features_used, res_time = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='time')
     print('School')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')
+    features_used, res_school = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=False, og_task='school')"""
 
-    '''print()
+    print()
     print('Optimized features')
     print('Author')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='author')
+    features_used, res_author = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='type')
     print('Type')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='type')
+    features_used, res_type = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='school')
     print('Time')
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='time')
-    print('School')s
-    features_used = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='school')'''
-
+    features_used, res_time  = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='time')
+    print('School')
+    features_used, res_school = performance_classifier_tasks(clf, path, embedds=embedds, feature_select=True, og_task='author')
+    ola = pd.DataFrame(np.zeros((4, 4)), index=['Author', 'Type', 'Time', 'School'], columns=['Type', 'School', 'Time', 'Author'])
+    ola.iloc[0, :] = res_author
+    ola.iloc[1, :] = res_type
+    ola.iloc[2, :] = res_time
+    ola.iloc[3, :] = res_school
+    print(ola)
     '''aux = [np.sum(np.sum(features_used, axis=0) >= x) for x in range(4)]
     plt.bar([1, 2, 3, 4], np.sum(aux, axis=0)); plt.xticks([1, 2, 3, 4]); plt.xlabel('Number of tasks'); plt.ylabel('Features used'); plt.title('Features used in at least x tasks');plt.show()
     print('Done!')'''
