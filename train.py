@@ -55,11 +55,17 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
 
 
 def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
-    grad_cam_images = get_gradcam(visual_model, data, target_var)
-    
-    
-    grad_cam_preds = lenet_model(grad_cam_images)
-    pd.DataFrame(grad_cam_preds.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    res_quant = np.zeros((data.shape[0], 4))
+    res_size = np.zeros((data.shape[0], 4))
+    for ix, image in enumerate(data):
+        grad_cam_image = get_gradcam(visual_model, image, target_var)
+        [quantity, size] = lenet_model(grad_cam_image)
+
+        res_quant[ix] = quantity.cpu().numpy()
+        res_size[ix] = size.cpu().numpy()
+
+    pd.DataFrame(res_quant.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    pd.DataFrame(res_size.data.cpu().numpy()).to_csv('./DeepFeatures/grad_cam_train__size' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
     
     
 def resume(args_dict, model, optimizer):
