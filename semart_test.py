@@ -192,21 +192,20 @@ def test_knowledgegraph(args_dict):
 
             target_var.append(torch.autograd.Variable(target[j]))
  #       print(target_var)
+        
         # Output of the model
-        with torch.no_grad():
-            # Output of the model
-            if args_dict.symbol_task:
-                output = model(input_var[0])
-            elif args_dict.append == 'append':
-                output = model((input_var[0], target[1]))
-                feat_cache = model.features((input_var[0], target[1]))   
-            elif args_dict.model == 'kgm':
-                pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
-                # feat_cache = model.features(input_var[0])   
-            else:
-                output = model(input_var[0])
+        if args_dict.symbol_task:
+            output = model(input_var[0])
+        elif args_dict.append == 'append':
+            output = model((input_var[0], target[1]))
+            feat_cache = model.features((input_var[0], target[1]))   
+        elif args_dict.model == 'kgm':
+            pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
+            # feat_cache = model.features(input_var[0])   
+        else:
+            output = model(input_var[0])
 
-            #outsoftmax = torch.nn.functional.softmax(output[0])
+        #outsoftmax = torch.nn.functional.softmax(output[0])
         
         if symbol_task:
             pred = output > 0.5
