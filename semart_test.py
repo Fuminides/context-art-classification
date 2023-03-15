@@ -36,7 +36,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
         res_size[ix] = size.detach().cpu().numpy()
 
     pd.DataFrame(res_quant).to_csv('./DeepFeatures/grad_cam_test_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    pd.DataFrame(res_size).to_csv('./DeepFeatures/grad_cam_test_size' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    pd.DataFrame(res_size).to_csv('./DeepFeatures/grad_cam_test_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
     
 
 def test_knowledgegraph(args_dict):
