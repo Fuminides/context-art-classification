@@ -12,8 +12,8 @@ conda activate pytorch
 
 
 # CLIP context 1 problema con la loss, 2 problema con la memoria, 3 ok, 4 ok de momento
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm  --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 300 --embedds clip --clusters 39 --resume ./Models/clip_author_best_model.pth.tar  >salidas/author_out_clip.txt 2>salidas/author_error_clip.txt" 
-argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --batch_size 32 --nepochs 300 --embedds bow --resume  ./Models/bow_all_best_model.pth.tar > salidas/all_out_fcm.txt 2>salidas/all_error_fcm.txt"
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm  --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 300 --embedds clip --clusters 39 --resume ./Models/clip_author_best_model.pth.tar  >salidas/all_out_clip.txt 2>salidas/all_error_clip.txt" 
+argumentos[${#argumentos[@]}]="--mode train --workers 0 --model kgm --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 300 --embedds bow --resume  ./Models/bow_all_best_model.pth.tar > salidas/all_out_fcm.txt 2>salidas/all_error_fcm.txt"
 
 
 
