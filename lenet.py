@@ -58,7 +58,6 @@ class LeNet(nn.Module):
         output_fc_0 = self.dropout1d(output_fc_0)
         output_fc_1 = self.relu(self.fc_1(output_fc_0))
         output_fc_1 = self.dropout1d(output_fc_1)
-        predictions = self.fc_2(output_fc_1)  # Softmax will be applied to this value
 
         output_fc_1 = self.dropout1d(output_fc_1)
         predictions_task1 = self.fc_2(output_fc_1)  # Softmax will be applied to this value
