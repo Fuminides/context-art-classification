@@ -69,6 +69,7 @@ def get_parser():
 
     # Grad cam
     parser.add_argument('--grad_cam_model_path', default='Models/grad_cam_lenet.pth.tar', type=str)
+    parser.add_argument('--gradcam_size', default=54, type=int)
 
 
     return parser
