@@ -49,7 +49,7 @@ def get_gradcam(model, image, target_class_index, task):
 
         # relu on top of the heatmap
         # expression (2) in https://arxiv.org/pdf/1610.02391.pdf
-        heatmap = torch.maximum(heatmap, axis=0)
+        heatmap = torch.maximum(heatmap, 0)
 
         # normalize the heatmap
         heatmap /= torch.max(heatmap)
