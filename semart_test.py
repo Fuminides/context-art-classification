@@ -149,7 +149,7 @@ def test_knowledgegraph(args_dict):
     checkpoint_lenet = torch.load(grad_classifier_path)
     
 
-    lenet_model = lenet.LeNet([args_dict.gradcam_size, args_dict.gradcam_size, 3], [4, 2])
+    lenet_model = lenet.LeNet([args_dict.grad_cam_image_size, args_dict.grad_cam_image_size, 1], [4, 2])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     try:
         lenet_model.load_state_dict(checkpoint_lenet['state_dict'])

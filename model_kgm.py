@@ -17,7 +17,7 @@ def translate_dict(state_dict):
     return state_dict
 
 def get_gradcam(model, image, target_class_index, task):
-        if image.shape[0] != 1:
+        while(image.shape[0] < 4):
             image = torch.unsqueeze(image, 0)
 
         # set the evaluation mode
@@ -41,15 +41,15 @@ def get_gradcam(model, image, target_class_index, task):
         activations = model.get_activations(img).detach()
 
         # weight the channels by corresponding gradients
-        for i in range(activations.shape[0]):
-            activations[i, :, :] *= pooled_gradients[i]
+        for i in range(activations.shape[1]):
+            activations[:, i, :, :] *= pooled_gradients[i]
             
         # average the channels of the activations
-        heatmap = torch.mean(activations, dim=1).squeeze().cpu()
+        heatmap = torch.mean(activations, dim=1).squeeze()# .cpu()
 
         # relu on top of the heatmap
         # expression (2) in https://arxiv.org/pdf/1610.02391.pdf
-        heatmap = np.maximum(heatmap, 0)
+        heatmap = torch.nn.ReLU()(heatmap)
 
         # normalize the heatmap
         heatmap /= torch.max(heatmap)
