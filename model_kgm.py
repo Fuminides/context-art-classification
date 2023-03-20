@@ -45,7 +45,7 @@ def get_gradcam(model, image, target_class_index, task):
             activations[i, :, :] *= pooled_gradients[i]
             
         # average the channels of the activations
-        heatmap = torch.mean(activations, dim=1).squeeze().cpu()
+        heatmap = torch.mean(activations, dim=1).squeeze()# .cpu()
 
         # relu on top of the heatmap
         # expression (2) in https://arxiv.org/pdf/1610.02391.pdf
