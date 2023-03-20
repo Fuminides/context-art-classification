@@ -10,5 +10,5 @@ conda activate pytorch
 # Set all the tasks to perform
 
 
-python main.py --mode train --workers 0 --model kgm --append gradient --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 0 --embedds bow --model_path ./Models/bow_all_gradient_best_model.pth.tar --grad_cam_model_path ./Models/lenet56_model.pt --grad_cam_image_size 56
-python main.py --mode test --workers 0 --model kgm --append gradient --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 0 --embedds bow --model_path ./Models/bow_all_gradient_best_model.pth.tar --grad_cam_model_path ./Models/lenet56_model.pt --grad_cam_image_size 56
+srun python main.py --mode train --workers 0 --model kgm --append gradient --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 0 --embedds bow --model_path ./Models/bow_all_gradient_best_model.pth.tar --grad_cam_model_path ./Models/lenet56_model.pt --grad_cam_image_size 56
+srun python main.py --mode test --workers 0 --model kgm --append gradient --att all --dir_dataset ../SemArt/ --batch_size 32 --nepochs 0 --embedds bow --model_path ./Models/bow_all_gradient_best_model.pth.tar --grad_cam_model_path ./Models/lenet56_model.pt --grad_cam_image_size 56
