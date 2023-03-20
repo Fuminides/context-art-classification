@@ -17,7 +17,7 @@ def translate_dict(state_dict):
     return state_dict
 
 def get_gradcam(model, image, target_class_index, task):
-        if image.shape[0] != 1:
+        while(image.shape[0] < 4):
             image = torch.unsqueeze(image, 0)
 
         # set the evaluation mode
