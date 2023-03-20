@@ -66,7 +66,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
                         0.25 * get_gradcam(visual_model, image, ix_1, 1) + \
                         0.25 * get_gradcam(visual_model, image, ix_2, 2) + \
                         0.25 * get_gradcam(visual_model, image, ix_3, 3)
-        [quantity, size] = lenet_model(torch.unsqueeze(image, 0))
+        [quantity, size] = lenet_model(torch.unsqueeze(grad_cam_image, 0))
 
         res_quant[ix] = quantity.detach().cpu().numpy()
         res_size[ix] = size.detach().cpu().numpy()
