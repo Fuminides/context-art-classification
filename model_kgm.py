@@ -41,8 +41,8 @@ def get_gradcam(model, image, target_class_index, task):
         activations = model.get_activations(img).detach()
 
         # weight the channels by corresponding gradients
-        for i in range(activations.shape[0]):
-            activations[i, :, :] *= pooled_gradients[i]
+        for i in range(activations.shape[1]):
+            activations[:, i, :, :] *= pooled_gradients[i]
             
         # average the channels of the activations
         heatmap = torch.mean(activations, dim=1).squeeze()# .cpu()
