@@ -1,5 +1,8 @@
+from torchvision import transforms
+
 from unicodedata import name
 import numpy as np
+import torch
 import torch.utils.data as data
 import pandas as pd
 import os
@@ -11,12 +14,15 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, transform=None, canon_list=None, symbol_detect=None, cache_mode=True):
+    def __init__(self, args_dict, set, transform=None, symbol_detect=None, imbalance_ratio=1):
         """
         Args:
             args_dict: parameters dictionary
             set: 'train', 'val', 'test'
             transform: data transform
+            symbol_detect: list of symbols to detect (integers)
+            imbalance_ratio: ratio of negative samples to positive samples
+
         """
 
         self.args_dict = args_dict
@@ -36,41 +42,46 @@ class ArtDatasetSym(data.Dataset):
 
         self.imageurls = list(df['IMAGE_FILE'])
 
-        if canon_list is None:
-            import re
-            pattern = re.compile('[^a-zA-Z]+')
-            myth_edges = an.load_edges_myth()
-            source_names = np.unique(list(myth_edges['Source']))
-            source_names = [pattern.sub('', name) for name in source_names]
-            target_names = np.unique(list(myth_edges['Target']))
-            target_names = [pattern.sub('', name) for name in target_names]
-            myth_entities = np.unique(source_names + target_names)
-            args_dict.canon_list = myth_entities
-        else:
-            args_dict.canon_list = canon_list
-
-        if not cache_mode:
-            self.symbol_context, self.paintings_names, self.symbols_names = an.load_semart_symbols(args_dict, self.set, strict_names=self.set!='train')
-        else:
-            self.symbol_context = np.array(pd.read_csv('Data/global_' + self.set + '_symbol_mat.csv', index_col=0))
-            self.symbols_names = pd.read_csv('Data/global_canon_names.csv', index_col=0)
-            self.symbols_names.index = np.arange(self.symbols_names.shape[0])
-            self.paintings_names = df['TITLE']
-            
-        print('Symbol mat: ' + str(self.symbol_context.shape), 'Set: ' + self.set, 'Symbol names: ' + str(len(self.symbols_names)))
-        
+        # Load symbols
+        painting_symbol_train = pd.read_csv('Symbol task/Data/' + self.set + '_symbol_labels.csv', index_col=0)
+        self.symbol_context = painting_symbol_train.values
+        self.symbols_names = painting_symbol_train.columns
+        self.paintings_names = painting_symbol_train.index        
 
         self.subset = symbol_detect is not None
-        self.target_index_list = symbol_detect
 
-        self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
-        ratios = [self.semart_Gallery.ratio_symbol(target_x) for target_x in self.target_index_list]
-        print('Target density: ' + str(ratios))
+        if self.subset:
+            self.target_index_list = symbol_detect
+
+            self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
+            ratios = [self.semart_Gallery.ratio_symbol(target_x) for target_x in self.target_index_list]
+
+            print('Target density in ' + set + ': ' + str(ratios))
+
+            self.sum_positive_paintings = np.sum([self.symbol_context.sum(axis=0)[target_x] for target_x in self.target_index_list])
+            self.imbalance_ratio = imbalance_ratio
+            self.positive_samples_index = np.logical_or.reduce([self.symbol_context[:, symbol] for symbol in self.target_index_list])
+            self.positive_samples = [self.imageurls[ix] for ix, x in enumerate(self.positive_samples_index) if x]
+            self.negative_samples = [self.imageurls[ix] for ix, x in enumerate(self.positive_samples_index) if not x]
+
+            self.generate_negative_samples()
+
+
+    def generate_negative_samples(self):
+        if not self.subset:
+            raise NameError('Only generate negative samples for balanced targeted subset')
+        
+        examples_to_generate = int(self.sum_positive_paintings * self.imbalance_ratio)
+        generated_negative_samples = np.random.choice(self.negative_samples, examples_to_generate, replace=False)
+        self.balanced_imageurls = self.positive_samples + generated_negative_samples.tolist()
 
 
 
     def __len__(self):
-        return len(self.imageurls)
+        if not self.subset:
+            return len(self.imageurls)
+        else:
+            return int(self.sum_positive_paintings * (self.imbalance_ratio+1))
 
 
     def class_from_name(self, vocab, name):
@@ -86,7 +97,10 @@ class ArtDatasetSym(data.Dataset):
     def __getitem__(self, index):
 
         # Load image & apply transformation
-        imagepath = self.imagefolder +  '/' + self.imageurls[index]
+        if not self.subset:
+            imagepath = self.imagefolder +  '/' + self.imageurls[index]
+        else:
+            imagepath = self.imagefolder +  '/' + self.balanced_imageurls[index]
         image = Image.open(imagepath).convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
@@ -108,7 +122,6 @@ if __name__ == '__main__':
     import params
     
 
-    from attributes import load_att_class
     args_dict = params.get_parser()
 
     args_dict.dir_data = 'Data'
@@ -118,38 +131,47 @@ if __name__ == '__main__':
     args_dict.vocab_time = 'time2ind.csv'
     args_dict.vocab_author = 'author2ind.csv'
     args_dict.embedds = 'tfidf'
-    args_dict.dir_dataset = r'C:\Users\jf22881\Documents\SemArt'
+    args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt'
     args_dict.csvtrain = 'semart_train.csv'
     args_dict.csvval = 'semart_val.csv'
     args_dict.csvtest = 'semart_test.csv'
     args_dict.dir_images = 'Images'
-    args_dict.targets = [10, 20 ,30]
+    args_dict.batch_size = 32
+    args_dict.targets = [10]
+
+    # Data transformation for training (with data augmentation) and validation
+    train_transforms = transforms.Compose([
+        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),                         # we get only the center of that rescaled
+        transforms.RandomCrop(224),                         # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),                  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),                              # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+
+    val_transforms = transforms.Compose([
+        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(224),                         # we get only the center of that rescaled
+        transforms.ToTensor(),                              # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
 
     #type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=args_dict.targets)
-    semart_val_loader = ArtDatasetSym(args_dict, set='val', symbol_detect=args_dict.targets, canon_list=semart_train_loader.symbols_names) 
-    semart_test_loader = ArtDatasetSym(args_dict, set='test', symbol_detect=args_dict.targets, canon_list=semart_train_loader.symbols_names) 
+    semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=args_dict.targets, transform=train_transforms)
+    semart_val_loader = ArtDatasetSym(args_dict, set='val', symbol_detect=args_dict.targets, transform=val_transforms) 
+    semart_test_loader = ArtDatasetSym(args_dict, set='test', symbol_detect=args_dict.targets, transform=val_transforms) 
 
-    semart_Gallery = an.Gallery(semart_train_loader.symbols_names, semart_train_loader.paintings_names, semart_train_loader.symbol_context, args_dict.dir_dataset)
-    val_Gallery = an.Gallery(semart_val_loader.symbols_names, semart_val_loader.paintings_names, semart_val_loader.symbol_context, args_dict.dir_dataset)
-    test_Gallery = an.Gallery(semart_test_loader.symbols_names, semart_test_loader.paintings_names, semart_test_loader.symbol_context, args_dict.dir_dataset)
-    
-    train_presence = semart_train_loader.symbol_context.sum(axis=0) > 0
-    val_presence = semart_val_loader.symbol_context.sum(axis=0) > 0
-    test_presence = semart_test_loader.symbol_context.sum(axis=0) > 0
+    train_loader = torch.utils.data.DataLoader(
+        semart_train_loader,
+        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=0)
+    print('Training loader with %d samples' % semart_train_loader.__len__())
 
-    global_presence = train_presence * val_presence * test_presence
-
-    train_symbol_mat = semart_train_loader.symbol_context[:, global_presence]
-    val_symbol_mat = semart_val_loader.symbol_context[:, global_presence]
-    test_symbol_mat = semart_test_loader.symbol_context[:, global_presence]
-
-    canon_names = semart_train_loader.symbols_names    
-
-    pd.DataFrame(train_symbol_mat).to_csv('Data/global_train_symbol_mat.csv')
-    pd.DataFrame(val_symbol_mat).to_csv('Data/global_val_symbol_mat.csv')
-    pd.DataFrame(test_symbol_mat).to_csv('Data/global_test_symbol_mat.csv')
-
-    canon_names.iloc[global_presence].to_csv('Data/global_canon_names.csv')
-
+     
+    for epoch in range(10):
+        for i, (images, symbols) in enumerate(train_loader):
+            print(i)
+        
+        train_loader.dataset.generate_negative_samples()
     print('Hola')
