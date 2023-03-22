@@ -6,6 +6,8 @@ import torch.nn as nn
 import torch.utils.data
 from torchvision import transforms
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
+
 
 import numpy as np
 import pandas as pd
@@ -114,13 +116,6 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     # switch to evaluation mode
     model.eval()
 
-    acc_sample = 0
-    symbols_detected = 0
-    symbols_possible = 0
-    acc_possible = 0
-    absence_detected = 0
-    absence_possible = 0
-
     for batch_idx, (input, target) in enumerate(val_loader):
         # Inputs to Variable type
         input_var = list()
@@ -161,14 +156,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     print('Absence detected {acc}'.format(acc=conf_matrix[1,1]))
     print(conf_matrix)
 
-    
-    # Print validation info
-    print('Accuracy {acc}'.format(acc=acc))
-    #plotter.plot('closs', 'val', 'Class Loss', epoch, losses.avg)
-    #plotter.plot('acc', 'val', 'Class Accuracy', epoch, acc)
-
-    # Return acc
-    return acc
+    return f1_score(label, out)
 
 
 def train_symbol_classifier(args_dict):
@@ -276,7 +264,7 @@ def train_symbol_classifier(args_dict):
                 'curr_val': accval,
             }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
 
-        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
+        print('** Validation: %f (best f1 score) - %f (current f1 score) - %d (patience)' % (best_val, accval, pat_track))
 
 
 def run_train(args_dict):
