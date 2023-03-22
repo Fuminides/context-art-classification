@@ -13,20 +13,16 @@ class SymModel(nn.Module):
         # Load pre-trained visual model
         if model == 'resnet':
             self.og_nmodel = models.resnet50(pretrained=True)
+            self.og_nmodel = nn.Sequential(*list(self.og_nmodel.children())[:-1])
             embedding_size = 2048
         elif model == 'clip':
             self.og_nmodel, _ = clip.load("ViT-B/32")
             embedding_size = 512
-        #self.resnet = nn.Sequential(*list(self.og_nmodel.children())[:-1])
             
-        
-        # Classifiers
         self.class_type = nn.Sequential(nn.Linear(embedding_size, num_class))
        
 
     def forward(self, img):
-
-       
         visual_emb = self.og_nmodel(img)
 
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
