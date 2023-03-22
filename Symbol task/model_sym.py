@@ -14,20 +14,9 @@ class SymModel(nn.Module):
         if model == 'resnet':
             self.og_nmodel = models.resnet50(pretrained=True)
             embedding_size = 2048
-        elif model == 'vgg':
-            self.og_nmodel = models.vgg16(pretrained=True)
-            embedding_size = 25088
         elif model == 'clip':
             self.og_nmodel, _ = clip.load("ViT-B/32")
             embedding_size = 512
-        elif model == 'vit':
-            from pytorch_pretrained_vit import ViT
-            model_name = 'B_16_imagenet1k'
-            self.resnet = ViT(model_name, pretrained=True)
-            self.tfms = transforms.Compose([transforms.Resize(self.resnet.image_size)])
-
-            embedding_size = 1000
-
         #self.resnet = nn.Sequential(*list(self.og_nmodel.children())[:-1])
             
         
@@ -37,13 +26,8 @@ class SymModel(nn.Module):
 
     def forward(self, img):
 
-        if self.model == 'vit':
-            img = self.tfms(img)
-
-        if self.model != 'clip':
-            visual_emb = self.resnet(img)
-        else:
-            visual_emb = self.resnet.encode_image(img)
+       
+        visual_emb = self.og_nmodel(img)
 
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         out_type = self.class_type(visual_emb)
