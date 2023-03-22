@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 from torchvision import transforms
-
+from sklearn.metrics import confusion_matrix
 
 import numpy as np
 import pandas as pd
@@ -148,25 +148,18 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         output = model(input_var[0])
         
         pred = output > 0.5
-        label_actual = torch.squeeze(target).cpu().numpy()
-        symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
-        symbols_possible += np.sum(label_actual, axis=None)
-        acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
-        try:
-            acc_possible += pred.shape[0] * pred.shape[1]
-        except IndexError:
-            acc_possible += pred.shape[0]
-            
-        absence_detected += np.sum(np.logical_and(pred.cpu().numpy()<1, label_actual<1), axis=None)
-        absence_possible += np.sum(np.logical_not(label_actual), axis=None)
 
+        if batch_idx == 0:
+            out = pred.cpu().numpy()
+            label = torch.squeeze(target).cpu().numpy()
+        else:
+            out = np.concatenate((out, pred.cpu().numpy()), axis=0)
+            label = np.concatenate((label, torch.squeeze(target).cpu().numpy()), axis=0)
 
-    acc = acc_sample / acc_possible
-    acc_symbols = symbols_detected / symbols_possible
-    acc_absence = absence_detected / absence_possible
-
-    print('Symbols detected {acc}'.format(acc=acc_symbols))
-    print('Absence detected {acc}'.format(acc=acc_absence))
+    conf_matrix = confusion_matrix(label, out)
+    print('Symbols detected {acc}'.format(acc=conf_matrix[0,0]))
+    print('Absence detected {acc}'.format(acc=conf_matrix[1,1]))
+    print(conf_matrix)
 
     
     # Print validation info
@@ -258,7 +251,7 @@ def train_symbol_classifier(args_dict):
 
         # Compute a training epoch
         trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch, symbol_task=True)
-
+        train_loader.dataset.generate_negative_samples()
         # Compute a validation epoch
         accval = valEpoch(args_dict, val_loader, model, class_loss, epoch, symbol_task=True)
 
