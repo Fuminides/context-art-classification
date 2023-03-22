@@ -1,41 +1,20 @@
 from __future__ import division
-from operator import index
 
 import os
 import torch
 import torch.nn as nn
 import torch.utils.data
 from torchvision import transforms
-import torchvision.ops
+
 
 import numpy as np
 import pandas as pd
 
 import utils
 #from model_gcn import GCN
-from model_mtl import MTL
 from model_sym import SymModel 
-from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
-from dataloader_mtl import ArtDatasetMTL
-from dataloader_kgm import ArtDatasetKGM
 from dataloader_sym import ArtDatasetSym
-from attributes import load_att_class
 import lenet
-
-#from torch_geometric.loader import DataLoader
-if torch.cuda.is_available():
-    try:
-        from torch_geometric.data import Data
-        from torch_geometric.loader import DataLoader
-    except ModuleNotFoundError:
-        print('Pytorch geometric not found, proceeding...')
-else:
-    #from dataclasses import dataclass
-
-    class Data(dict):
-        def __init__(self, *args, **kwargs):
-            super(Data, self).__init__(*args, **kwargs)
-            self.__dict__ = self
 
 
 
