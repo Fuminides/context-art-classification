@@ -1,3 +1,5 @@
+import random
+import math 
 from torchvision import transforms
 
 from unicodedata import name
@@ -54,15 +56,17 @@ class ArtDatasetSym(data.Dataset):
             self.target_index_list = symbol_detect
 
             self.semart_Gallery = an.Gallery(self.symbols_names, self.paintings_names, self.symbol_context, args_dict.dir_dataset)
-            ratios = [self.semart_Gallery.ratio_symbol(target_x) for target_x in self.target_index_list]
+            ratios = [self.symbol_context[:, target_x].mean() for target_x in self.target_index_list]
 
-            print('Target density in ' + set + ': ' + str(ratios))
+            print('Original target density in ' + set + ': ' + str(ratios))
 
             self.sum_positive_paintings = np.sum([self.symbol_context.sum(axis=0)[target_x] for target_x in self.target_index_list])
             self.imbalance_ratio = imbalance_ratio
             self.positive_samples_index = np.logical_or.reduce([self.symbol_context[:, symbol] for symbol in self.target_index_list])
             self.positive_samples = [self.imageurls[ix] for ix, x in enumerate(self.positive_samples_index) if x]
             self.negative_samples = [self.imageurls[ix] for ix, x in enumerate(self.positive_samples_index) if not x]
+
+            self.symbol_context = self.symbol_context[:, self.target_index_list]
 
             self.generate_negative_samples()
 
@@ -74,6 +78,12 @@ class ArtDatasetSym(data.Dataset):
         examples_to_generate = int(self.sum_positive_paintings * self.imbalance_ratio)
         generated_negative_samples = np.random.choice(self.negative_samples, examples_to_generate, replace=False)
         self.balanced_imageurls = self.positive_samples + generated_negative_samples.tolist()
+        random.shuffle(self.balanced_imageurls)
+
+        self.positive_symbol_context = self.symbol_context[self.positive_samples_index, :]
+        self.negative_symbol_context = self.symbol_context[~self.positive_samples_index, :]
+        self.balanced_symbol_context = np.concatenate((self.positive_symbol_context, self.negative_symbol_context), axis=0)
+        np.random.permutation(self.balanced_symbol_context)
 
 
 
@@ -108,14 +118,13 @@ class ArtDatasetSym(data.Dataset):
         # Attribute class
         try:
             if self.subset:
-                symbols = self.symbol_context[index, :]
-                symbols = np.array([symbols[x] for x in self.target_index_list])
+                symbols = self.balanced_symbol_context[index, :]
             else:
                 symbols = self.symbol_context[index, :]
         except Exception as e:
             print(e, self.set, index)
 
-        return [image], np.ravel(symbols)
+        return image, np.ravel(symbols)
 
 #def filter_symbols():
 if __name__ == '__main__':
@@ -166,12 +175,14 @@ if __name__ == '__main__':
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=0)
-    print('Training loader with %d samples' % semart_train_loader.__len__())
+    print('Training loader with %d samples' % train_loader.dataset.__len__())
 
-     
+    symbols_list = []
     for epoch in range(10):
         for i, (images, symbols) in enumerate(train_loader):
-            print(i)
+            symbols_list.append(symbols)
         
         train_loader.dataset.generate_negative_samples()
-    print('Hola')
+    
+    assert math.isclose(np.mean([torch.mean(x) for x in symbols_list]) , 0.5, rel_tol=1e-9)
+    print('Test passed')
