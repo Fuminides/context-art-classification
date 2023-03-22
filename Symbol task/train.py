@@ -72,22 +72,9 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
-    mtl_mode = args_dict.att == 'all'
     # switch to train mode
-    model.train()
-    actual_index = 0
-    grad_classifier_path = args_dict.grad_cam_model_path
-    checkpoint = torch.load(grad_classifier_path)
-    
-    lenet_model = lenet.LeNet([args_dict.gradcam_size, args_dict.gradcam_size, 3], [4, 2])
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    try:
-        lenet_model.load_state_dict(checkpoint['state_dict'])
-    except KeyError:
-        lenet_model.load_state_dict(checkpoint)
-
-    lenet_model = lenet_model.to(device)
-    lenet_model.eval()
+    model.train()    
+   
 
     for batch_idx, (input, target) in enumerate(train_loader):
 
@@ -107,9 +94,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
         
         output = model(input_var[0])
-
-       
-        
         train_loss = criterion(output, torch.squeeze(target_var))
 
         # Backpropagate loss and update weights
@@ -129,6 +113,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
     # switch to evaluation mode
     model.eval()
+
     acc_sample = 0
     symbols_detected = 0
     symbols_possible = 0
@@ -160,103 +145,30 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             if torch.cuda.is_available():
                     target_var = target_var.cuda(non_blocking=True)
 
-        # Predictions
-        # with torch.no_grad():
-        # Output of the model
-        if args_dict.append == 'append':
-            output = model((input_var[0], target[1]))
-        else:
-            output = model(input_var[0])
-        if symbol_task:
-            pred = output > 0.5
-            label_actual = torch.squeeze(target).cpu().numpy()
-            symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
-            symbols_possible += np.sum(label_actual, axis=None)
-            acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
-            try:
-                acc_possible += pred.shape[0] * pred.shape[1]
-            except IndexError:
-                acc_possible += pred.shape[0]
-                
-            absence_detected += np.sum(np.logical_and(pred.cpu().numpy()<1, label_actual<1), axis=None)
-            absence_possible += np.sum(np.logical_not(label_actual), axis=None)
+        output = model(input_var[0])
+        
+        pred = output > 0.5
+        label_actual = torch.squeeze(target).cpu().numpy()
+        symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
+        symbols_possible += np.sum(label_actual, axis=None)
+        acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
+        try:
+            acc_possible += pred.shape[0] * pred.shape[1]
+        except IndexError:
+            acc_possible += pred.shape[0]
+            
+        absence_detected += np.sum(np.logical_and(pred.cpu().numpy()<1, label_actual<1), axis=None)
+        absence_possible += np.sum(np.logical_not(label_actual), axis=None)
 
-        elif args_dict.att == 'all':
-            pred_type = torch.argmax(output[0], 1)
-            pred_school = torch.argmax(output[1], 1)
-            pred_time = torch.argmax(output[2], 1)
-            pred_author = torch.argmax(output[3], 1)
 
-            # Save predictions to compute accuracy
-            if batch_idx == 0:
-                out_type = pred_type.data.cpu().numpy()
-                out_school = pred_school.data.cpu().numpy()
-                out_time = pred_time.data.cpu().numpy()
-                out_author = pred_author.data.cpu().numpy()
-                label_type = target[0].cpu().numpy()
-                label_school = target[1].cpu().numpy()
-                label_tf = target[2].cpu().numpy()
-                label_author = target[3].cpu().numpy()
-            else:
-                out_type = np.concatenate((out_type, pred_type.data.cpu().numpy()), axis=0)
-                out_school = np.concatenate((out_school, pred_school.data.cpu().numpy()), axis=0)
-                out_time = np.concatenate((out_time, pred_time.data.cpu().numpy()), axis=0)
-                out_author = np.concatenate((out_author, pred_author.data.cpu().numpy()), axis=0)
-                label_type = np.concatenate((label_type, target[0].cpu().numpy()), axis=0)
-                label_school = np.concatenate((label_school, target[1].cpu().numpy()), axis=0)
-                label_tf = np.concatenate((label_tf, target[2].cpu().numpy()), axis=0)
-                label_author = np.concatenate((label_author, target[3].cpu().numpy()), axis=0)
-           
-        else:
-            if args_dict.model == 'kgm' and (not args_dict.append == 'append'):
-                pred = torch.argmax(output[0], 1)
-                label_actual = target[0].cpu().numpy()
-                
-                # Save predictions to compute accuracy
-                if batch_idx == 0:
-                    out = pred.data.cpu().numpy()
-                    label = label_actual
-                    
-                else:
-                    out = np.concatenate((out, pred.data.cpu().numpy()), axis=0)
-                    label = np.concatenate((label, label_actual), axis=0)
-                    
-            elif args_dict.model == 'kgm':
-                pred = torch.argmax(output, 1)
-                label_actual = target[0].cpu().numpy()
-            else:
-                pred = torch.argmax(output, 1)
-                label_actual = target.cpu().numpy()
+    acc = acc_sample / acc_possible
+    acc_symbols = symbols_detected / symbols_possible
+    acc_absence = absence_detected / absence_possible
 
-             
-            # Save predictions to compute accuracy
-            if batch_idx == 0:
-                out = pred.data.cpu().numpy()
-                label = label_actual
-                
-            else:
-                out = np.concatenate((out, pred.data.cpu().numpy()), axis=0)
-                label = np.concatenate((label, label_actual), axis=0)
-                
-    # Accuracy
-    if symbol_task:
-        acc = acc_sample / acc_possible
-        acc_symbols = symbols_detected / symbols_possible
-        acc_absence = absence_detected / absence_possible
+    print('Symbols detected {acc}'.format(acc=acc_symbols))
+    print('Absence detected {acc}'.format(acc=acc_absence))
 
-        print('Symbols detected {acc}'.format(acc=acc_symbols))
-        print('Absence detected {acc}'.format(acc=acc_absence))
-
-    elif args_dict.att == 'all':
-        acc_type = np.sum(out_type == label_type)/len(out_type)
-        acc_school = np.sum(out_school == label_school) / len(out_school)
-        acc_tf = np.sum(out_time == label_tf) / len(out_time)
-        acc_author = np.sum(out_author == label_author) / len(out_author)
-        acc = np.mean((acc_type, acc_school, acc_tf, acc_author))
-
-    elif args_dict.model == 'kgm' or symbol_task:
-        acc = np.sum(out == label) / len(out)
-
+    
     # Print validation info
     print('Accuracy {acc}'.format(acc=acc))
     #plotter.plot('closs', 'val', 'Class Loss', epoch, losses.avg)
@@ -288,7 +200,11 @@ def train_symbol_classifier(args_dict):
                              std=[0.229, 0.224, 0.225])
     ])
 
-
+    try:
+        len(args_dict.targets)
+    except:
+        args_dict.targets = [args_dict.targets]
+        
     # Dataloaders for training and validation
     semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms, symbol_detect=args_dict.targets)
     semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
