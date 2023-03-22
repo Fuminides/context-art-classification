@@ -19,7 +19,7 @@ class SymModel(nn.Module):
             self.og_nmodel, _ = clip.load("ViT-B/32")
             embedding_size = 512
             
-        self.class_type = nn.Sequential(nn.Linear(embedding_size, num_class))
+        self.class_type = nn.Sequential(nn.Linear(embedding_size, num_class*2))
        
 
     def forward(self, img):
@@ -28,4 +28,4 @@ class SymModel(nn.Module):
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
         out_type = self.class_type(visual_emb)
         
-        return torch.squeeze(out_type)
+        return out_type

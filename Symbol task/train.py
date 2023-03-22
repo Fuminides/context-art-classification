@@ -28,27 +28,6 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     torch.save(state, filename)
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
-    res_quant = np.zeros((data.shape[0], 4))
-    res_size = np.zeros((data.shape[0], 2))
-    for ix, image in enumerate(data):
-        ix_0 = int(target_var[0][ix].cpu().numpy())
-        ix_1 = int(target_var[1][ix].cpu().numpy())
-        ix_2 = int(target_var[2][ix].cpu().numpy())
-        ix_3 = int(target_var[3][ix].cpu().numpy())
-        grad_cam_image = 0.25 * get_gradcam(visual_model, image, ix_0, 0) + \
-                        0.25 * get_gradcam(visual_model, image, ix_1, 1) + \
-                        0.25 * get_gradcam(visual_model, image, ix_2, 2) + \
-                        0.25 * get_gradcam(visual_model, image, ix_3, 3)
-        [quantity, size] = lenet_model(torch.unsqueeze(image, 0))
-
-        res_quant[ix] = quantity.detach().cpu().numpy()
-        res_size[ix] = size.detach().cpu().numpy()
-
-    pd.DataFrame(res_quant).to_csv('./DeepFeatures/sym_grad_cam_train_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    pd.DataFrame(res_size).to_csv('./DeepFeatures/sym_grad_cam_train_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    
-    
 def resume(args_dict, model, optimizer):
 
     best_val = float(0)
@@ -81,30 +60,32 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     for batch_idx, (input, target) in enumerate(train_loader):
 
         # Inputs to Variable type
-        input_var = list()
-        for j in range(len(input)):
-            if torch.cuda.is_available():
-                input_var.append(torch.autograd.Variable(input[j]).cuda())
-            else:
-                input_var.append(torch.autograd.Variable(input[j]))
+        if torch.cuda.is_available():
+          input = input.to('cuda')
 
-            target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
-
-            if torch.cuda.is_available():
-                target_var = target_var.cuda(non_blocking=True)
+        target_var = list()
+        for j in range(target.shape[1]):
+          target_j = torch.tensor(target[:, j], dtype=torch.int64).to('cuda')
+          if torch.cuda.is_available():
+            target_j = target_j.to('cuda')
+          target_var.append(torch.autograd.Variable(target_j))
             
+        output = model(input)
+        denominator = 1 / len(target_var[j])
+        train_loss = 0
+        for j, target_var_j in enumerate(target_var):
+          for target_symbol in range(target_var_j.shape[1]):
+            train_loss += denominator * criterion(output, target_var_j[:, target_symbol]) 
 
-        
-        output = model(input_var[0])
-        train_loss = criterion(output, torch.squeeze(target_var))
-
+        # Store loss
+        losses.update(train_loss.item(), input.size(0))
         # Backpropagate loss and update weights
         optimizer.zero_grad()
         train_loss.backward()
         optimizer.step()
 
         # Print info
-        if epoch % 30 == 0:
+        if epoch % 3 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\t'
                 'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
                 epoch, batch_idx, len(train_loader), 100. * batch_idx / len(train_loader), loss=losses))
@@ -118,31 +99,19 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
     for batch_idx, (input, target) in enumerate(val_loader):
         # Inputs to Variable type
-        input_var = list()
-        for j in range(len(input)):
-            if torch.cuda.is_available():
-                input_var.append(torch.autograd.Variable(input[j]).cuda())
-            else:
-                input_var.append(torch.autograd.Variable(input[j]))
+        if torch.cuda.is_available():
+          input = input.to('cuda')
 
-        if not symbol_task:
-        # Targets to Variable type
-            target_var = list()
-            for j in range(len(target)):
-                target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
-
-                if torch.cuda.is_available():
-                    target[j] = target[j].cuda(non_blocking=True)
-
-                target_var.append(torch.autograd.Variable(target[j]))
-        else:
-            target_var = torch.tensor(np.array(target, dtype=np.float))
-            if torch.cuda.is_available():
-                    target_var = target_var.cuda(non_blocking=True)
-
-        output = model(input_var[0])
+        target_var = list()
+        for j in range(target.shape[1]):
+          target_j = torch.tensor(target[:, j]).to('cuda')
+          if torch.cuda.is_available():
+            target_j = target_j.to('cuda')
+          target_var.append(torch.autograd.Variable(target_j))
+            
+        output = model(input)
         
-        pred = output > 0.5
+        pred = torch.argmax(output, dim=1)
 
         if batch_idx == 0:
             out = pred.cpu().numpy()

@@ -116,15 +116,19 @@ class ArtDatasetSym(data.Dataset):
             image = self.transform(image)
 
         # Attribute class
-        try:
-            if self.subset:
-                symbols = self.balanced_symbol_context[index, :]
-            else:
-                symbols = self.symbol_context[index, :]
-        except Exception as e:
-            print(e, self.set, index)
+        if self.subset:
+            symbols_positive = self.balanced_symbol_context[index, :].astype(int)
+            
+        else:
+            symbols_positive = self.symbol_context[index, :].astype(int)
+        
+        if len(self.target_index_list) == 1:
+            symbols_positive = symbols_positive[:, None]
 
-        return image, np.ravel(symbols)
+        symbols_negatives = np.logical_not(symbols_positive)
+        symbols = np.concatenate((symbols_positive, symbols_negatives), axis=1)
+
+        return image, symbols_positive
 
 #def filter_symbols():
 if __name__ == '__main__':
@@ -173,7 +177,7 @@ if __name__ == '__main__':
     semart_test_loader = ArtDatasetSym(args_dict, set='test', symbol_detect=args_dict.targets, transform=val_transforms) 
 
     train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
+        semart_val_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=0)
     print('Training loader with %d samples' % train_loader.dataset.__len__())
 
