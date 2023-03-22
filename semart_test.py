@@ -29,6 +29,8 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
         
         if ix == 0:
             grad_cams = torch.zeros((data.shape[0], 1, grad_cam_image.shape[0], grad_cam_image.shape[1]))
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            grad_cams = grad_cams.to(device)
 
         grad_cams[ix] = grad_cam_image
 
