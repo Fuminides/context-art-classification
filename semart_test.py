@@ -28,7 +28,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
                         0.25 * get_gradcam(visual_model, image, ix_3, 3)
         
         if ix == 0:
-            grad_cams = torch.zeros((data.shape[0], grad_cam_image.shape[0], grad_cam_image.shape[1]))
+            grad_cams = torch.zeros((data.shape[0], 1, grad_cam_image.shape[0], grad_cam_image.shape[1]))
 
         grad_cams[ix] = grad_cam_image
 
