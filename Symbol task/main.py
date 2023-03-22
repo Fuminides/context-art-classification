@@ -1,20 +1,8 @@
 import warnings
-import os
-import utils
-
 warnings.filterwarnings("ignore")
 
-import torch
-
-import numpy as np
-import pandas as pd
-from scipy.sparse import dok_matrix
-
-from dataloader_mtl import ArtDatasetMTL
-#from model_gcn import NODE2VEC_OUTPUT
-
 from params import get_parser
-from train import run_train, load_att_class
+from train import run_train
 from semart_test import run_test
 
 

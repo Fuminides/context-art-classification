@@ -118,13 +118,14 @@ if __name__ == '__main__':
     args_dict.vocab_time = 'time2ind.csv'
     args_dict.vocab_author = 'author2ind.csv'
     args_dict.embedds = 'tfidf'
-    args_dict.dir_dataset = r'C:\Users\jf22881\Documents\SemArt'
+    args_dict.dir_dataset = r'/home/javierfumanal/Documents/GitHub/SemArt/'
     args_dict.csvtrain = 'semart_train.csv'
     args_dict.csvval = 'semart_val.csv'
     args_dict.csvtest = 'semart_test.csv'
     args_dict.dir_images = 'Images'
     args_dict.targets = [10, 20 ,30]
 
+    symbol_canon_list_filtered = pd.read_csv('Data/global_canon_names_filtered_visual.csv', index_col=0)
     #type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     semart_train_loader = ArtDatasetSym(args_dict, set='train', symbol_detect=args_dict.targets)
     semart_val_loader = ArtDatasetSym(args_dict, set='val', symbol_detect=args_dict.targets, canon_list=semart_train_loader.symbols_names) 

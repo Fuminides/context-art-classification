@@ -64,7 +64,6 @@ def get_parser():
     parser.add_argument('--no_cuda', action='store_true')
 
     #Symbol task
-    parser.add_argument('--symbol_task', default=False, type=bool)
     parser.add_argument('--targets', type=ast.literal_eval)
 
     # Grad cam
