@@ -14,7 +14,6 @@ import utils
 #from model_gcn import GCN
 from model_sym import SymModel 
 from dataloader_sym import ArtDatasetSym
-import lenet
 
 
 
