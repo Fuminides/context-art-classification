@@ -5,7 +5,6 @@ import torch
 from torchvision import transforms
 from dataloader_sym import ArtDatasetSym
 
-from attributes import load_att_class
 from model_sym import SymModel
 
 import pandas as pd
