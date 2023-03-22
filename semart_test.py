@@ -3,7 +3,6 @@ from __future__ import division
 import numpy as np
 import torch
 from torchvision import transforms
-from dataloader_sym import ArtDatasetSym
 
 from model_mtl import MTL
 from model_kgm import KGM, KGM_append, get_gradcam, GradCamKGM

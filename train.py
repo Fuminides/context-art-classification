@@ -18,7 +18,6 @@ from model_mtl import MTL
 from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
-from dataloader_sym import ArtDatasetSym
 from attributes import load_att_class
 import lenet
 
