@@ -22,8 +22,6 @@ if __name__ == "__main__":
 
     # Check mode and model are correct
     assert args_dict.mode in ['train', 'test'], 'Incorrect mode. Please select either train or test.'
-    assert args_dict.model in ['mtl', 'kgm', 'gcn', 'gat', 'rmtl',
-                               'fcm'], 'Incorrect model. Please select either mlt, kgm, gcn or fcm.'
 
     # Run process
     if args_dict.mode == 'train':
