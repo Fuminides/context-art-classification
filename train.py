@@ -15,7 +15,6 @@ from xgboost import train
 import utils
 #from model_gcn import GCN
 from model_mtl import MTL
-from model_sym import SymModel 
 from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
