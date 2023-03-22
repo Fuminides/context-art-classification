@@ -36,23 +36,6 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
 
 def test_knowledgegraph(args_dict):
 
-    # Load classes
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    mtl_mode = args_dict.att == 'all'
-    if args_dict.att == 'type':
-        att2i = type2idx
-    elif args_dict.att == 'school':
-        att2i = school2idx
-    elif args_dict.att == 'time':
-        att2i = time2idx
-    elif args_dict.att == 'author':
-        att2i = author2idx
-    elif args_dict.att == 'all':
-        att2i = [type2idx, school2idx, time2idx, author2idx]
-        num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-
-    N_CLUSTERS = args_dict.clusters
-    symbol_task = args_dict.symbol_task
     # Define model
     semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
     model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
@@ -100,16 +83,6 @@ def test_knowledgegraph(args_dict):
     checkpoint_lenet = torch.load(grad_classifier_path)
     
     # Lenet is for gradcam classification
-    lenet_model = lenet.LeNet([args_dict.gradcam_size, args_dict.gradcam_size, 3], [4, 2]) 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    try:
-        lenet_model.load_state_dict(checkpoint_lenet['state_dict'])
-    except KeyError:
-        lenet_model.load_state_dict(checkpoint_lenet)
-
-    lenet_model = lenet_model.to(device)
-    lenet_model.eval()
-
     for i, (input, target) in enumerate(test_loader):
         # Inputs to Variable type
         input_var = list()
