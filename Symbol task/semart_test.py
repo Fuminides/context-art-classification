@@ -5,11 +5,6 @@ import torch
 from torchvision import transforms
 from dataloader_sym import ArtDatasetSym
 
-from model_mtl import MTL
-from model_kgm import KGM, KGM_append, get_gradcam, GradCamKGM
-import lenet
-from dataloader_mtl import ArtDatasetMTL
-from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
 from model_sym import SymModel
 
