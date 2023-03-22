@@ -204,10 +204,10 @@ def train_symbol_classifier(args_dict):
         len(args_dict.targets)
     except:
         args_dict.targets = [args_dict.targets]
-        
+
     # Dataloaders for training and validation
     semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms, symbol_detect=args_dict.targets)
-    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
+    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, symbol_detect=args_dict.targets)
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
         batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
