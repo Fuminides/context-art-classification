@@ -16,7 +16,7 @@ import pandas as pd
 NODE2VEC_OUTPUT = 128
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model, im_names):
     for ix, image in enumerate(data):
         ix_0 = int(target_var[0][ix].cpu().numpy())
         ix_1 = int(target_var[1][ix].cpu().numpy())
@@ -39,8 +39,8 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     res_quant = quantity.detach().cpu().numpy()
     res_size = size.detach().cpu().numpy()
 
-    pd.DataFrame(res_quant).to_csv('./DeepFeatures/grad_cam_test_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    pd.DataFrame(res_size).to_csv('./DeepFeatures/grad_cam_test_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    pd.DataFrame(res_quant).to_csv('./DeepFeatures/grad_cam_test_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
+    pd.DataFrame(res_size).to_csv('./DeepFeatures/grad_cam_test_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
     
 
 def test_knowledgegraph(args_dict):
@@ -163,7 +163,7 @@ def test_knowledgegraph(args_dict):
     lenet_model = lenet_model.to(device)
     lenet_model.eval()
 
-    for i, (input, target) in enumerate(test_loader):
+    for i, (input, target, im_names) in enumerate(test_loader):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
@@ -256,7 +256,7 @@ def test_knowledgegraph(args_dict):
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model)
+        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
         # features_matrix[actual_index:actual_index+feat_cache.shape[0]] = feat_cache
 

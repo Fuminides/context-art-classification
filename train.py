@@ -53,8 +53,6 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
 
 
 def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
-    res_quant = np.zeros((data.shape[0], 4))
-    res_size = np.zeros((data.shape[0], 2))
     for ix, image in enumerate(data):
         ix_0 = int(target_var[0][ix].cpu().numpy())
         ix_1 = int(target_var[1][ix].cpu().numpy())
@@ -64,10 +62,19 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
                         0.25 * get_gradcam(visual_model, image, ix_1, 1) + \
                         0.25 * get_gradcam(visual_model, image, ix_2, 2) + \
                         0.25 * get_gradcam(visual_model, image, ix_3, 3)
-        [quantity, size] = lenet_model(torch.unsqueeze(grad_cam_image, 0))
+        
+        if ix == 0:
+            grad_cams = torch.zeros((data.shape[0], 1, grad_cam_image.shape[0], grad_cam_image.shape[1]))
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            grad_cams = grad_cams.to(device)
 
-        res_quant[ix] = quantity.detach().cpu().numpy()
-        res_size[ix] = size.detach().cpu().numpy()
+        grad_cams[ix] = grad_cam_image
+
+    [quantity, size] = lenet_model(grad_cams)
+
+    res_quant = quantity.detach().cpu().numpy()
+    res_size = size.detach().cpu().numpy()
+
 
     pd.DataFrame(res_quant).to_csv('./DeepFeatures/grad_cam_train_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
     pd.DataFrame(res_size).to_csv('./DeepFeatures/grad_cam_train_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')

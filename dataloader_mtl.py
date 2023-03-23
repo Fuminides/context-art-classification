@@ -149,4 +149,4 @@ class ArtDatasetMTL(data.Dataset):
         if self.args_dict.att == 'all':
             return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
         else:
-            return [image], [idclass, graph_emb]
+            return [image], [idclass, graph_emb], self.imageurls[index]
