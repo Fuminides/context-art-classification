@@ -52,7 +52,7 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     torch.save(state, filename)
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model):
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model, im_names, set_data='train'):
     for ix, image in enumerate(data):
         ix_0 = int(target_var[0][ix].cpu().numpy())
         ix_1 = int(target_var[1][ix].cpu().numpy())
@@ -75,10 +75,10 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
     res_quant = quantity.detach().cpu().numpy()
     res_size = size.detach().cpu().numpy()
 
-
-    pd.DataFrame(res_quant).to_csv('./DeepFeatures/grad_cam_train_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-    pd.DataFrame(res_size).to_csv('./DeepFeatures/grad_cam_train_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+    pd.DataFrame(res_quant, index=im_names).to_csv('./DeepFeatures/grad_cam_' + set_data + '_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
+    pd.DataFrame(res_size, index=im_names).to_csv('./DeepFeatures/grad_cam_' + set_data + 'test_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     
+
     
 def resume(args_dict, model, optimizer):
 
@@ -122,7 +122,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     lenet_model = lenet_model.to(device)
     lenet_model.eval()
 
-    for batch_idx, (input, target) in enumerate(train_loader):
+    for batch_idx, (input, target, im_names) in enumerate(train_loader):
 
         # Inputs to Variable type
         input_var = list()
@@ -191,7 +191,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 if not mtl_mode:
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
-                    extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, lenet_model)
+                    extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, lenet_model, im_names, set_data='train')
                     # pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
@@ -249,7 +249,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     absence_detected = 0
     absence_possible = 0
 
-    for batch_idx, (input, target) in enumerate(val_loader):
+    for batch_idx, (input, target, im_names) in enumerate(val_loader):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
