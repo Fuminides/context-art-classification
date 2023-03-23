@@ -43,6 +43,7 @@ class ArtDatasetMTL(data.Dataset):
         self.school = list(df['SCHOOL'])
         self.time = list(df['TIMEFRAME'])
         self.author = list(df['AUTHOR'])
+        self.descriptions = list(df['DESCRIPTION'])
 
         self.embedds = args_dict.embedds
         # Load Data + Graph Embeddings
@@ -150,3 +151,17 @@ class ArtDatasetMTL(data.Dataset):
             return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb], self.imageurls[index]
         else:
             return [image], [idclass, graph_emb], self.imageurls[index]
+
+class BasicDataExtract(ArtDatasetMTL):
+
+    def __getitem__(self, index):
+
+        # Load image & apply transformation
+        imagepath = self.imagefolder + self.imageurls[index]
+        image = Image.open(imagepath).convert('RGB')
+        if self.transform is not None:
+            image = self.transform(image)
+
+        
+        return image, self.descriptions[index]
+        
