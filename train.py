@@ -187,7 +187,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 print('Saving features...')
                 feat = model.features(input_var[0])
 
-                pd.DataFrame(feat.data.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+                pd.DataFrame(feat.data.cpu().numpy(), index=im_names).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
                 if not mtl_mode:
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
