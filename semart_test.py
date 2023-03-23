@@ -276,8 +276,8 @@ def test_knowledgegraph(args_dict):
           acc = np.mean(np.equal(out_type, label_type))
           print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
     if not mtl_mode:
-        pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-        pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+        pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
+        pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
     else:
        # Compute Accuracy
       acc_type = np.mean(np.equal(out_type, label_type))
@@ -335,7 +335,7 @@ def test_multitask(args_dict):
 
     # Switch to evaluation mode & compute test
     model.eval()
-    for i, (input, target) in enumerate(test_loader):
+    for i, (input, target, im_names) in enumerate(test_loader):
 
         # Inputs to Variable type
         input_var = list()
@@ -381,6 +381,8 @@ def test_multitask(args_dict):
             label_school = np.concatenate((label_school,target[1].cpu().numpy()),axis=0)
             label_time = np.concatenate((label_time,target[2].cpu().numpy()),axis=0)
             label_author = np.concatenate((label_author,target[3].cpu().numpy()),axis=0)
+
+        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model, im_names)
 
     # Compute Accuracy
     acc_type = np.sum(out_type == label_type)/len(out_type)
