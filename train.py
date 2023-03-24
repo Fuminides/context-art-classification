@@ -115,12 +115,17 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     lenet_model = lenet.LeNet([args_dict.grad_cam_image_size, args_dict.grad_cam_image_size, 1], [4, 2])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     try:
-        lenet_model.load_state_dict(checkpoint['state_dict'])
-    except KeyError:
-        lenet_model.load_state_dict(checkpoint)
+        try:
+            lenet_model.load_state_dict(checkpoint['state_dict'])
+        except KeyError:
+            lenet_model.load_state_dict(checkpoint)
 
-    lenet_model = lenet_model.to(device)
-    lenet_model.eval()
+        lenet_model = lenet_model.to(device)
+        lenet_model.eval()
+        grad_cam = True
+    except:
+        print('No gradcam!')
+        grad_cam = False
 
     for batch_idx, (input, target, im_names) in enumerate(train_loader):
 
@@ -191,7 +196,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 if not mtl_mode:
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
-                    extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, lenet_model, im_names, set_data='train')
+                    if grad_cam:
+                        extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, lenet_model, im_names, set_data='train')
                     # pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
