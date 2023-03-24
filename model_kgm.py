@@ -125,7 +125,7 @@ class GradCamKGM(nn.Module):
         self.visual_resnet = nn.Sequential(*list(resnet.children())[0:5])
         self.avg_pooling_resnet = nn.Sequential(*list(resnet.children())[5:-1])
 
-        self.deep_feature_size = 512
+        self.deep_feature_size = 20
         self.classifier2 = nn.Sequential(nn.Linear(2048, self.deep_feature_size))
 
         self.class_type = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[0]))
