@@ -96,8 +96,8 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
 
     # switch to evaluation mode
     model.eval()
-
-    for batch_idx, (input, target) in enumerate(val_loader):
+    full_fiability = []
+    for batch_idx, (input, target, fiabilities) in enumerate(val_loader):
         # Inputs to Variable type
         if torch.cuda.is_available():
           input = input.to('cuda')
@@ -119,8 +119,11 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         else:
             out = np.concatenate((out, pred.cpu().numpy()), axis=0)
             label = np.concatenate((label, torch.squeeze(target).cpu().numpy()), axis=0)
+        full_fiability.extend(fiabilities)
 
     conf_matrix = confusion_matrix(label, out)
+    ponderated_succes = np.mean(np.equal(out, label) * np.array(full_fiability)) / np.sum(full_fiability)
+    print('Ponderated accuracy: ' + str(ponderated_succes))
     print('Symbols detected {acc}'.format(acc=conf_matrix[0,0]))
     print('Absence detected {acc}'.format(acc=conf_matrix[1,1]))
     print(conf_matrix)
