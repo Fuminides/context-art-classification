@@ -208,6 +208,7 @@ def test_knowledgegraph(args_dict):
             # feat_cache = model.features(input_var[0])   
         else:
             output = model(input_var[0])
+            feat_cache = model.features(input_var[0])   
 
         #outsoftmax = torch.nn.functional.softmax(output[0])
         
