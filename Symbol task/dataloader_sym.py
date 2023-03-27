@@ -29,8 +29,7 @@ class ArtDatasetSym(data.Dataset):
 
         self.args_dict = args_dict
         self.set = set
-        if self.set == 'val':
-            self.set = 'train'
+
 
         # Load data
         if self.set == 'train':
