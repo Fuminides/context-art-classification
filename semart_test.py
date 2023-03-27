@@ -115,21 +115,17 @@ def test_knowledgegraph(args_dict):
 
     # Data Loaders for test
     if torch.cuda.is_available():
-        if not args_dict.symbol_task:
-            if mtl_mode:
-                test_loader = torch.utils.data.DataLoader(
-                    ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=test_transforms, clusters=128),
-                    batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
-            else:
-                test_loader = torch.utils.data.DataLoader(
-                    ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
-                    batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
-            
-        else:
-            semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
+        
+        if mtl_mode:
             test_loader = torch.utils.data.DataLoader(
-                        ArtDatasetSym(args_dict, set='test', transform=test_transforms, canon_list=semart_train_loader.symbols_names),
-                        batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+                ArtDatasetMTL(args_dict, set='test', att2i=att2i, transform=test_transforms, clusters=128),
+                batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+        else:
+            test_loader = torch.utils.data.DataLoader(
+                ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
+                batch_size=args_dict.batch_size, shuffle=False, pin_memory=(not args_dict.no_cuda), num_workers=args_dict.workers)
+            
+      
     else:
         test_loader = torch.utils.data.DataLoader(
             ArtDatasetKGM(args_dict, set='test', att2i=att2i, att_name=args_dict.att, transform=test_transforms, clusters=128),
@@ -146,7 +142,7 @@ def test_knowledgegraph(args_dict):
     absence_detected = 0
     absence_possible = 0
 
-    features_matrix = torch.zeros((1069, model.deep_feature_size))
+    features_matrix = np.zeros((1069, model.deep_feature_size))
     actual_index = 0
 
     grad_classifier_path = args_dict.grad_cam_model_path
@@ -205,7 +201,7 @@ def test_knowledgegraph(args_dict):
             feat_cache = model.features((input_var[0], target[1]))   
         elif args_dict.model == 'kgm':
             pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
-            feat_cache = model.features(input_var[0])   
+            feat_cache = model.features(input_var[0]).detach().cpu().numpy()
         else:
             output = model(input_var[0])
             # feat_cache = model.features(input_var[0])   
@@ -262,7 +258,7 @@ def test_knowledgegraph(args_dict):
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
         features_matrix[actual_index:actual_index+feat_cache.shape[0]] = feat_cache
 
-    pd.DataFrame(features_matrix.data.cpu().numpy(), index=im_names).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
+    pd.DataFrame(features_matrix, index=im_names).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     # Compute Accuracy
     # Accuracy
     if symbol_task:
@@ -280,7 +276,7 @@ def test_knowledgegraph(args_dict):
           print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
     if not mtl_mode:
         pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
-        pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
+        # pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
     else:
        # Compute Accuracy
       acc_type = np.mean(np.equal(out_type, label_type))

@@ -556,7 +556,16 @@ def train_multitask_classifier(args_dict):
     best_val, model, optimizer = resume(args_dict, model, optimizer)
 
     # Data transformation for training (with data augmentation) and validation
-
+    train_transforms = transforms.Compose([
+        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),                         # we get only the center of that rescaled
+        transforms.RandomCrop(224),                         # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),                  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),                              # to pytorch tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                             std=[0.229, 0.224, 0.225])
+    ])
+    
     val_transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(224),  # we get only the center of that rescaled
@@ -615,111 +624,6 @@ def train_multitask_classifier(args_dict):
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 
-def train_symbol_classifier(args_dict):
-
-    
-    # Data transformation for training (with data augmentation) and validation
-    train_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-    val_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(224),  # we get only the center of that rescaled
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-
-    # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms, symbol_detect=args_dict.targets)
-    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % semart_train_loader.__len__())
-
-    val_loader = torch.utils.data.DataLoader(
-        semart_val_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % semart_val_loader.__len__())
-    
-
-    # Define model
-    if args_dict.targets is None:
-        model = SymModel(semart_train_loader.symbol_context.shape[1], model=args_dict.architecture)
-    else:
-        model = SymModel(len(args_dict.targets), model=args_dict.architecture)
-
-    if torch.cuda.is_available():
-        model.cuda()
-
-    # Loss and optimizer
-    
-    if len(args_dict.targets) > 1:
-        class_loss = nn.BCEWithLogitsLoss()
-        if torch.cuda.is_available():
-            class_loss = class_loss.cuda()    
-    else:
-        
-        class_loss = nn.CrossEntropyLoss()
-        try:
-            if torch.cuda.is_available():
-                class_loss = class_loss.cuda()
-        except AttributeError:
-            pass
-
-    optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
-                                lr=args_dict.lr,
-                                momentum=args_dict.momentum)
-
-    # Resume training if needed
-    best_val, model, optimizer = resume(args_dict, model, optimizer)
-
-
-    # Now, let's start the training process!
-    print('Start training Symbolic task...')
-    pat_track = 0
-    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
-
-        # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch, symbol_task=True)
-
-        # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch, symbol_task=True)
-
-        # check patience
-        if accval <= best_val:
-            pat_track += 1
-        else:
-            pat_track = 0
-        if pat_track >= args_dict.patience:
-            break
-
-        # save if it is the best validation accuracy
-        is_best = accval > best_val
-        best_val = max(accval, best_val)
-        if is_best:
-            save_model(args_dict, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_val': best_val,
-                'optimizer': optimizer.state_dict(),
-                'valtrack': pat_track,
-                'curr_val': accval,
-            }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
-
-        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
-
-
-
 def _load_labels(df_path, att2i):
     def class_from_name(name, vocab):
 
@@ -749,7 +653,6 @@ def _load_labels(df_path, att2i):
     
     return tipei, schooli, timei, authori
     
-
 
 def compute_preds_val(target, val_size, output, label_type, label_school, label_tf, label_author):
     if target == 'all' or target == 'type':
@@ -790,14 +693,10 @@ def run_train(args_dict):
     #global plotter
     #plotter = utils.VisdomLinePlotter(env_name=args_dict.name)
 
-    if args_dict.symbol_task:
-        train_symbol_classifier(args_dict)
-    elif args_dict.model == 'mtl':
+    if args_dict.model == 'mtl':
         train_multitask_classifier(args_dict)
     elif args_dict.model == 'kgm':
         train_knowledgegraph_classifier(args_dict)
-    elif args_dict.model == 'rmtl':
-        vis_encoder_train(args_dict)
     else:
         assert False, 'Incorrect model type'
 

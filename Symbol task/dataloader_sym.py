@@ -43,6 +43,9 @@ class ArtDatasetSym(data.Dataset):
         self.transform = transform
 
         self.imageurls = list(df['IMAGE_FILE'])
+        fiability_path = os.path.join(args_dict.dir_dataset, 'fiabilities_' + self.set + '.csv')
+        self.fiability =pd.read_csv(fiability_path, index_col=0)
+
 
         # Load symbols
         painting_symbol_train = pd.read_csv('Symbol task/Data/' + self.set + '_symbol_labels.csv', index_col=0)
@@ -128,7 +131,8 @@ class ArtDatasetSym(data.Dataset):
         symbols_negatives = np.logical_not(symbols_positive)
         symbols = np.concatenate((symbols_positive, symbols_negatives), axis=1)
 
-        return image, symbols_positive
+        painting_fiability = self.fiability[self.imageurls[index]]
+        return image, symbols_positive, painting_fiability
 
 #def filter_symbols():
 if __name__ == '__main__':

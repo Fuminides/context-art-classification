@@ -57,7 +57,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     model.train()    
    
 
-    for batch_idx, (input, target) in enumerate(train_loader):
+    for batch_idx, (input, target, fiability) in enumerate(train_loader):
 
         # Inputs to Variable type
         if torch.cuda.is_available():
@@ -75,7 +75,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         train_loss = 0
         for j, target_var_j in enumerate(target_var):
           for target_symbol in range(target_var_j.shape[1]):
-            train_loss += denominator * criterion(output, target_var_j[:, target_symbol]) 
+            train_loss += denominator * criterion(output, target_var_j[:, target_symbol]) * fiability
 
         # Store loss
         losses.update(train_loss.item(), input.size(0))
