@@ -43,7 +43,7 @@ class ArtDatasetSym(data.Dataset):
         self.transform = transform
 
         self.imageurls = list(df['IMAGE_FILE'])
-        fiability_path = os.path.join(args_dict.dir_dataset, 'fiabilities_' + self.set + '.csv')
+        fiability_path = os.path.join('Data/', 'fiabilities_' + self.set + '.csv')
         self.fiability =pd.read_csv(fiability_path, index_col=0)
 
 
