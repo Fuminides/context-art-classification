@@ -205,10 +205,10 @@ def test_knowledgegraph(args_dict):
             feat_cache = model.features((input_var[0], target[1]))   
         elif args_dict.model == 'kgm':
             pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
-            # feat_cache = model.features(input_var[0])   
+            feat_cache = model.features(input_var[0])   
         else:
             output = model(input_var[0])
-            feat_cache = model.features(input_var[0])   
+            # feat_cache = model.features(input_var[0])   
 
         #outsoftmax = torch.nn.functional.softmax(output[0])
         
