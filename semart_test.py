@@ -407,8 +407,6 @@ def run_test(args_dict):
 
     if args_dict.model == 'mtl':
         test_multitask(args_dict)
-    elif args_dict.model == 'gcn':
-        test_gcn(args_dict)
     elif args_dict.model == 'kgm':
         test_knowledgegraph(args_dict)
     else:
