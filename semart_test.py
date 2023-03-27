@@ -158,7 +158,7 @@ def test_knowledgegraph(args_dict):
 
     lenet_model = lenet_model.to(device)
     lenet_model.eval()
-
+    full_imgs = []
     for i, (input, target, im_names) in enumerate(test_loader):
         # Inputs to Variable type
         input_var = list()
@@ -257,8 +257,10 @@ def test_knowledgegraph(args_dict):
         extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
         features_matrix[actual_index:actual_index+feat_cache.shape[0]] = feat_cache
+        actual_index += feat_cache.shape[0]
+        full_imgs.append(input_var[0].cpu().numpy())
 
-    pd.DataFrame(features_matrix, index=im_names).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
+    pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     # Compute Accuracy
     # Accuracy
     if symbol_task:
