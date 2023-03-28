@@ -71,13 +71,13 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
           target_var.append(torch.autograd.Variable(target_j))
         
         fiability = torch.tensor(fiability, dtype=torch.float32).to('cuda')
-        
+
         output = model(input)
         denominator = 1 / len(target_var[j])
         train_loss = 0
         for j, target_var_j in enumerate(target_var):
           for target_symbol in range(target_var_j.shape[1]):
-            train_loss += denominator * criterion(output, target_var_j[:, target_symbol]) * fiability
+            train_loss += denominator * criterion(output, target_var_j[:, target_symbol]) # * fiability
 
         # Store loss
         losses.update(train_loss.item(), input.size(0))
@@ -124,7 +124,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
         full_fiability.extend(fiabilities)
 
     conf_matrix = confusion_matrix(label, out)
-    ponderated_succes = np.mean(np.equal(out, label) * np.array(full_fiability)) / np.sum(full_fiability)
+    ponderated_succes = np.sum(np.equal(out, label) * np.array(full_fiability)) / np.sum(full_fiability)
     print('Ponderated accuracy: ' + str(ponderated_succes))
     print('Symbols detected {acc}'.format(acc=conf_matrix[0,0]))
     print('Absence detected {acc}'.format(acc=conf_matrix[1,1]))

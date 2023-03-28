@@ -16,7 +16,7 @@ import annotation_analysis as an
 
 class ArtDatasetSym(data.Dataset):
 
-    def __init__(self, args_dict, set, transform=None, symbol_detect=None, imbalance_ratio=1):
+    def __init__(self, args_dict, set, transform=None, symbol_detect=None, imbalance_ratio=1, fiability_threshold=0.9):
         """
         Args:
             args_dict: parameters dictionary
@@ -26,7 +26,6 @@ class ArtDatasetSym(data.Dataset):
             imbalance_ratio: ratio of negative samples to positive samples
 
         """
-
         self.args_dict = args_dict
         self.set = set
 
@@ -39,13 +38,17 @@ class ArtDatasetSym(data.Dataset):
         elif self.set == 'test':
             textfile = os.path.join(args_dict.dir_dataset, args_dict.csvtest)
         df = pd.read_csv(textfile, delimiter='\t', encoding='Cp1252')
+        self.fiability =pd.read_csv(fiability_path, index_col=0)
 
+        self.fiability_threshold = fiability_threshold
+        df = df.loc[self.fiability['fiability'] > self.fiability_threshold, :]
+
+        
         self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
         self.transform = transform
 
         self.imageurls = list(df['IMAGE_FILE'])
         fiability_path = os.path.join('Data/', 'fiabilities_' + self.set + '.csv')
-        self.fiability =pd.read_csv(fiability_path, index_col=0)
 
 
         # Load symbols
