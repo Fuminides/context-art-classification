@@ -35,7 +35,7 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
         grad_cams[ix] = grad_cam_image
 
     for jx in range(grad_cams.shape[0]):
-        grad_cams = grad_cams.detach().cpu().numpy()[jx, 0, :, :]
+        grad_cams = grad_cams[jx, 0, :, :]
         pd.DataFrame(grad_cams).to_csv('./GradCams/' + im_names[jx] + '.csv', index=False)
 
     [quantity, size] = lenet_model(grad_cams)
