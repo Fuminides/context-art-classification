@@ -69,7 +69,9 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
           if torch.cuda.is_available():
             target_j = target_j.to('cuda')
           target_var.append(torch.autograd.Variable(target_j))
-            
+        
+        fiability = torch.tensor(fiability, dtype=torch.float32).to('cuda')
+        
         output = model(input)
         denominator = 1 / len(target_var[j])
         train_loss = 0
