@@ -42,7 +42,7 @@ class ArtDatasetSym(data.Dataset):
         self.fiability =pd.read_csv(fiability_path, index_col=0)
 
         self.fiability_threshold = fiability_threshold
-        df = df.loc[self.fiability['fiability'] > self.fiability_threshold, :]
+        df = df.loc[self.fiability['Fiability'] > self.fiability_threshold, :]
 
         
         self.imagefolder = os.path.join(args_dict.dir_dataset, args_dict.dir_images)
