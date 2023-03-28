@@ -132,7 +132,7 @@ class ArtDatasetSym(data.Dataset):
         symbols_negatives = np.logical_not(symbols_positive)
         symbols = np.concatenate((symbols_positive, symbols_negatives), axis=1)
 
-        painting_fiability = self.fiability[self.imageurls[index]]
+        painting_fiability = self.fiability.loc[self.imageurls[index]]
         return image, symbols_positive, painting_fiability
 
 #def filter_symbols():
