@@ -43,6 +43,7 @@ class ArtDatasetSym(data.Dataset):
 
         self.fiability_threshold = fiability_threshold
         boolean_index = self.fiability['Fiability'] > self.fiability_threshold
+        boolean_index.index = df.index
         df = df.loc[boolean_index]
 
         
@@ -54,6 +55,9 @@ class ArtDatasetSym(data.Dataset):
 
         # Load symbols
         painting_symbol_train = pd.read_csv('Symbol task/Data/' + self.set + '_symbol_labels.csv', index_col=0)
+        boolean_index.index = self.imageurls
+        painting_symbol_train = painting_symbol_train.loc[boolean_index]
+        
         self.symbol_context = painting_symbol_train.values
         self.symbols_names = painting_symbol_train.columns
         self.paintings_names = painting_symbol_train.index        
