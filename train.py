@@ -19,7 +19,6 @@ from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
-import lenet
 
 #from torch_geometric.loader import DataLoader
 if torch.cuda.is_available():
@@ -52,7 +51,7 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     torch.save(state, filename)
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model, im_names, set_data='train'):
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, im_names, set_data='train'):
     for ix, image in enumerate(data):
         ix_0 = int(target_var[0][ix].cpu().numpy())
         ix_1 = int(target_var[1][ix].cpu().numpy())
@@ -70,16 +69,8 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
 
         grad_cams[ix] = grad_cam_image
 
-    [quantity, size] = lenet_model(grad_cams)
 
-    res_quant = quantity.detach().cpu().numpy()
-    res_size = size.detach().cpu().numpy()
-
-    pd.DataFrame(res_quant, index=im_names).to_csv('./DeepFeatures/grad_cam_' + set_data + '_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
-    pd.DataFrame(res_size, index=im_names).to_csv('./DeepFeatures/grad_cam_' + set_data + 'test_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
-    
-
-    
+   
 def resume(args_dict, model, optimizer):
 
     best_val = float(0)
@@ -112,16 +103,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     grad_classifier_path = args_dict.grad_cam_model_path
     checkpoint = torch.load(grad_classifier_path)
     
-    lenet_model = lenet.LeNet([args_dict.grad_cam_image_size, args_dict.grad_cam_image_size, 1], [4, 2])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    try:
-        try:
-            lenet_model.load_state_dict(checkpoint['state_dict'])
-        except KeyError:
-            lenet_model.load_state_dict(checkpoint)
-
-        lenet_model = lenet_model.to(device)
-        lenet_model.eval()
+    
         grad_cam = True
     except:
         print('No gradcam!')
@@ -197,7 +180,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
                 else:
                     if grad_cam:
-                        extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, lenet_model, im_names, set_data='train')
+                        extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, im_names, set_data='train')
                     # pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
