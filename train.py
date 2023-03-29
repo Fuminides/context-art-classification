@@ -103,13 +103,8 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     grad_classifier_path = args_dict.grad_cam_model_path
     checkpoint = torch.load(grad_classifier_path)
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    grad_cam = True
     
-        grad_cam = True
-    except:
-        print('No gradcam!')
-        grad_cam = False
-
     for batch_idx, (input, target, im_names) in enumerate(train_loader):
 
         # Inputs to Variable type
