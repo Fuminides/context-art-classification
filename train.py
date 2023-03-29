@@ -69,6 +69,11 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
 
         grad_cams[ix] = grad_cam_image
 
+    for jx in range(grad_cams.shape[0]):
+        grad_cam = grad_cams[jx, 0, :, :].detach().cpu().numpy()
+        pd.DataFrame(grad_cam).to_csv('./GradCams/' + im_names[jx] + '.csv', index=False)
+
+
 
    
 def resume(args_dict, model, optimizer):
