@@ -6,7 +6,6 @@ from torchvision import transforms
 
 from model_mtl import MTL
 from model_kgm import KGM, KGM_append, get_gradcam, GradCamKGM
-import lenet
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
 from attributes import load_att_class
@@ -143,18 +142,10 @@ def test_knowledgegraph(args_dict):
     actual_index = 0
 
     grad_classifier_path = args_dict.grad_cam_model_path
-    checkpoint_lenet = torch.load(grad_classifier_path)
     
 
-    lenet_model = lenet.LeNet([args_dict.grad_cam_image_size, args_dict.grad_cam_image_size, 1], [4, 2])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    try:
-        lenet_model.load_state_dict(checkpoint_lenet['state_dict'])
-    except KeyError:
-        lenet_model.load_state_dict(checkpoint_lenet)
-
-    lenet_model = lenet_model.to(device)
-    lenet_model.eval()
+   
     full_imgs = []
     for i, (input, target, im_names) in enumerate(test_loader):
         # Inputs to Variable type
@@ -251,7 +242,7 @@ def test_knowledgegraph(args_dict):
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))
         
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model, im_names)
+        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
         features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
         actual_index += feat_cache.shape[0]
