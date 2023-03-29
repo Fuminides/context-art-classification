@@ -16,7 +16,7 @@ import pandas as pd
 NODE2VEC_OUTPUT = 128
 
 
-def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, lenet_model, im_names):
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, im_names):
     for ix, image in enumerate(data):
         ix_0 = int(target_var[0][ix].cpu().numpy())
         ix_1 = int(target_var[1][ix].cpu().numpy())
@@ -38,13 +38,6 @@ def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_i
         grad_cam = grad_cams[jx, 0, :, :].detach().cpu().numpy()
         pd.DataFrame(grad_cam).to_csv('./GradCams/' + im_names[jx] + '.csv', index=False)
 
-    [quantity, size] = lenet_model(grad_cams)
-
-    res_quant = quantity.detach().cpu().numpy()
-    res_size = size.detach().cpu().numpy()
-
-    pd.DataFrame(res_quant, index=im_names).to_csv('./DeepFeatures/grad_cam_test_quant_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
-    pd.DataFrame(res_size, index=im_names).to_csv('./DeepFeatures/grad_cam_test_size_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     
 
 def test_knowledgegraph(args_dict):
@@ -387,7 +380,7 @@ def test_multitask(args_dict):
             label_time = np.concatenate((label_time,target[2].cpu().numpy()),axis=0)
             label_author = np.concatenate((label_author,target[3].cpu().numpy()),axis=0)
 
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, lenet_model, im_names)
+        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
 
     # Compute Accuracy
     acc_type = np.sum(out_type == label_type)/len(out_type)
