@@ -38,7 +38,11 @@ from multiprocessing.pool import ThreadPool
 from pymoo.core.problem import StarmapParallelization
 
 def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2Tbox/Demos/occupancy_data/explainable_features.csv', sample_ratio=0.1):
-    data = pd.read_csv(path, index_col=0).sample(frac=sample_ratio, random_state=33)
+    try:
+        data = pd.read_csv(path, index_col=0).sample(frac=sample_ratio, random_state=33)
+    except FileNotFoundError:
+        data = pd.read_csv('/home/fcojavier.fernandez/Github/FuzzyT2Tbox/Demos/occupancy_data/explainable_features.csv', index_col=0).sample(frac=sample_ratio, random_state=33)
+        
     X = data.iloc[:, :-1]
     y = data.iloc[:, -1]
 
