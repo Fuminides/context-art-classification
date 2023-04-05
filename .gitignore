@@ -12,3 +12,4 @@ DeepFeatures/*.csv
 DeepFeaturesBoW/*.csv
 *.gephi
 *.gephi
+*.ipynb

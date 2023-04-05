@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import ndimage
-
+from PIL import Image
 
 def relevant_area(image_numpy):
     '''
@@ -60,6 +60,13 @@ def relevant_parts(image_numpy):
     _, n_components = ndimage.label(relevant_areas)
     return n_components
 
+def sobel_filter(np_image):
+    # Apply Sobel filter
+    edges_x = ndimage.sobel(np_image, axis=0)
+    edges_y = ndimage.sobel(np_image, axis=1)
+    # Compute gradient magnitude
+    gradient_magnitude = np.hypot(edges_x, edges_y)
+    return gradient_magnitude
 
 if __name__ == '__main__':
     # Load the Grad-CAM results
