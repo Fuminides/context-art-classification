@@ -27,7 +27,7 @@ import numpy as np
 
 import sys
 sys.path.append('/home/javierfumanal/Documents/GitHub/FuzzyT2Tbox/ex_fuzzy/')
-
+sys.path.append('/home/fcojavier.fernandez/Github/FuzzyT2Tbox/ex_fuzzy/')
 import ex_fuzzy.fuzzy_sets as fs
 import ex_fuzzy.evolutionary_fit as GA
 import ex_fuzzy.utils as utils
@@ -86,7 +86,7 @@ str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_test,
 
 # Check for other rule bases in the folder
 import os
-files = os.listdir()
+files = os.listdir('rules_art_features')
 files = [f for f in files if 'rules_' in f]
 if len(files) > 0:
     files.sort()
