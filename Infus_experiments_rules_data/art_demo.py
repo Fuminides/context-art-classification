@@ -36,8 +36,13 @@ from sklearn.model_selection import train_test_split
 
 from multiprocessing.pool import ThreadPool
 from pymoo.core.problem import StarmapParallelization
+# Matthew Correlation Coefficient
+from sklearn.metrics import matthews_corrcoef
+# Supress warnings
+import warnings
+warnings.filterwarnings("ignore")
 
-def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2Tbox/Demos/occupancy_data/explainable_features.csv', sample_ratio=0.1):
+def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2Tbox/Demos/occupancy_data/explainable_features.csv', sample_ratio=0.1, feature_studied=0):
     try:
         data = pd.read_csv(path, index_col=0).sample(frac=sample_ratio, random_state=33)
     except FileNotFoundError:
@@ -47,7 +52,39 @@ def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2
     X = data.iloc[:, :-1]
     y = data.iloc[:, -1]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=33) #Como que 33?
+    y = y == feature_studied
+
+    # Subsample the dataframe to have balanced classes
+    X = pd.concat([X[y], X[~y].sample(sum(y), random_state=33)], axis=0, ignore_index=False)
+    y = pd.concat([y[y], y[~y].sample(sum(y), random_state=33)], axis=0, ignore_index=False)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=33, stratify=y) #Como que 33?
+
+    # Classification with Extreme gradient boosting
+    from xgboost import XGBClassifier
+    model = XGBClassifier()
+    model.fit(X_train.values, y_train.values)
+    choose_features = model.feature_importances_ > np.mean(sorted(model.feature_importances_)[::-1])
+    X = X.iloc[:, choose_features]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=33, stratify=y) #Como que 33?
+
+    model = XGBClassifier()
+    model.fit(X_train.values, y_train.values)
+    y_pred = model.predict(X_train.values)
+    y_pred_test = model.predict(X_test.values)
+
+    
+    mcc_test = matthews_corrcoef(y_test, y_pred_test)
+    
+    # Choose the most important features
+    
+    
+    print('Feature studied: ', feature_studied)
+    print('MCC on train set: ', matthews_corrcoef(y_train, y_pred))
+    print('MCC on test set: ', mcc_test)
+    print('Accuracy on train set: ', (y_pred == y_train).mean())
+    print('Accuracy on test set: ', (y_pred_test == y_test).mean())
+    print()
 
     return X, y, X_train, X_test, y_train, y_test
 
@@ -58,12 +95,14 @@ try:
     nRules = int(sys.argv[3])
     nAnts = int(sys.argv[4])
     n_threads = int(sys.argv[5])
+    feature_studied = int(sys.argv[6])
 except:
-    n_gen = 100
+    n_gen = 1000
     pop_size = 30
-    nRules = 20
+    nRules = 15
     nAnts = 3
     n_threads = 1
+    feature_studied = 19
 
 if n_threads > 1:
     pool = ThreadPool(n_threads)
@@ -71,9 +110,11 @@ if n_threads > 1:
 else:
     runner = None
 
-fz_type_studied = fs.FUZZY_SETS.t2
+fz_type_studied = fs.FUZZY_SETS.t1
+checkpoints = 400
 
-X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=0.05)
+X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0, feature_studied=feature_studied)
+
 precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
 min_bounds = np.min(X, axis=0).values
 max_bounds = np.max(X, axis=0).values
@@ -84,7 +125,7 @@ fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts,
     linguistic_variables=precomputed_partitions, n_linguist_variables=3, 
     fuzzy_type=fz_type_studied, verbose=True, tolerance=0.0, domain=domain, runner=runner)
 
-fl_classifier.fit(X_train, y_train, n_gen=n_gen, pop_size=pop_size, checkpoints=0)
+fl_classifier.fit(X_train, y_train, n_gen=n_gen, pop_size=pop_size, checkpoints=checkpoints)
 
 str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_test, y_test, 
                         plot_rules=False, print_rules=True, plot_partitions=False, return_rules=True)
