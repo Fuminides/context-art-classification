@@ -46,7 +46,10 @@ warnings.filterwarnings("ignore")
 
 def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
         '''
-        Fitness function for the optimization problem.
+        Fitness function for the optimization problem. 
+        The fitness function is the accuracy of the rule base, weighted by the size of the rule base.
+        It creates a balanced random partition of the data to evaluate the rule base.
+
         :param ruleBase: RuleBase object
         :param X: array of train samples. X shape = (n_samples, n_features)
         :param y: array of train labels. y shape = (n_samples,)
@@ -99,33 +102,6 @@ def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=33, stratify=y) #Como que 33?
 
-    # Classification with Extreme gradient boosting
-    '''
-    from xgboost import XGBClassifier
-    model = XGBClassifier()
-    model.fit(X_train.values, y_train.values)
-    choose_features = model.feature_importances_ > np.mean(sorted(model.feature_importances_)[::-1])
-    X = X.iloc[:, choose_features]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=33, stratify=y) #Como que 33?
-
-    model = XGBClassifier()
-    model.fit(X_train.values, y_train.values)
-    y_pred = model.predict(X_train.values)
-    y_pred_test = model.predict(X_test.values)
-
-    
-    mcc_test = matthews_corrcoef(y_test, y_pred_test)
-    
-    # Choose the most important features
-    
-    
-    print('Feature studied: ', feature_studied)
-    print('MCC on train set: ', matthews_corrcoef(y_train, y_pred))
-    print('MCC on test set: ', mcc_test)
-    print('Accuracy on train set: ', (y_pred == y_train).mean())
-    print('Accuracy on test set: ', (y_pred_test == y_test).mean())
-    print()
-    '''
     return X, y, X_train, X_test, y_train, y_test
 
 
@@ -140,7 +116,7 @@ except:
     n_gen = 1000
     pop_size = 30
     nRules = 15
-    nAnts = 3
+    nAnts = 4
     runner = 1
     feature_studied = 19
 
@@ -168,18 +144,13 @@ str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_test,
 
 # Check for other rule bases in the folder
 import os
-files = os.listdir('rules_art_features')
-files = [f for f in files if 'rules_' in f]
-if len(files) > 0:
-    files.sort()
-    last_file = files[-1]
-    last_num = int(last_file.split('_')[1].split('.')[0])
-    new_num = last_num + 1
-else:
-    new_num = 0
+res_folder = 'rules_art_features'
+if not os.path.exists(res_folder):
+    os.makedirs(res_folder)
 
+files = os.listdir('rules_art_features')
 # We save the rules in a file
-with open('rules_art_features/rules_candidates_' + str(new_num) + '.txt', 'w') as f:
+with open('rules_art_features/rules_feature' + str(feature_studied) + '.txt', 'w') as f:
     f.write(str_rules)
 
 print('Done')
