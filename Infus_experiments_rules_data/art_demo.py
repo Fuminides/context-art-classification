@@ -14,8 +14,7 @@ Example:
 
 This will run the algorithm for 10 generations, with a population size of 30, 10 rules, 3 antecedents per rule, and 2 threads.
 
-The script will save the rules in a file called rules_#.txt, where # is the number of the file. If there are no files in the
-folder, the number will be 0. If there are files, the number will be the last number + 1.
+The script will save the rules in a file called rules_#.txt, where # is the featuer number.
 
 The script will also print the rules in the console.
 
@@ -111,7 +110,7 @@ try:
     nRules = int(sys.argv[3])
     nAnts = int(sys.argv[4])
     runner = int(sys.argv[5])
-    feature_studied = int(sys.argv[6])
+    feature_studied = int(sys.argv[6]) - 1
 except:
     n_gen = 1000
     pop_size = 30
@@ -127,7 +126,7 @@ checkpoints = 0
 X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0, feature_studied=feature_studied, balance=False)
 
 precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
-precomputed_partitions=None
+#precomputed_partitions=None
 min_bounds = np.min(X, axis=0).values
 max_bounds = np.max(X, axis=0).values
 domain = [min_bounds, max_bounds]
