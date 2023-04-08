@@ -65,7 +65,7 @@ def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
         X_balanced = X[total_index]
         y_balanced = y[total_index]
         
-        ev_object = evr.evalRuleBase(ruleBase, X_balanced, y_balanced)
+        ev_object = evr.evalRuleBase(ruleBase, X, y)
         ev_object.add_rule_weights()
 
         score_acc = ev_object.classification_eval()
@@ -113,7 +113,7 @@ try:
     feature_studied = int(sys.argv[6]) - 1
 except:
     print('Using default parameters')
-    n_gen = 1000
+    n_gen = 100
     pop_size = 30
     nRules = 15
     nAnts = 4
