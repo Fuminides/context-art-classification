@@ -112,6 +112,7 @@ try:
     runner = int(sys.argv[5])
     feature_studied = int(sys.argv[6]) - 1
 except:
+    print('Using default parameters')
     n_gen = 1000
     pop_size = 30
     nRules = 15
