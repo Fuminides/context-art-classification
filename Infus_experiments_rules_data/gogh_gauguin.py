@@ -15,6 +15,60 @@ import ex_fuzzy.rules as rules
 import ex_fuzzy.eval_rules as evr
 from sklearn.model_selection import train_test_split
 
+def balanced_sample(X, y):
+    '''
+    Create a balanced random partition of the data to evaluate the rule base.
+
+    :param X: array of train samples. X shape = (n_samples, n_features)
+    :param y: array of train labels. y shape = (n_samples,)
+    :return: X_balanced, y_balanced
+    '''
+    # Susbsample X and y to have balanced classes
+    positive_index = np.where(y)[0]
+    negative_index = np.where(y == 0)[0]
+
+    if len(positive_index) > len(negative_index):
+        aux = positive_index
+        positive_index = negative_index
+        negative_index = aux
+
+    negative_samples_index = np.random.choice(negative_index, len(positive_index), replace=False)
+    total_index = np.concatenate((positive_index, negative_samples_index))
+    np.random.shuffle(total_index)
+
+    X_balanced = X[total_index]
+    y_balanced = y[total_index]
+    
+    return X_balanced, y_balanced
+
+def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
+        '''
+        Fitness function for the optimization problem. 
+        The fitness function is the accuracy of the rule base, weighted by the size of the rule base.
+        It creates a balanced random partition of the data to evaluate the rule base.
+
+        :param ruleBase: RuleBase object
+        :param X: array of train samples. X shape = (n_samples, n_features)
+        :param y: array of train labels. y shape = (n_samples,)
+        :param tolerance: float. Tolerance for the size evaluation.
+        :return: float. Fitness value.
+        '''
+        # Susbsample X and y to have balanced classes
+        X_balanced, y_balanced = balanced_sample(X, y)
+
+        ev_object = evr.evalRuleBase(ruleBase, X_balanced, y_balanced)
+        ev_object.add_rule_weights()
+
+        score_acc = ev_object.classification_eval()
+        score_size = ev_object.size_eval(tolerance)
+
+        alpha = 0.99
+        beta = 1 - alpha
+
+        score = score_acc * alpha + score_size * beta
+
+        return score
+
 
 def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2Tbox/Demos/occupancy_data/explainable_features.csv', sample_ratio=0.1):
     try:
@@ -56,9 +110,9 @@ try:
     runner = int(sys.argv[5])
 except:
     print('Using default parameters')
-    n_gen = 110
+    n_gen = 100
     pop_size = 30
-    nRules = 15
+    nRules = 7
     nAnts = 4
     runner = 2
 
@@ -91,8 +145,8 @@ domain = [min_bounds, max_bounds]
 print('Training fuzzy classifier:' , nRules, 'rules, ', nAnts, 'ants, ', n_gen, 'generations, ', pop_size, 'population size')
 fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts, 
     linguistic_variables=precomputed_partitions, n_linguist_variables=3, 
-    fuzzy_type=fz_type_studied, verbose=True, tolerance=0.01, domain=domain, runner=runner)
-# fl_classifier.customized_loss(new_loss)
+    fuzzy_type=fz_type_studied, verbose=True, tolerance=0.001, domain=domain, runner=runner)
+fl_classifier.customized_loss(new_loss)
 fl_classifier.fit(X_artists_train, y_artists_train, n_gen=n_gen, pop_size=pop_size, checkpoints=checkpoints)
 
 str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_artists_train, y_artists_train, X_artists_test, y_artists_test, 
