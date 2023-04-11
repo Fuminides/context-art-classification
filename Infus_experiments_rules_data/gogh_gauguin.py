@@ -38,7 +38,7 @@ def balanced_sample(X, y):
 
     X_balanced = X[total_index]
     y_balanced = y[total_index]
-    
+
     return X_balanced, y_balanced
 
 def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
@@ -93,8 +93,12 @@ try:
     semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
 
 except FileNotFoundError:
-    semart_path = '/home/javierfumanal/Documents/GitHub/SemArt/'
-    semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
+    try:
+        semart_path = '/home/javierfumanal/Documents/GitHub/SemArt/'
+        semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
+    except FileNotFoundError:
+        semart_path = '/home/fcojavier.fernandez/Github/SemArt/'
+        semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
 
 
 van_gogh = semart_train[semart_train['AUTHOR'] == 'GOGH, Vincent van']
