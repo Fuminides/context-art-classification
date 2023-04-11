@@ -29,13 +29,19 @@ def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2
     X = data.iloc[:, :-1]
     y = data.iloc[:, -1]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=33, stratify=y) #Como que 33?
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=33, stratify=y) #Como que 33?
 
     return X, y, X_train, X_test, y_train, y_test
 
 # Load SemArt dataset
-semart_path = 'C:/Users/javier.fumanal/Documents/GitHub/SemArt/'
-semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
+try:
+    semart_path = 'C:/Users/javier.fumanal/Documents/GitHub/SemArt/'
+    semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
+
+except FileNotFoundError:
+    semart_path = '/home/javierfumanal/Documents/GitHub/SemArt/'
+    semart_train = pd.read_csv(semart_path + 'semart_train.csv', encoding='cp1252', sep='\t')
+
 
 van_gogh = semart_train[semart_train['AUTHOR'] == 'GOGH, Vincent van']
 paul = semart_train[semart_train['AUTHOR'] == 'GAUGUIN, Paul']
@@ -57,7 +63,6 @@ except:
     runner = 1
 
 
-painter = 'GOGH'
 fz_type_studied = fs.FUZZY_SETS.t1
 checkpoints = 0
 
@@ -66,6 +71,12 @@ X_van_gogh = X.loc[van_gogh['IMAGE_FILE']]
 X_paul = X.loc[paul['IMAGE_FILE']]
 y_artists = np.zeros(X_van_gogh.shape[0] + X_paul.shape[0])
 y_artists[:X_van_gogh.shape[0]] = 1
+
+# Assign names to classes
+y_artists = pd.Series(y_artists)
+y_artists = y_artists.replace({0: 'Van Gogh', 1: 'Paul Gauguin'})
+painter = 'GOGH_GAUGUIN'
+
 X_artists = pd.concat([X_van_gogh, X_paul])
 
 X_artists_train, X_artists_test, y_artists_train, y_artists_test = train_test_split(X_artists, y_artists, test_size=0.10, random_state=33, stratify=y_artists) #Como que 33?
