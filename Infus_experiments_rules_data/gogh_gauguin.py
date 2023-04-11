@@ -60,10 +60,10 @@ except:
     pop_size = 30
     nRules = 15
     nAnts = 4
-    runner = 1
+    runner = 2
 
 
-fz_type_studied = fs.FUZZY_SETS.t2
+fz_type_studied = fs.FUZZY_SETS.t1
 checkpoints = 0
 
 X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0)
@@ -91,7 +91,7 @@ domain = [min_bounds, max_bounds]
 print('Training fuzzy classifier:' , nRules, 'rules, ', nAnts, 'ants, ', n_gen, 'generations, ', pop_size, 'population size')
 fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts, 
     linguistic_variables=precomputed_partitions, n_linguist_variables=3, 
-    fuzzy_type=fz_type_studied, verbose=True, tolerance=0.0, domain=domain, runner=runner)
+    fuzzy_type=fz_type_studied, verbose=True, tolerance=0.01, domain=domain, runner=runner)
 # fl_classifier.customized_loss(new_loss)
 fl_classifier.fit(X_artists_train, y_artists_train, n_gen=n_gen, pop_size=pop_size, checkpoints=checkpoints)
 
