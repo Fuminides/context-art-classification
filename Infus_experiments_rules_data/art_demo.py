@@ -139,6 +139,15 @@ fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts,
 fl_classifier.customized_loss(new_loss)
 fl_classifier.fit(X_train, y_train, n_gen=n_gen, pop_size=pop_size, checkpoints=checkpoints)
 
+# Susbsample X and y to have balanced classes
+positive_index = np.where(y_test)[0]
+negative_index = np.where(y_test == 0)[0]
+negative_samples_index = np.random.choice(negative_index, len(positive_index), replace=False)
+test_index = np.concatenate((positive_index, negative_samples_index))
+#Shuffle the index
+np.random.shuffle(test_index)
+X_balanced = X_test[test_index]
+y_balanced = y_test[test_index]
 str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_test, y_test, 
                         plot_rules=False, print_rules=True, plot_partitions=False, return_rules=True)
 

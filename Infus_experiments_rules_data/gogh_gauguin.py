@@ -29,7 +29,7 @@ def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2
     X = data.iloc[:, :-1]
     y = data.iloc[:, -1]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=33, stratify=y) #Como que 33?
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=33, stratify=y) #Como que 33?
 
     return X, y, X_train, X_test, y_train, y_test
 
@@ -56,14 +56,14 @@ try:
     runner = int(sys.argv[5])
 except:
     print('Using default parameters')
-    n_gen = 1000
+    n_gen = 110
     pop_size = 30
     nRules = 15
     nAnts = 4
     runner = 1
 
 
-fz_type_studied = fs.FUZZY_SETS.t1
+fz_type_studied = fs.FUZZY_SETS.t2
 checkpoints = 0
 
 X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0)
@@ -86,6 +86,7 @@ precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
 min_bounds = np.min(X, axis=0).values
 max_bounds = np.max(X, axis=0).values
 domain = [min_bounds, max_bounds]
+
 
 print('Training fuzzy classifier:' , nRules, 'rules, ', nAnts, 'ants, ', n_gen, 'generations, ', pop_size, 'population size')
 fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts, 
