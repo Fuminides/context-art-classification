@@ -117,7 +117,7 @@ except:
     pop_size = 30
     nRules = 15
     nAnts = 4
-    runner = 1
+    runner = 2
     feature_studied = 19
 
 
@@ -146,8 +146,8 @@ negative_samples_index = np.random.choice(negative_index, len(positive_index), r
 test_index = np.concatenate((positive_index, negative_samples_index))
 #Shuffle the index
 np.random.shuffle(test_index)
-X_balanced = X_test[test_index]
-y_balanced = y_test[test_index]
+X_balanced = np.array(X_test)[test_index]
+y_balanced = np.array(y_test)[test_index]
 str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_test, y_test, 
                         plot_rules=False, print_rules=True, plot_partitions=False, return_rules=True)
 
