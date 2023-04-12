@@ -13,6 +13,7 @@ import ex_fuzzy.utils as utils
 import ex_fuzzy.eval_tools as eval_tools
 import ex_fuzzy.rules as rules
 import ex_fuzzy.eval_rules as evr
+from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 
 def balanced_sample(X, y):
@@ -137,7 +138,30 @@ painter = 'GOGH_GAUGUIN'
 
 X_artists = pd.concat([X_van_gogh, X_paul])
 
+# TSN visualization of X_artists
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
+X_artists_tsne = tsne.fit_transform(X_artists)
+X_artists_tsne = pd.DataFrame(X_artists_tsne, columns=['TSNE1', 'TSNE2'])
+X_artists_tsne['AUTHOR'] = y_artists
+# Plot the TSNE
+import seaborn as sns
+sns.scatterplot(x='TSNE1', y='TSNE2', hue='AUTHOR', data=X_artists_tsne)
+plt.show()
+
+plt.figure()
+# PCA visualization of X_artists
+pca = PCA(n_components=2)
+X_artists_pca = pca.fit_transform(X_artists)
+X_artists_pca = pd.DataFrame(X_artists_pca, columns=['PC1', 'PC2'])
+X_artists_pca['AUTHOR'] = y_artists
+# Plot the PCA
+import seaborn as sns
+sns.scatterplot(x='PC1', y='PC2', hue='AUTHOR', data=X_artists_pca)
+plt.show()
 X_artists_train, X_artists_test, y_artists_train, y_artists_test = train_test_split(X_artists, y_artists, test_size=0.10, random_state=33, stratify=y_artists) #Como que 33?
+
 
 precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
 #precomputed_partitions=None

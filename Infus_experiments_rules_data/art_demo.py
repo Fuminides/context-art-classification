@@ -35,6 +35,9 @@ import ex_fuzzy.eval_tools as eval_tools
 import ex_fuzzy.rules as rules
 import ex_fuzzy.eval_rules as evr
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 
 
 # Matthew Correlation Coefficient
@@ -42,6 +45,27 @@ from sklearn.metrics import matthews_corrcoef
 # Supress warnings
 import warnings
 warnings.filterwarnings("ignore")
+
+def balanced_sample(X, y):
+    '''
+    Create a balanced random partition of the data to evaluate the rule base.
+
+    :param X: array of train samples. X shape = (n_samples, n_features)
+    :param y: array of train labels. y shape = (n_samples,)
+    :return: X_balanced, y_balanced
+    '''
+    # Susbsample X and y to have balanced classes
+    positive_index = np.where(y)[0]
+    negative_index = np.where(y == 0)[0]
+
+    negative_samples_index = np.random.choice(negative_index, len(positive_index), replace=False)
+    total_index = np.concatenate((positive_index, negative_samples_index))
+    np.random.shuffle(total_index)
+
+    X_balanced = X[total_index]
+    y_balanced = y[total_index]
+
+    return X_balanced, y_balanced
 
 def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
         '''
@@ -55,16 +79,7 @@ def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
         :param tolerance: float. Tolerance for the size evaluation.
         :return: float. Fitness value.
         '''
-        # Susbsample X and y to have balanced classes
-        positive_index = np.where(y)[0]
-        negative_index = np.where(y == 0)[0]
-        negative_samples_index = np.random.choice(negative_index, len(positive_index), replace=False)
-        total_index = np.concatenate((positive_index, negative_samples_index))
-        #Shuffle the index
-        np.random.shuffle(total_index)
-        X_balanced = X[total_index]
-        y_balanced = y[total_index]
-        
+        X_balanced, y_balanced = balanced_sample(X, y)
         ev_object = evr.evalRuleBase(ruleBase, X_balanced, y_balanced)
         ev_object.add_rule_weights()
 
@@ -117,14 +132,14 @@ except:
     pop_size = 30
     nRules = 15
     nAnts = 4
-    runner = 2
-    feature_studied = 19
+    runner = 1
+    feature_studied = 9
 
 
 fz_type_studied = fs.FUZZY_SETS.t1
 checkpoints = 0
 
-X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0, feature_studied=feature_studied, balance=False)
+X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=0.2, feature_studied=feature_studied, balance=False)
 
 precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
 #precomputed_partitions=None
@@ -132,23 +147,28 @@ min_bounds = np.min(X, axis=0).values
 max_bounds = np.max(X, axis=0).values
 domain = [min_bounds, max_bounds]
 
-print('Training fuzzy classifier:' , nRules, 'rules, ', nAnts, 'ants, ', n_gen, 'generations, ', pop_size, 'population size')
+# Susbsample X and y to have balanced classes
+X_train_balanced, y_train_balanced = balanced_sample(np.array(X_test), np.array(y_test))
+X_balanced, y_balanced = balanced_sample(np.array(X_test), np.array(y_test))
+
+# Gradient boosting classification for comparison
+print('Training gradient boosting classifier')
+gb_classifier = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=33)
+gb_classifier.fit(X_train_balanced, y_train_balanced)
+print('Accuracy of the gradient boosting classifier on training set: {:.2f}'.format(gb_classifier.score(X_train, y_train)))
+print('Matthews correlation coefficient of the gradient boosting classifier on training set: {:.2f}'.format(matthews_corrcoef(y_train, gb_classifier.predict(X_train))))
+print('Accuracy of the gradient boosting classifier on test set: {:.2f}'.format(gb_classifier.score(X_test, y_test)))
+print('Matthews correlation coefficient of the gradient boosting classifier on test set: {:.2f}'.format(matthews_corrcoef(y_test, gb_classifier.predict(X_test))))
+
+print('Training fuzzy classifier:' , nRules, 'rules, ', nAnts, 'ants, ', n_gen, 'generations, ', pop_size, 'population size, ', X_train.shape[0], 'samples')
 fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts, 
     linguistic_variables=precomputed_partitions, n_linguist_variables=3, 
     fuzzy_type=fz_type_studied, verbose=True, tolerance=0.0, domain=domain, runner=runner)
-fl_classifier.customized_loss(new_loss)
+# fl_classifier.customized_loss(new_loss)
 fl_classifier.fit(X_train, y_train, n_gen=n_gen, pop_size=pop_size, checkpoints=checkpoints)
 
-# Susbsample X and y to have balanced classes
-positive_index = np.where(y_test)[0]
-negative_index = np.where(y_test == 0)[0]
-negative_samples_index = np.random.choice(negative_index, len(positive_index), replace=False)
-test_index = np.concatenate((positive_index, negative_samples_index))
-#Shuffle the index
-np.random.shuffle(test_index)
-X_balanced = np.array(X_test)[test_index]
-y_balanced = np.array(y_test)[test_index]
-str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_test, y_test, 
+
+str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_train, y_train, X_balanced, y_balanced, 
                         plot_rules=False, print_rules=True, plot_partitions=False, return_rules=True)
 
 # Check for other rule bases in the folder
