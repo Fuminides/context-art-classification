@@ -38,13 +38,46 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
-
+import matplotlib.pyplot as plt
 
 # Matthew Correlation Coefficient
 from sklearn.metrics import matthews_corrcoef
 # Supress warnings
 import warnings
 warnings.filterwarnings("ignore")
+
+def plot3d(X_pca, y):
+    # Plot the data in 3d
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(projection='3d')
+    ax.scatter(X_pca[y == 0, 0], X_pca[y == 0, 1], X_pca[y == 0, 2], c='r', label='Suppresed')
+    ax.scatter(X_pca[y == 1, 0], X_pca[y == 1, 1], X_pca[y == 1, 2], c='b', label='Dominant')
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.set_zlabel('PC3')
+    plt.legend()
+    # plt.show()
+
+def plot2d(X_pca, y):
+    # Plot the data in 3d
+    plt.figure(figsize=(10, 10))
+    plt.scatter(X_pca[y == 0, 0], X_pca[y == 0, 1], c='r', label='Suppresed')
+    plt.scatter(X_pca[y == 1, 0], X_pca[y == 1, 1], c='b', label='Dominant')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    plt.legend()
+    # plt.show()
+
+def plot_PCA(n_components, X, y):
+    # Visualize the data using PCA
+    import matplotlib.pyplot as plt
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=n_components)
+    X_pca = pca.fit_transform(X)
+    if n_components == 3:
+        plot3d(X_pca, y)
+    else:
+        plot2d(X_pca, y)
 
 def balanced_sample(X, y):
     '''
@@ -133,19 +166,31 @@ except:
     nRules = 15
     nAnts = 4
     runner = 1
-    feature_studied = 9
+    feature_studied = 16
 
 
 fz_type_studied = fs.FUZZY_SETS.t1
 checkpoints = 0
-
-X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=0.2, feature_studied=feature_studied, balance=False)
-
+'''
+for feature_studied in range(20):
+    X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0, feature_studied=feature_studied, balance=False)
+    plot_PCA(2, X, y)
+    plt.savefig('PCA_2D_{}.jpg'.format(feature_studied))
+'''
+X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0, feature_studied=feature_studied, balance=False)
+# plot_PCA(2, X, y)
+# plt.show()
 precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
 #precomputed_partitions=None
 min_bounds = np.min(X, axis=0).values
 max_bounds = np.max(X, axis=0).values
 domain = [min_bounds, max_bounds]
+
+
+# Use SMOTE to upsample the minority class
+from imblearn.over_sampling import SMOTE
+sm = SMOTE(random_state=33)
+X_train, y_train = sm.fit_resample(X_train, y_train)
 
 # Susbsample X and y to have balanced classes
 X_train_balanced, y_train_balanced = balanced_sample(np.array(X_test), np.array(y_test))
@@ -156,7 +201,7 @@ print('Training gradient boosting classifier')
 gb_classifier = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=33)
 gb_classifier.fit(X_train_balanced, y_train_balanced)
 print('Accuracy of the gradient boosting classifier on training set: {:.2f}'.format(gb_classifier.score(X_train_balanced, y_train_balanced)))
-print('Matthews correlation coefficient of the gradient boosting classifier on training set: {:.2f}'.format(matthews_corrcoef(y_train, gb_classifier.predict(X_train))))
+print('Matthews correlation coefficient of the gradient boosting classifier on training set: {:.2f}'.format(matthews_corrcoef(y_train_balanced, gb_classifier.predict(X_train_balanced))))
 print('Accuracy of the gradient boosting classifier on test set: {:.2f}'.format(gb_classifier.score(X_test, y_test)))
 print('Matthews correlation coefficient of the gradient boosting classifier on test set: {:.2f}'.format(matthews_corrcoef(y_test, gb_classifier.predict(X_test))))
 
