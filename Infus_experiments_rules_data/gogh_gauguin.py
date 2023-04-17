@@ -57,18 +57,23 @@ def new_loss(ruleBase: rules.RuleBase, X:np.array, y:np.array, tolerance:float):
         # Susbsample X and y to have balanced classes
         X_balanced, y_balanced = balanced_sample(X, y)
 
-        ev_object = evr.evalRuleBase(ruleBase, X_balanced, y_balanced)
+        ev_object = evr.evalRuleBase(ruleBase, X, y)
         ev_object.add_rule_weights()
 
+        # Get the biggest rule weight
+        max_weight = max(ruleBase.get_scores())
         score_acc = ev_object.classification_eval()
+        if score_acc < 0:
+            score_acc = 0
         score_size = ev_object.size_eval(tolerance)
 
         alpha = 0.99
-        beta = 1 - alpha
+        beta = 0.00
+        theta = 1 - alpha - beta
 
-        score = score_acc * alpha + score_size * beta
+        score = score_acc * alpha + (1 - max_weight) * beta + score_size * theta
 
-        return score
+        return 1 - score
 
 
 def load_explainable_features(path='/home/javierfumanal/Documents/GitHub/FuzzyT2Tbox/Demos/occupancy_data/explainable_features.csv', sample_ratio=0.1):
@@ -105,7 +110,8 @@ except FileNotFoundError:
 van_gogh = semart_train[semart_train['AUTHOR'] == 'GOGH, Vincent van']
 paul = semart_train[semart_train['AUTHOR'] == 'GAUGUIN, Paul']
 
-load_feats = load_explainable_features(sample_ratio=1.0)
+
+
 
 try:
     n_gen = int(sys.argv[1])
@@ -115,17 +121,17 @@ try:
     runner = int(sys.argv[5])
 except:
     print('Using default parameters')
-    n_gen = 100
+    n_gen = 500
     pop_size = 30
-    nRules = 7
-    nAnts = 4
+    nRules = 8
+    nAnts = 3
     runner = 2
 
 
 fz_type_studied = fs.FUZZY_SETS.t1
 checkpoints = 0
 
-X, y, X_train, X_test, y_train, y_test = load_explainable_features(sample_ratio=1.0)
+X, y, _, _, _, _ = load_explainable_features(sample_ratio=1.0)
 X_van_gogh = X.loc[van_gogh['IMAGE_FILE']]
 X_paul = X.loc[paul['IMAGE_FILE']]
 y_artists = np.zeros(X_van_gogh.shape[0] + X_paul.shape[0])
@@ -133,11 +139,12 @@ y_artists[:X_van_gogh.shape[0]] = 1
 
 # Assign names to classes
 y_artists = pd.Series(y_artists)
-y_artists = y_artists.replace({0: 'Van Gogh', 1: 'Paul Gauguin'})
+y_artists = y_artists.replace({1: 'Van Gogh', 0: 'Paul Gauguin'})
 painter = 'GOGH_GAUGUIN'
 
 X_artists = pd.concat([X_van_gogh, X_paul])
 
+'''
 # TSN visualization of X_artists
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
@@ -160,9 +167,40 @@ X_artists_pca['AUTHOR'] = y_artists
 import seaborn as sns
 sns.scatterplot(x='PC1', y='PC2', hue='AUTHOR', data=X_artists_pca)
 plt.show()
-X_artists_train, X_artists_test, y_artists_train, y_artists_test = train_test_split(X_artists, y_artists, test_size=0.10, random_state=33, stratify=y_artists) #Como que 33?
+'''
+# Solve the problem using a Gradient Boosting Classifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 
+
+X_artists_train, X_artists_test, y_artists_train, y_artists_test = train_test_split(X_artists, y_artists, test_size=0.20, random_state=33, stratify=y_artists) #Como que 33?
+# Print the shape of the training and test sets
+print('Shape of the training set: ' + str(X_artists_train.shape))
+print('Shape of the test set: ' + str(X_artists_test.shape))
+
+
+from sklearn.metrics import matthews_corrcoef
+
+classifier = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=0)
+classifier.fit(X_artists_train, y_artists_train)
+y_pred = classifier.predict(X_artists_test)
+print('Accuracy of the classifier: ', accuracy_score(y_artists_test, y_pred))
+# Feature importance
+importances = classifier.feature_importances_
+importance_threshold = 0.025
+print('Number of features used: ' + str(np.sum(importances > importance_threshold)))
+# Get only the important features
+
+X = X.iloc[:, importances > importance_threshold]
+X_artists_train = X_artists_train.iloc[:, importances > importance_threshold]
+X_artists_test = X_artists_test.iloc[:, importances > importance_threshold]
+
+classifier.fit(X_artists_train, y_artists_train)
+y_pred = classifier.predict(X_artists_test)
+print('Accuracy of the classifier with reduced dimensions: ', accuracy_score(y_artists_test, y_pred))
+print('Matthews correlation coefficient: ', matthews_corrcoef(y_artists_test, y_pred))
 precomputed_partitions = utils.construct_partitions(X, fz_type_studied)
 #precomputed_partitions=None
 min_bounds = np.min(X, axis=0).values
@@ -174,7 +212,7 @@ print('Training fuzzy classifier:' , nRules, 'rules, ', nAnts, 'ants, ', n_gen, 
 fl_classifier = GA.FuzzyRulesClassifier(nRules=nRules, nAnts=nAnts, 
     linguistic_variables=precomputed_partitions, n_linguist_variables=3, 
     fuzzy_type=fz_type_studied, verbose=True, tolerance=0.001, domain=domain, runner=runner)
-fl_classifier.customized_loss(new_loss)
+# fl_classifier.customized_loss(new_loss)
 fl_classifier.fit(X_artists_train, y_artists_train, n_gen=n_gen, pop_size=pop_size, checkpoints=checkpoints)
 
 str_rules = eval_tools.eval_fuzzy_model(fl_classifier, X_artists_train, y_artists_train, X_artists_test, y_artists_test, 
@@ -190,7 +228,6 @@ files = os.listdir('rules_art_features')
 # We save the rules in a file
 with open('rules_art_features/rules_feature' + str(painter) + '.txt', 'w') as f:
     f.write(str_rules)
-
 print('Done')
 
 
