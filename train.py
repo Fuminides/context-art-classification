@@ -352,14 +352,14 @@ def train_knowledgegraph_classifier(args_dict):
     # Define model
     if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
         else:
-            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
     else:
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
         else:
-            model = KGM_append(len(att2i), end_dim=N_CLUSTERS)
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -479,8 +479,17 @@ def train_multitask_classifier(args_dict):
     # Resume training if needed
     best_val, model, optimizer = resume(args_dict, model, optimizer)
 
-    # Data transformation for training (with data augmentation) and validation
 
+    # Data transformation for training (with data augmentation) and validation
+    train_transforms = transforms.Compose([
+            transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+            transforms.CenterCrop(256),                         # we get only the center of that rescaled
+            transforms.RandomCrop(224),                         # random crop within the center crop (data augmentation)
+            transforms.RandomHorizontalFlip(),                  # random horizontal flip (data augmentation)
+            transforms.ToTensor(),                              # to pytorch tensor
+            transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
+                                std=[0.229, 0.224, 0.225])
+        ])
     val_transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(224),  # we get only the center of that rescaled

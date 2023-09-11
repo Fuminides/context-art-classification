@@ -19,13 +19,17 @@ from semart_test import run_test
 
 
 if __name__ == "__main__":
-
+    import sys
+    if len(sys.argv) == 1:
+        args = '--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --architecture vit --batch_size 1 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_author_best_model.pth.tar >salidas/fcm_author_out.txt 2>salidas/author_error.txt'
+        
     # Load parameters
     parser = get_parser()
-    args_dict, unknown = parser.parse_known_args()
+    args_dict, unknown = parser.parse_known_args(args=args.split())
 
     assert args_dict.att in ['type', 'school', 'time', 'author', 'all'], \
         'Incorrect classifier. Please select type, school, time, author or all.'
+
 
     if args_dict.model == 'mtl':
         args_dict.att = 'all'
@@ -39,8 +43,7 @@ if __name__ == "__main__":
 
     # Check mode and model are correct
     assert args_dict.mode in ['train', 'test'], 'Incorrect mode. Please select either train or test.'
-    assert args_dict.model in ['mtl', 'kgm', 'gcn', 'gat', 'rmtl',
-                               'fcm'], 'Incorrect model. Please select either mlt, kgm, gcn or fcm.'
+    assert args_dict.model in ['mtl', 'kgm'], 'Incorrect model. Please select either mlt, kgm, gcn or fcm.'
 
     # Run process
     if args_dict.mode == 'train':

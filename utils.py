@@ -19,7 +19,7 @@ def load_obj(filename):
     return obj
 
 def load_csv_as_dict(csv_path):
-    with open(csv_path, mode='r') as infile:
+    with open(csv_path, mode='r', encoding='utf8') as infile:
         reader = csv.reader(infile)
         
         mydict = {rows[1]:rows[0] for rows in reader}
@@ -46,7 +46,7 @@ def graph_similarity(g1, g2):
     return 1 - np.abs(g1-g2).sum().sum() / (g1.shape[0] * g1.shape[1])
 
 #### DEEP FEATURES TO UNIQUE CSV
-def format_features(path='./DeepFeatures/', task='author'):
+def format_features(path='./DeepFeatures/', task='author', model='bow'):
     import os
 
     get_file_num = lambda a: int(a.split('_')[2])
@@ -61,10 +61,10 @@ def format_features(path='./DeepFeatures/', task='author'):
         
         return max_num
     
-    def get_X(path1, dataset='train', task='author'):
+    def get_X(path1, dataset='train', task='author', model='bow'):
         ix = 0
         for file in os.listdir(path1):
-            if (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3].split('.')[0] == task):
+            if (dataset == 'train') and (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[3] == task) and (file.split('_')[4].split('.')[0] == model):
                 x_file = pd.read_csv(path + file, index_col=0)
 
                 if ix == 0:
@@ -72,13 +72,7 @@ def format_features(path='./DeepFeatures/', task='author'):
                     ix += 1
                 else:
                     res = pd.concat([res, x_file])
-        
-        return res
-
-    def get_y(path1, dataset, task):
-        ix = 0
-        for file in os.listdir(path1):
-            if (file.split('_')[1] == 'y') and (file.split('_')[-1].split('.')[0] == task) and (file.split('_')[0] == dataset):
+            elif (dataset == 'test') and (file.split('_')[1] == 'x') and (file.split('_')[0] == dataset) and (file.split('_')[2] == task) and (file.split('_')[3].split('.')[0] == model):
                 x_file = pd.read_csv(path + file, index_col=0)
 
                 if ix == 0:
@@ -86,11 +80,32 @@ def format_features(path='./DeepFeatures/', task='author'):
                     ix += 1
                 else:
                     res = pd.concat([res, x_file])
-        
         return res
 
-    X = get_X(path, 'train', task=task)
-    X_test = get_X(path, 'test')
+    def get_y(path1, dataset, task, model):
+        ix = 0
+        for file in os.listdir(path1):
+            if (dataset == 'train') and (file.split('_')[1] == 'y') and (file.split('_')[-1].split('.')[0] == model) and (file.split('_')[3] == task) and (file.split('_')[0] == dataset):
+                x_file = pd.read_csv(path + file, index_col=0)
+
+                if ix == 0:
+                    res = x_file
+                    ix += 1
+                else:
+                    res = pd.concat([res, x_file])
+            elif (dataset == 'test') and (file.split('_')[1] == 'y') and (file.split('_')[-1].split('.')[0] == model) and (file.split('_')[2] == task) and (file.split('_')[0] == dataset):
+                x_file = pd.read_csv(path + file, index_col=0)
+
+                if ix == 0:
+                    res = x_file
+                    ix += 1
+                else:
+                    res = pd.concat([res, x_file])
+
+        return res
+
+    X = get_X(path, 'train', task=task, model=model)
+    X_test = get_X(path, 'test', task=task, model=model)
 
     y_author = get_y(path, 'train', 'author')
     y_type = get_y(path, 'train', 'type')
@@ -101,7 +116,6 @@ def format_features(path='./DeepFeatures/', task='author'):
     y_type_test = get_y(path, 'test', 'type')
     y_time_test = get_y(path, 'test', 'time')
     y_school_test = get_y(path, 'test', 'school')
-
 
     y_final = np.zeros((y_type.iloc[:, 0].shape[0], 4))
     y_final[:, 0] = np.squeeze(y_type.values)
@@ -199,13 +213,13 @@ class VisdomLinePlotter(object):
             self.viz.line(X=np.array([x]), Y=np.array([y]), env=self.env, win=self.plots[var_name], name=split_name, update = 'append')
 
 if __name__ == '__main__':
-    path = 'C:/Users/jf22881/Downloads/Clip_features/DeepFeatures/'
+    path = 'C:/Users/javi-/Downloads/DeepFeatures/'
     from sklearn import svm
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import GradientBoostingClassifier
     import matplotlib.pyplot as plt
 
-    X_train, y_train, X_test, y_test = format_features(path)
+    X_train, y_train, X_test, y_test = format_features(path, task='school')
 
     clf = svm.LinearSVC
     features_used = performance_classifier_tasks(clf, path)
