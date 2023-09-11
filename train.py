@@ -15,14 +15,10 @@ from xgboost import train
 import utils
 #from model_gcn import GCN
 from model_mtl import MTL
-from model_sym import SymModel 
-from model_kgm import KGM, KGM_append
-from model_rmtl import RMTL
+from model_kgm import KGM, KGM_append, GradCamKGM, get_gradcam
 from dataloader_mtl import ArtDatasetMTL
 from dataloader_kgm import ArtDatasetKGM
-from dataloader_sym import ArtDatasetSym
 from attributes import load_att_class
-from my_focal_loss import sigmoid_focal_loss
 
 #from torch_geometric.loader import DataLoader
 if torch.cuda.is_available():
@@ -55,6 +51,31 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     torch.save(state, filename)
 
 
+def extract_grad_cam_features(visual_model, data, target_var, args_dict, batch_idx, im_names, set_data='train'):
+    for ix, image in enumerate(data):
+        ix_0 = int(target_var[0][ix].cpu().numpy())
+        ix_1 = int(target_var[1][ix].cpu().numpy())
+        ix_2 = int(target_var[2][ix].cpu().numpy())
+        ix_3 = int(target_var[3][ix].cpu().numpy())
+        grad_cam_image = 0.25 * get_gradcam(visual_model, image, ix_0, 0) + \
+                        0.25 * get_gradcam(visual_model, image, ix_1, 1) + \
+                        0.25 * get_gradcam(visual_model, image, ix_2, 2) + \
+                        0.25 * get_gradcam(visual_model, image, ix_3, 3)
+        
+        if ix == 0:
+            grad_cams = torch.zeros((data.shape[0], 1, grad_cam_image.shape[0], grad_cam_image.shape[1]))
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            grad_cams = grad_cams.to(device)
+
+        grad_cams[ix] = grad_cam_image
+
+    for jx in range(grad_cams.shape[0]):
+        grad_cam = grad_cams[jx, 0, :, :].detach().cpu().numpy()
+        pd.DataFrame(grad_cam).to_csv('./GradCams/' + im_names[jx] + '.csv', index=False)
+
+
+
+   
 def resume(args_dict, model, optimizer):
 
     best_val = float(0)
@@ -80,12 +101,16 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
     # object to store & plot the losses
     losses = utils.AverageMeter()
-
+    mtl_mode = args_dict.att == 'all'
     # switch to train mode
     model.train()
     actual_index = 0
-
-    for batch_idx, (input, target) in enumerate(train_loader):
+    grad_classifier_path = args_dict.grad_cam_model_path
+    checkpoint = torch.load(grad_classifier_path)
+    
+    grad_cam = True
+    
+    for batch_idx, (input, target, im_names) in enumerate(train_loader):
 
         # Inputs to Variable type
         input_var = list()
@@ -106,9 +131,19 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
 
                 target_var.append(torch.autograd.Variable(target[j]))
         else:
-            target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
-            if torch.cuda.is_available():
+            if args_dict.att == 'all':
+                target_var = torch.tensor(np.array(target[:-1], dtype=np.float), dtype=torch.float32)
+                target_embd = torch.tensor(np.array(target[-1], dtype=np.float), dtype=torch.float32)
+                if torch.cuda.is_available():
                     target_var = target_var.cuda(non_blocking=True)
+                    target_embd = target_embd.cuda(non_blocking=True)
+            
+
+            else:
+                target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
+
+            if torch.cuda.is_available():
+                target_var = target_var.cuda(non_blocking=True)
             
 
         # Output of the model
@@ -140,15 +175,23 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                 print('Saving features...')
                 feat = model.features(input_var[0])
 
-                pd.DataFrame(feat.data.cpu().numpy()).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
-                pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+                pd.DataFrame(feat.data.cpu().numpy(), index=im_names).to_csv('./DeepFeatures/train_x_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
+                if not mtl_mode:
+                    pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv')
+                else:
+                    if grad_cam:
+                        extract_grad_cam_features(model, input_var[0], target_var, args_dict, batch_idx, im_names, set_data='train')
+                    # pd.DataFrame(target_var[0].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('type') + '_' + str(args_dict.embedds) + '.csv')
+                    # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
+                    # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
+                    # pd.DataFrame(target_var[3].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('author') + '_' + str(args_dict.embedds) + '.csv')
             
             actual_index += args_dict.batch_size
             
-            if args_dict.att == 'all': # TODO
-                class_loss = multi_class_loss(criterion, target_var, output)
+            if args_dict.att == 'all':
+                class_loss = multi_class_loss(criterion[0], target_var, output)
                 
-                encoder_loss = criterion[1](output[4], target_var[-1].long())
+                encoder_loss = criterion[1](output[4], target_var[-1].float())
                 train_loss = args_dict.lambda_c * class_loss + \
                             args_dict.lambda_e * encoder_loss
 
@@ -195,7 +238,7 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
     absence_detected = 0
     absence_possible = 0
 
-    for batch_idx, (input, target) in enumerate(val_loader):
+    for batch_idx, (input, target, im_names) in enumerate(val_loader):
         # Inputs to Variable type
         input_var = list()
         for j in range(len(input)):
@@ -220,12 +263,12 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
                     target_var = target_var.cuda(non_blocking=True)
 
         # Predictions
-        with torch.no_grad():
-            # Output of the model
-            if args_dict.append == 'append':
-                output = model((input_var[0], target[1]))
-            else:
-                output = model(input_var[0])
+        # with torch.no_grad():
+        # Output of the model
+        if args_dict.append == 'append':
+            output = model((input_var[0], target[1]))
+        else:
+            output = model(input_var[0])
         if symbol_task:
             pred = output > 0.5
             label_actual = torch.squeeze(target).cpu().numpy()
@@ -332,9 +375,12 @@ def multi_class_loss(criterion, target_var, output):
 
 
 def train_knowledgegraph_classifier(args_dict):
-
+    mtl_mode = args_dict.att == 'all'
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
+    # Load classes
+    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    
     if args_dict.att == 'type':
         att2i = type2idx
     elif args_dict.att == 'school':
@@ -343,6 +389,8 @@ def train_knowledgegraph_classifier(args_dict):
         att2i = time2idx
     elif args_dict.att == 'author':
         att2i = author2idx
+    elif args_dict.att == 'all':
+        att2i = [type2idx, school2idx, time2idx, author2idx]
 
     if args_dict.embedds == 'clip':
         N_CLUSTERS = 77
@@ -398,8 +446,12 @@ def train_knowledgegraph_classifier(args_dict):
     k = args_dict.k
 
     # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, clusters=N_CLUSTERS, k=k)
-    semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, clusters=N_CLUSTERS, k=k)
+    if mtl_mode:
+        semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms, clusters=N_CLUSTERS, k=k)
+        semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms, clusters=N_CLUSTERS, k=k)
+    else:
+        semart_train_loader = ArtDatasetKGM(args_dict, set='train', att2i=att2i, att_name=args_dict.att, append=args_dict.append, transform=train_transforms, clusters=N_CLUSTERS, k=k)
+        semart_val_loader = ArtDatasetKGM(args_dict, set='val', att2i=att2i, att_name=args_dict.att, transform=val_transforms, clusters=N_CLUSTERS, k=k)
 
     train_loader = torch.utils.data.DataLoader(
         semart_train_loader,
@@ -553,232 +605,15 @@ def train_symbol_classifier(args_dict):
     
     # Data transformation for training (with data augmentation) and validation
     train_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
+        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
+        transforms.CenterCrop(256),                         # we get only the center of that rescaled
+        transforms.RandomCrop(224),                         # random crop within the center crop (data augmentation)
+        transforms.RandomHorizontalFlip(),                  # random horizontal flip (data augmentation)
+        transforms.ToTensor(),                              # to pytorch tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
                              std=[0.229, 0.224, 0.225])
     ])
-
-    val_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(224),  # we get only the center of that rescaled
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-
-    # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=train_transforms, symbol_detect=args_dict.targets)
-    semart_val_loader = ArtDatasetSym(args_dict, set='val',  transform=val_transforms, canon_list=semart_train_loader.symbols_names, symbol_detect=args_dict.targets)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % semart_train_loader.__len__())
-
-    val_loader = torch.utils.data.DataLoader(
-        semart_val_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % semart_val_loader.__len__())
     
-
-    # Define model
-    if args_dict.targets is None:
-        model = SymModel(semart_train_loader.symbol_context.shape[1], model=args_dict.architecture)
-    else:
-        model = SymModel(len(args_dict.targets), model=args_dict.architecture)
-
-    if torch.cuda.is_available():
-        model.cuda()
-
-    # Loss and optimizer
-    
-    if len(args_dict.targets) > 1:
-        class_loss = nn.BCEWithLogitsLoss()
-        if torch.cuda.is_available():
-            class_loss = class_loss.cuda()    
-    else:
-        
-        class_loss = nn.CrossEntropyLoss()
-        try:
-            if torch.cuda.is_available():
-                class_loss = class_loss.cuda()
-        except AttributeError:
-            pass
-
-    optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
-                                lr=args_dict.lr,
-                                momentum=args_dict.momentum)
-
-    # Resume training if needed
-    best_val, model, optimizer = resume(args_dict, model, optimizer)
-
-
-    # Now, let's start the training process!
-    print('Start training Symbolic task...')
-    pat_track = 0
-    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
-
-        # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch, symbol_task=True)
-
-        # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch, symbol_task=True)
-
-        # check patience
-        if accval <= best_val:
-            pat_track += 1
-        else:
-            pat_track = 0
-        if pat_track >= args_dict.patience:
-            break
-
-        # save if it is the best validation accuracy
-        is_best = accval > best_val
-        best_val = max(accval, best_val)
-        if is_best:
-            save_model(args_dict, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_val': best_val,
-                'optimizer': optimizer.state_dict(),
-                'valtrack': pat_track,
-                'curr_val': accval,
-            }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
-
-        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
-
-
-def gen_embeds(args_dict, vis_encoder, data_partition='train'):
-    '''
-    Generates the proper dataset to train the GCN model.
-        1. A file containing the embeddings for each category and painting for train, validation and test.
-        
-        
-        NOTE: remember that the pseudo-labels for validation and test are computed
-        using another classification model.
-    '''
-    from torchvision import transforms
-
-    transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-    # Load classes
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-    att2i = [type2idx, school2idx, time2idx, author2idx]
-
-    from PIL import Image
-    from model_rmtl import RMTL
-
-    #if args_dict.embedds == 'graph':
-    if data_partition == 'train':
-        train_node2vec_emb = pd.read_csv('Data/semart.emd', skiprows=1, sep=' ', header=None, index_col=0)
-    else:
-        train_node2vec_emb = pd.read_csv('Data/semart_' + data_partition + '.emd', skiprows=1, sep=' ', header=None, index_col=0)
-
-
-    vis_encoder.eval()
-    if torch.cuda.is_available():
-        vis_encoder = vis_encoder.cuda()
-
-    # feature_matrix = np.zeros(train_node2vec_emb.shape)
-    print('Starting the process... ')
-    semart_train_loader = ArtDatasetMTL(args_dict, set=data_partition, att2i=att2i, transform=transforms)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-
-    type_label = []
-    school_label = []
-    time_label = []
-    author_label = []
-
-    for batch_idx, (input, target) in enumerate(train_loader):
-
-        # Inputs to Variable type
-        input_var = list()
-        type_label.append(target[0])
-        school_label.append(target[0])
-        time_label.append(target[0])
-        author_label.append(target[0])
-
-        for j in range(len(input)):
-            if torch.cuda.is_available():
-                input_var.append(torch.autograd.Variable(input[j]).cuda())
-            else:
-                input_var.append(torch.autograd.Variable(input[j]))
-
-        if batch_idx == 0:
-            features_matrix = vis_encoder.reduce(input_var[0])
-            features_matrix = features_matrix.data.cpu().numpy()
-        else:
-            features_matrix = np.append(features_matrix, vis_encoder.reduce(input_var[0]).data.cpu().numpy(), axis=0)
-
-        print(
-            'Sample ' + str(batch_idx * int(args_dict.batch_size)) + 'th out of ' + str(len(semart_train_loader)))
-
-    #if args_dict.embedds == 'graph':
-    features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)
-    '''elif args_dict.embedds == 'avg':
-        # Gen the feature for each category using the avg of all their representatives
-        additional_entities = np.zeros((train_node2vec_emb - len(semart_train_loader), train_node2vec_emb.shape[1]))
-        for entity in range(additional_entities.shape[0]):
-            entity
-        features_matrix_end = np.append(features_matrix, train_node2vec_emb[len(semart_train_loader):], axis=0)'''
-    
-    assert train_node2vec_emb.shape == features_matrix_end.shape
-    
-    return features_matrix_end
-
-def vis_encoder_train(args_dict):
-
-    # Load classes
-    type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
-    att2i = [type2idx, school2idx, time2idx, author2idx]
-
-    # Define model
-    model = RMTL(num_classes)
-    if torch.cuda.is_available():
-        model.cuda()
-
-    # Loss and optimizer
-    if torch.cuda.is_available():
-        class_loss = nn.CrossEntropyLoss().cuda()
-    else:
-        class_loss = nn.CrossEntropyLoss()
-
-    encoder_loss = nn.SmoothL1Loss()
-    loss = [class_loss, encoder_loss]
-
-    optimizer = torch.optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())),
-                                lr=args_dict.lr,
-                                momentum=args_dict.momentum)
-
-    # Resume training if needed
-    best_val, model, optimizer = resume(args_dict, model, optimizer)
-
-    # Data transformation for training (with data augmentation) and validation
-    train_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),  # we get only the center of that rescaled
-        transforms.RandomCrop(224),  # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
     val_transforms = transforms.Compose([
         transforms.Resize(256),  # rescale the image keeping the original aspect ratio
         transforms.CenterCrop(224),  # we get only the center of that rescaled
@@ -803,15 +638,15 @@ def vis_encoder_train(args_dict):
 
     # Now, let's start the training process!
     print_classes(type2idx, school2idx, time2idx, author2idx)
-    print('Start training RMTL model...')
+    print('Start training MTL model...')
     pat_track = 0
     for epoch in range(args_dict.start_epoch, args_dict.nepochs):
 
         # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, loss, optimizer, epoch)
+        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch)
 
         # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, loss, epoch)
+        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
 
         # check patience
         if accval <= best_val:
@@ -834,18 +669,8 @@ def vis_encoder_train(args_dict):
                 'curr_val': accval,
             }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
 
-            feature_matrix = gen_embeds(args_dict, model, 'train')
-            print(feature_matrix[0:2, :][:10])
-            pd.DataFrame(feature_matrix).to_csv('Data/feature_train_128_semart.csv')
-
-            feature_matrix = gen_embeds(args_dict, model, 'val')
-            pd.DataFrame(feature_matrix).to_csv('Data/feature_val_128_semart.csv')
-
-            feature_matrix = gen_embeds(args_dict, model, 'test')
-            pd.DataFrame(feature_matrix).to_csv('Data/feature_test_128_semart.csv')
-
-
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
+
 
 def _load_labels(df_path, att2i):
     def class_from_name(name, vocab):
@@ -876,7 +701,6 @@ def _load_labels(df_path, att2i):
     
     return tipei, schooli, timei, authori
     
-
 
 def compute_preds_val(target, val_size, output, label_type, label_school, label_tf, label_author):
     if target == 'all' or target == 'type':
@@ -917,14 +741,10 @@ def run_train(args_dict):
     #global plotter
     #plotter = utils.VisdomLinePlotter(env_name=args_dict.name)
 
-    if args_dict.symbol_task:
-        train_symbol_classifier(args_dict)
-    elif args_dict.model == 'mtl':
+    if args_dict.model == 'mtl':
         train_multitask_classifier(args_dict)
     elif args_dict.model == 'kgm':
         train_knowledgegraph_classifier(args_dict)
-    elif args_dict.model == 'rmtl':
-        vis_encoder_train(args_dict)
     else:
         assert False, 'Incorrect model type'
 

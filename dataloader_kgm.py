@@ -132,9 +132,9 @@ class ArtDatasetKGM(data.Dataset):
             graph_emb = torch.FloatTensor(graph_emb)
 
             if self.args_dict.att == 'all':
-                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb], self.imageurls[index]
             else:
-                return [image], [idclass, graph_emb]
+                return [image], [idclass, graph_emb], self.imageurls[index]
 
 
         elif self.set == 'val':
@@ -146,9 +146,9 @@ class ArtDatasetKGM(data.Dataset):
             graph_emb = torch.FloatTensor(graph_emb)
 
             if self.args_dict.att == 'all':
-                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb], self.imageurls[index]
             else:
-                return [image], [idclass, graph_emb]
+                return [image], [idclass, graph_emb], self.imageurls[index]
         
         elif self.set == 'test':
             if self.embedds == 'graph':
@@ -159,6 +159,6 @@ class ArtDatasetKGM(data.Dataset):
             graph_emb = torch.FloatTensor(graph_emb)
             
             if self.args_dict.att == 'all':
-                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb]
+                return [image], [type_idclass, school_idclass, time_idclass, author_idclass, graph_emb], self.imageurls[index]
             else:
-                return [image], [idclass, graph_emb]
+                return [image], [idclass, graph_emb], self.imageurls[index]

@@ -36,7 +36,6 @@ def get_parser():
     parser.add_argument('--nepochs', default=300, type=int)
 
     
-
     # KGM model
     parser.add_argument('--graph_embs', default='semart-artgraph-node2vec.model')
     parser.add_argument('--lambda_c', default=0.9, type=float)
@@ -59,6 +58,7 @@ def get_parser():
     
     # MTL model
     parser.add_argument('--architecture', default='resnet', type=str)
+
     # Test
     parser.add_argument('--model_path', default='Models/best-kgm-time-model.pth.tar', type=str)
     parser.add_argument('--no_cuda', action='store_true')
@@ -67,5 +67,8 @@ def get_parser():
     parser.add_argument('--symbol_task', default=False, type=bool)
     parser.add_argument('--targets', type=ast.literal_eval)
 
+    # Grad cam
+    parser.add_argument('--grad_cam_model_path', default='Models/grad_cam_lenet.pth.tar', type=str)
+    parser.add_argument('--grad_cam_images_path', default='./GradCams/', type=str)
 
     return parser
