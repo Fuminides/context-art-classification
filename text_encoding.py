@@ -171,7 +171,9 @@ def kmeans_coded_context(chosen_coded_semart, clusters):
 
     kmeans = KMeans(n_clusters=clusters, random_state=0).fit(chosen_coded_semart)
 
-    return kmeans.labels_
+    # Get distance for each sample to each cluster
+    distances = kmeans.transform(chosen_coded_semart)
+    return distances
 
 def myplot(score,coeff,labels=None):
     import matplotlib.pyplot as plt
