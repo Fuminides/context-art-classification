@@ -106,7 +106,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
     model.train()
     actual_index = 0
     grad_classifier_path = args_dict.grad_cam_model_path
-    checkpoint = torch.load(grad_classifier_path)
     
     grad_cam = True
     
