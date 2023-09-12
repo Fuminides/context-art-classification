@@ -112,11 +112,11 @@ def format_features(path='./DeepFeatures/', task='author', embedds='bow'):
             elif (dataset == 'test') and (file.split('_')[1] == 'y') and (file.split('_')[-1].split('.')[0] == model) and (file.split('_')[2] == task) and (file.split('_')[0] == dataset):
                 x_file = pd.read_csv(path + file, index_col=0)
 
-                    if ix == 0:
-                        res = x_file
-                        ix += 1
-                    else:
-                        res = pd.concat([res, x_file])
+                if ix == 0:
+                    res = x_file
+                    ix += 1
+                else:
+                    res = pd.concat([res, x_file])
         
         return res
 
