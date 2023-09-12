@@ -58,7 +58,6 @@ def get_gradcam(model, image, target_class_index, task):
         return heatmap
 
 import clip
-from torchvision.models.feature_extraction import create_feature_extractor
 
 class KGM(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
@@ -82,6 +81,7 @@ class KGM(nn.Module):
         elif model == 'convnext':
             resnet = models.convnext_base(weights=models.ConvNeXt_Base_Weights.DEFAULT)
         elif model == 'vit':
+            from torchvision.models.feature_extraction import create_feature_extractor
             network = getattr(torchvision.models,"vit_b_16")(pretrained=True)
             self.feature_extractor = create_feature_extractor(network, return_nodes=['getitem_5'])
         
