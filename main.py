@@ -25,7 +25,10 @@ if __name__ == "__main__":
         
     # Load parameters
     parser = get_parser()
-    args_dict, unknown = parser.parse_known_args(args=args.split())
+    try:
+        args_dict, unknown = parser.parse_known_args(args=args.split())
+    except:
+        args_dict, unknown = parser.parse_known_args()
 
     assert args_dict.att in ['type', 'school', 'time', 'author', 'all'], \
         'Incorrect classifier. Please select type, school, time, author or all.'
