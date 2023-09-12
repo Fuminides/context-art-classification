@@ -120,10 +120,12 @@ class KGM(nn.Module):
 
             if visual_emb.is_cuda:
                 self.classifier1.cuda()
-                self.classifier2.cuda()
-                self.classifier3.cuda()
-                self.classifier4.cuda()
+
                 self.nodeEmb.cuda()
+                if self.multi_task:
+                    self.classifier2.cuda()
+                    self.classifier3.cuda()
+                    self.classifier4.cuda()
 
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
 
