@@ -93,10 +93,6 @@ class KGM(nn.Module):
         self.class_tf = nn.Sequential(nn.Linear(2048, num_class[2]))
         self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
 
-        # Classifier
-        else:
-            self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, num_class))
-
         # Graph space encoder
         self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
 
@@ -132,10 +128,10 @@ class KGM(nn.Module):
 
         else:
             pred_class = self.classifier1(visual_emb)
-            pred_class = self.classifier2(pred_class)
             graph_proj = self.nodeEmb(visual_emb)
 
         return [pred_class, graph_proj]
+    
     
     def features(self, img):
         visual_emb = self.resnet(img)
