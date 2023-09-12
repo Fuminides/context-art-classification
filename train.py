@@ -357,18 +357,23 @@ def train_knowledgegraph_classifier(args_dict):
     # Load classes
     type2idx, school2idx, time2idx, author2idx = load_att_class(args_dict)
     # Load classes
-    num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
+    
     
     if args_dict.att == 'type':
         att2i = type2idx
+        num_classes = len(att2i)
     elif args_dict.att == 'school':
         att2i = school2idx
+        num_classes = len(att2i)
     elif args_dict.att == 'time':
         att2i = time2idx
+        num_classes = len(att2i)
     elif args_dict.att == 'author':
         att2i = author2idx
+        num_classes = len(att2i)
     elif args_dict.att == 'all':
         att2i = [type2idx, school2idx, time2idx, author2idx]
+        num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
 
     if args_dict.embedds == 'clip':
         N_CLUSTERS = 77
@@ -383,7 +388,7 @@ def train_knowledgegraph_classifier(args_dict):
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
     else:
         if args_dict.append != 'append':
-            model = KGM(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
+            model = KGM(num_classes, end_dim=N_CLUSTERS, model=args_dict.architecture, multi_task=args_dict.att=='all')
         else:
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
 
