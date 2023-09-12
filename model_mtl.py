@@ -3,10 +3,12 @@ from torchvision import models
 import torch
 import clip
 import torchvision
-from torchvision.models.feature_extraction import create_feature_extractor
 
 
 class MTL(nn.Module):
+
+    from torchvision.models.feature_extraction import create_feature_extractor
+
     # Inputs an image and ouputs the predictions for each classification task
 
     def __init__(self, num_class, model='resnet'):
