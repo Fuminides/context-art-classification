@@ -120,8 +120,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
             else:
                 input_var.append(torch.autograd.Variable(input[j]))
 
-        if not symbol_task:
-        # Targets to Variable type
+            # Targets to Variable type
             target_var = list()
             for j in range(len(target)):
                 target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
@@ -130,21 +129,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     target[j] = target[j].cuda(non_blocking=True)
 
                 target_var.append(torch.autograd.Variable(target[j]))
-        else:
-            if args_dict.att == 'all':
-                target_var = torch.tensor(np.array(target[:-1], dtype=np.float), dtype=torch.float32)
-                target_embd = torch.tensor(np.array(target[-1], dtype=np.float), dtype=torch.float32)
-                if torch.cuda.is_available():
-                    target_var = target_var.cuda(non_blocking=True)
-                    target_embd = target_embd.cuda(non_blocking=True)
-            
-
-            else:
-                target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
-
-            if torch.cuda.is_available():
-                target_var = target_var.cuda(non_blocking=True)
-            
+                    
 
         # Output of the model
         if args_dict.append == 'append':
@@ -156,18 +141,12 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         if args_dict.model != 'kgm':
 
             if args_dict.att == 'all':
-                if symbol_task:
-                    train_loss = criterion(output, target_var)
-
-               
-                else: 
                     train_loss = multi_class_loss(criterion, target_var, output)
             else:
                 train_loss = criterion(output, torch.squeeze(target_var))
 
             losses.update(train_loss.data.cpu().numpy(), input[0].size(0))
-        elif args_dict.symbol_task:
-            train_loss = criterion(output, torch.squeeze(target_var))
+        
         # It is a Context-based model
         else:
 
@@ -599,77 +578,6 @@ def train_multitask_classifier(args_dict):
 
         print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
-
-def train_symbol_classifier(args_dict):
-
-    
-    # Data transformation for training (with data augmentation) and validation
-    train_transforms = transforms.Compose([
-        transforms.Resize(256),                             # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(256),                         # we get only the center of that rescaled
-        transforms.RandomCrop(224),                         # random crop within the center crop (data augmentation)
-        transforms.RandomHorizontalFlip(),                  # random horizontal flip (data augmentation)
-        transforms.ToTensor(),                              # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-    
-    val_transforms = transforms.Compose([
-        transforms.Resize(256),  # rescale the image keeping the original aspect ratio
-        transforms.CenterCrop(224),  # we get only the center of that rescaled
-        transforms.ToTensor(),  # to pytorch tensor
-        transforms.Normalize(mean=[0.485, 0.456, 0.406, ],  # ImageNet mean substraction
-                             std=[0.229, 0.224, 0.225])
-    ])
-
-
-    # Dataloaders for training and validation
-    semart_train_loader = ArtDatasetMTL(args_dict, set='train', att2i=att2i, transform=train_transforms)
-    semart_val_loader = ArtDatasetMTL(args_dict, set='val', att2i=att2i, transform=val_transforms)
-    train_loader = torch.utils.data.DataLoader(
-        semart_train_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Training loader with %d samples' % semart_train_loader.__len__())
-
-    val_loader = torch.utils.data.DataLoader(
-        semart_val_loader,
-        batch_size=args_dict.batch_size, shuffle=True, pin_memory=True, num_workers=args_dict.workers)
-    print('Validation loader with %d samples' % semart_val_loader.__len__())
-
-    # Now, let's start the training process!
-    print_classes(type2idx, school2idx, time2idx, author2idx)
-    print('Start training MTL model...')
-    pat_track = 0
-    for epoch in range(args_dict.start_epoch, args_dict.nepochs):
-
-        # Compute a training epoch
-        trainEpoch(args_dict, train_loader, model, class_loss, optimizer, epoch)
-
-        # Compute a validation epoch
-        accval = valEpoch(args_dict, val_loader, model, class_loss, epoch)
-
-        # check patience
-        if accval <= best_val:
-            pat_track += 1
-        else:
-            pat_track = 0
-        if pat_track >= args_dict.patience:
-            break
-
-        # save if it is the best validation accuracy
-        is_best = accval > best_val
-        best_val = max(accval, best_val)
-        if is_best:
-            save_model(args_dict, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_val': best_val,
-                'optimizer': optimizer.state_dict(),
-                'valtrack': pat_track,
-                'curr_val': accval,
-            }, type=args_dict.att, train_feature=args_dict.embedds, append=args_dict.append)
-
-        print('** Validation: %f (best acc) - %f (current acc) - %d (patience)' % (best_val, accval, pat_track))
 
 
 def _load_labels(df_path, att2i):
