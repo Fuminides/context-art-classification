@@ -238,7 +238,7 @@ def test_knowledgegraph(args_dict):
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))
         
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
+        # extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
         # features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
         # actual_index += feat_cache.shape[0]
