@@ -149,7 +149,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
         # It is a Context-based model
         else:
 
-            if final_epoch:
+            '''if final_epoch:
                 print('Saving features...')
                 feat = model.features(input_var[0])
 
@@ -163,7 +163,7 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     # pd.DataFrame(target_var[1].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('school') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[2].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('timeframe') + '_' + str(args_dict.embedds) + '.csv')
                     # pd.DataFrame(target_var[3].cpu().numpy()).to_csv('./DeepFeatures/train_y_' + str(batch_idx) + '_' + str('author') + '_' + str(args_dict.embedds) + '.csv')
-            
+            '''
             actual_index += args_dict.batch_size
             
             if args_dict.att == 'all':
@@ -181,7 +181,10 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     class_loss = criterion[0](output[0], target_var[0].long())
                     encoder_loss = criterion[1](output[1], target_var[1].float())
 
-                    train_loss = args_dict.lambda_c * class_loss + \
+                    if args_dict.base == 'base':
+                        train_loss = class_loss
+                    else:
+                        train_loss = args_dict.lambda_c * class_loss + \
                                 args_dict.lambda_e * encoder_loss
                     
                 
