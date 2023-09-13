@@ -182,10 +182,10 @@ def test_knowledgegraph(args_dict):
             output = model(input_var[0])
         elif args_dict.append == 'append':
             output = model((input_var[0], target[1]))
-            feat_cache = model.features((input_var[0], target[1]))   
+            # feat_cache = model.features((input_var[0], target[1]))   
         elif args_dict.model == 'kgm':
             pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
-            feat_cache = model.features(input_var[0]).detach().cpu().numpy()
+            # feat_cache = model.features(input_var[0]).detach().cpu().numpy()
         else:
             output = model(input_var[0])
             # feat_cache = model.features(input_var[0])   
@@ -240,8 +240,8 @@ def test_knowledgegraph(args_dict):
         
         extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
-        features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
-        actual_index += feat_cache.shape[0]
+        # features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
+        # actual_index += feat_cache.shape[0]
         full_imgs.append(input_var[0].cpu().numpy())
 
     pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
