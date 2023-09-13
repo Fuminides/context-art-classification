@@ -96,7 +96,7 @@ class KGM(nn.Module):
         self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
 
         # Graph space encoder
-        self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
+        # self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
 
 
     def forward(self, img):
