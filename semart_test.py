@@ -244,7 +244,7 @@ def test_knowledgegraph(args_dict):
         # actual_index += feat_cache.shape[0]
         full_imgs.append(input_var[0].cpu().numpy())
 
-    pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
+    # pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     # Compute Accuracy
     # Accuracy
     if symbol_task:
