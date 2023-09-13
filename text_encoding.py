@@ -166,6 +166,15 @@ def fcm_coded_context(chosen_coded_semart, clusters):
 
     return u.T
 
+def kmeans_coded_context(chosen_coded_semart, clusters):
+    from sklearn.cluster import KMeans
+
+    kmeans = KMeans(n_clusters=clusters, random_state=0).fit(chosen_coded_semart)
+
+    # Get distance for each sample to each cluster
+    distances = kmeans.transform(chosen_coded_semart)
+    return distances
+
 def myplot(score,coeff,labels=None):
     import matplotlib.pyplot as plt
     plt.figure()

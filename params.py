@@ -32,7 +32,7 @@ def get_parser():
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--workers', default=8, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
-    parser.add_argument('--patience', default=100, type=int)
+    parser.add_argument('--patience', default=20, type=int)
     parser.add_argument('--nepochs', default=300, type=int)
 
     
@@ -71,4 +71,5 @@ def get_parser():
     parser.add_argument('--grad_cam_model_path', default='Models/grad_cam_lenet.pth.tar', type=str)
     parser.add_argument('--grad_cam_images_path', default='./GradCams/', type=str)
 
+    parser.add_argument('--base', default='context', type=str)
     return parser

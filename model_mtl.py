@@ -3,10 +3,11 @@ from torchvision import models
 import torch
 import clip
 import torchvision
-from torchvision.models.feature_extraction import create_feature_extractor
 
 
 class MTL(nn.Module):
+
+
     # Inputs an image and ouputs the predictions for each classification task
 
     def __init__(self, num_class, model='resnet'):
@@ -27,6 +28,7 @@ class MTL(nn.Module):
             resnet = models.convnext_base(weights=models.ConvNeXt_Base_Weights.DEFAULT)
             self.resnet = nn.Sequential(*list(resnet.children())[:-1])
         elif model == 'vit':
+            from torchvision.models.feature_extraction import create_feature_extractor
             network = getattr(torchvision.models,"vit_b_16")(pretrained=True)
             self.feature_extractor = create_feature_extractor(network, return_nodes=['getitem_5'])
 

@@ -21,11 +21,14 @@ from semart_test import run_test
 if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:
-        args = '--mode train --workers 0 --model kgm --att author --dir_dataset ../SemArt/ --architecture vit --batch_size 1 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_author_best_model.pth.tar >salidas/fcm_author_out.txt 2>salidas/author_error.txt'
+        args = '--mode train --workers 0 --model kgm --att all --dir_dataset ../SemArt/ --architecture vit --batch_size 128 --nepochs 300 --embedds bow --resume ./Models/fcm_bow_author_best_model.pth.tar >salidas/fcm_author_out.txt 2>salidas/author_error.txt'
         
     # Load parameters
     parser = get_parser()
-    args_dict, unknown = parser.parse_known_args(args=args.split())
+    try:
+        args_dict, unknown = parser.parse_known_args(args=args.split())
+    except:
+        args_dict, unknown = parser.parse_known_args()
 
     assert args_dict.att in ['type', 'school', 'time', 'author', 'all'], \
         'Incorrect classifier. Please select type, school, time, author or all.'

@@ -58,14 +58,15 @@ def get_gradcam(model, image, target_class_index, task):
         return heatmap
 
 import clip
-from torchvision.models.feature_extraction import create_feature_extractor
 
 class KGM(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
 
-    def __init__(self, num_class, end_dim=128, model='resnet', multi_task=False):
+    def __init__(self, num_class, end_dim=128, model='resnet', multi_task=True):
         super(KGM, self).__init__()
+        self.multi_task = multi_task
         self.num_class = num_class
+        
         self.end_dim = end_dim
         self.multi_task = multi_task
         
@@ -82,6 +83,7 @@ class KGM(nn.Module):
         elif model == 'convnext':
             resnet = models.convnext_small(weights=models.ConvNeXt_Small_Weights.DEFAULT)
         elif model == 'vit':
+            from torchvision.models.feature_extraction import create_feature_extractor
             network = getattr(torchvision.models,"vit_b_16")(pretrained=True)
             self.feature_extractor = create_feature_extractor(network, return_nodes=['getitem_5'])
         
@@ -98,7 +100,7 @@ class KGM(nn.Module):
         # Classifier
 
         # Graph space encoder
-        self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
+        # self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
 
 
     def forward(self, img):
@@ -110,22 +112,32 @@ class KGM(nn.Module):
         if self.deep_feature_size is None:
             # Classifier
             self.deep_feature_size = visual_emb.size(1)
-            
-            self.classifier1 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class))
+            if self.multi_task:
+                self.classifier1 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[0]))
+                self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[1]))
+                self.classifier3 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[2]))
+                self.classifier4 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[3]))
+            else:
+                self.classifier1 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class))
             # Graph space encoder
             self.nodeEmb = nn.Sequential(nn.Linear(self.deep_feature_size, self.end_dim))
 
             if visual_emb.is_cuda:
                 self.classifier1.cuda()
+
                 self.nodeEmb.cuda()
+                if self.multi_task:
+                    self.classifier2.cuda()
+                    self.classifier3.cuda()
+                    self.classifier4.cuda()
 
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
 
         if self.multi_task:
-            pred_type = self.class_type(visual_emb)
-            pred_school = self.class_school(visual_emb)
-            pred_tf = self.class_tf(visual_emb)
-            pred_author = self.class_author(visual_emb)
+            pred_type = self.classifier1(visual_emb)
+            pred_school = self.classifier2(visual_emb)
+            pred_tf = self.classifier3(visual_emb)
+            pred_author = self.classifier4(visual_emb)
             graph_proj = self.nodeEmb(visual_emb)
 
             return [pred_type, pred_school, pred_tf, pred_author, graph_proj]
@@ -136,6 +148,7 @@ class KGM(nn.Module):
 
         return [pred_class, graph_proj]
     
+
     def features(self, img):
         visual_emb = self.resnet(img)
         visual_emb = visual_emb.view(visual_emb.size(0), -1)

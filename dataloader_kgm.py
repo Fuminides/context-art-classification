@@ -42,6 +42,21 @@ class ArtDatasetKGM(data.Dataset):
             pd.DataFrame(self.chosen_coded_semart_train).to_csv('train_semart_fcm_'+str(clusters)+'.csv')
             pd.DataFrame(self.chosen_coded_semart_val).to_csv('val_semart_fcm_'+str(clusters)+'.csv')
             pd.DataFrame(self.chosen_coded_semart_test).to_csv('test_semart_fcm_'+str(clusters)+'.csv')
+        
+        elif self.embedds == 'kmeans':
+            self.chosen_coded_semart_train, self.chosen_coded_semart_val, self.chosen_coded_semart_test = \
+            text_encoding.bow_load_train_text_corpus(args_dict.dir_dataset, append='append', k=k)
+
+            self.chosen_coded_semart_train = text_encoding.kmeans_coded_context(
+                self.chosen_coded_semart_train, clusters=clusters)
+            self.chosen_coded_semart_val = text_encoding.kmeans_coded_context(
+                self.chosen_coded_semart_val, clusters=clusters)
+            self.chosen_coded_semart_test = text_encoding.kmeans_coded_context(
+                self.chosen_coded_semart_test, clusters=clusters)
+            
+            pd.DataFrame(self.chosen_coded_semart_train).to_csv('train_semart_fcm_'+str(clusters)+'.csv')
+            pd.DataFrame(self.chosen_coded_semart_val).to_csv('val_semart_fcm_'+str(clusters)+'.csv')
+            pd.DataFrame(self.chosen_coded_semart_test).to_csv('test_semart_fcm_'+str(clusters)+'.csv')
             
         elif self.embedds == 'frbc':
             self.chosen_coded_semart_train = pd.read_csv('Data/rule_embds_train.csv', index_col=0).values

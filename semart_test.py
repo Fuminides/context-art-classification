@@ -59,29 +59,22 @@ def test_knowledgegraph(args_dict):
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
     # Define model
-    if symbol_task:
-        semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
-        model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
-    elif args_dict.embedds == 'graph':
+   
+    # Define model
+    if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
-            model = GradCamKGM(len(att2i))
+            print('Case 1')
+            model = KGM(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
         else:
-            if not mtl_mode:
-                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
-            else:
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
+            print('Case 2')
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
     else:
         if args_dict.append != 'append':
-            if not mtl_mode:
-                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
-            else:
-              
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
+            print('Correct new models')
+            model = KGM(num_classes, end_dim=N_CLUSTERS, model=args_dict.architecture, multi_task=args_dict.att=='all')
         else:
-            if not mtl_mode:
-                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
-            else:
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
+            print('Case 3')
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
@@ -91,6 +84,9 @@ def test_knowledgegraph(args_dict):
     print("=> loading checkpoint '{}'".format(args_dict.model_path))
     checkpoint = torch.load(args_dict.model_path)
     args_dict.start_epoch = checkpoint['epoch']
+    # Create a random batch
+    dummy_batch = torch.randn(1, 3, 224, 224).cuda()
+    model(dummy_batch)
     model.load_state_dict(checkpoint['state_dict'])
     print("=> loaded checkpoint '{}' (epoch {})"
             .format(args_dict.model_path, checkpoint['epoch']))
@@ -186,10 +182,10 @@ def test_knowledgegraph(args_dict):
             output = model(input_var[0])
         elif args_dict.append == 'append':
             output = model((input_var[0], target[1]))
-            feat_cache = model.features((input_var[0], target[1]))   
+            # feat_cache = model.features((input_var[0], target[1]))   
         elif args_dict.model == 'kgm':
             pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
-            feat_cache = model.features(input_var[0]).detach().cpu().numpy()
+            # feat_cache = model.features(input_var[0]).detach().cpu().numpy()
         else:
             output = model(input_var[0])
             # feat_cache = model.features(input_var[0])   
@@ -242,13 +238,13 @@ def test_knowledgegraph(args_dict):
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))
         
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
+        # extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
-        features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
-        actual_index += feat_cache.shape[0]
+        # features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
+        # actual_index += feat_cache.shape[0]
         full_imgs.append(input_var[0].cpu().numpy())
 
-    pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
+    # pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     # Compute Accuracy
     # Accuracy
     if symbol_task:
