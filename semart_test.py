@@ -63,13 +63,17 @@ def test_knowledgegraph(args_dict):
     # Define model
     if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
+            print('Case 1')
             model = KGM(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
         else:
+            print('Case 2')
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
     else:
         if args_dict.append != 'append':
+            print('Correct new models')
             model = KGM(num_classes, end_dim=N_CLUSTERS, model=args_dict.architecture, multi_task=args_dict.att=='all')
         else:
+            print('Case 3')
             model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
