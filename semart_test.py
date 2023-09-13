@@ -59,29 +59,18 @@ def test_knowledgegraph(args_dict):
     N_CLUSTERS = args_dict.clusters
     symbol_task = args_dict.symbol_task
     # Define model
-    if symbol_task:
-        semart_train_loader = ArtDatasetSym(args_dict, set='train', transform=None)
-        model = SymModel(len(semart_train_loader.symbols_names), model=args_dict.architecture)
-    elif args_dict.embedds == 'graph':
+   
+    # Define model
+    if args_dict.embedds == 'graph':
         if args_dict.append != 'append':
-            model = GradCamKGM(len(att2i))
+            model = KGM(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
         else:
-            if not mtl_mode:
-                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
-            else:
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
     else:
         if args_dict.append != 'append':
-            if not mtl_mode:
-                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
-            else:
-              
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
+            model = KGM(num_classes, end_dim=N_CLUSTERS, model=args_dict.architecture, multi_task=args_dict.att=='all')
         else:
-            if not mtl_mode:
-                model = KGM(len(att2i), end_dim=N_CLUSTERS, multi_task=mtl_mode)
-            else:
-                model = GradCamKGM(num_classes, end_dim=N_CLUSTERS)
+            model = KGM_append(len(att2i), end_dim=N_CLUSTERS, model=args_dict.architecture)
 
     if torch.cuda.is_available():#args_dict.use_gpu:
         model.cuda()
