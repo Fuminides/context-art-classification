@@ -63,10 +63,12 @@ from torchvision.models.feature_extraction import create_feature_extractor
 class KGM(nn.Module):
     # Inputs an image and ouputs the prediction for the class and the projected embedding into the graph space
 
-    def __init__(self, num_class, end_dim=128, model='resnet'):
+    def __init__(self, num_class, end_dim=128, model='resnet', multi_task=False):
         super(KGM, self).__init__()
         self.num_class = num_class
         self.end_dim = end_dim
+        self.multi_task = multi_task
+        
         # Load pre-trained visual model
         self.deep_feature_size = None
         self.model = model
@@ -78,7 +80,7 @@ class KGM(nn.Module):
         elif model == 'clip':
             resnet, _ = clip.load("ViT-B/32")
         elif model == 'convnext':
-            resnet = models.convnext_base(weights=models.ConvNeXt_Base_Weights.DEFAULT)
+            resnet = models.convnext_small(weights=models.ConvNeXt_Small_Weights.DEFAULT)
         elif model == 'vit':
             network = getattr(torchvision.models,"vit_b_16")(pretrained=True)
             self.feature_extractor = create_feature_extractor(network, return_nodes=['getitem_5'])
@@ -94,8 +96,6 @@ class KGM(nn.Module):
         self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
 
         # Classifier
-        else:
-            self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, num_class))
 
         # Graph space encoder
         self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
@@ -132,7 +132,6 @@ class KGM(nn.Module):
 
         else:
             pred_class = self.classifier1(visual_emb)
-            pred_class = self.classifier2(pred_class)
             graph_proj = self.nodeEmb(visual_emb)
 
         return [pred_class, graph_proj]
