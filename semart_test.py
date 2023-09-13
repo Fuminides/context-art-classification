@@ -84,6 +84,9 @@ def test_knowledgegraph(args_dict):
     print("=> loading checkpoint '{}'".format(args_dict.model_path))
     checkpoint = torch.load(args_dict.model_path)
     args_dict.start_epoch = checkpoint['epoch']
+    # Create a random batch
+    dummy_batch = torch.randn(1, 3, 224, 224)
+    model(dummy_batch)
     model.load_state_dict(checkpoint['state_dict'])
     print("=> loaded checkpoint '{}' (epoch {})"
             .format(args_dict.model_path, checkpoint['epoch']))
