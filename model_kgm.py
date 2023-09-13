@@ -81,7 +81,7 @@ class KGM(nn.Module):
         elif model == 'clip':
             resnet, _ = clip.load("ViT-B/32")
         elif model == 'convnext':
-            resnet = models.convnext_tiny(weights=models.convnext_tiny.DEFAULT)
+            resnet = models.convnext_tiny(weights=models.ConvNeXt_Tiny_Weights.DEFAULT)
         elif model == 'vit':
             from torchvision.models.feature_extraction import create_feature_extractor
             network = getattr(torchvision.models,"vit_b_16")(pretrained=True)
