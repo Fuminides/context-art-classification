@@ -68,6 +68,8 @@ class KGM(nn.Module):
         self.num_class = num_class
         
         self.end_dim = end_dim
+        self.multi_task = multi_task
+        
         # Load pre-trained visual model
         self.deep_feature_size = None
         self.model = model
@@ -97,6 +99,8 @@ class KGM(nn.Module):
         self.class_tf = nn.Sequential(nn.Linear(2048, num_class[2]))
         self.class_author = nn.Sequential(nn.Linear(2048, num_class[3]))''' #TODO
 
+        # Classifier
+
         # Graph space encoder
         # self.nodeEmb = nn.Sequential(nn.Linear(2048, end_dim))
 
@@ -104,7 +108,7 @@ class KGM(nn.Module):
     def forward(self, img):
         try:
             visual_emb = self.resnet(img)
-        except:
+        except AttributeError:
             visual_emb = self.feature_extractor(img)['getitem_5']
             
         if self.deep_feature_size is None:
