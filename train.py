@@ -46,7 +46,7 @@ def save_model(args_dict, state, type='school', train_feature='kgm', append='gra
     directory = args_dict.dir_model + "%s/"%(args_dict.name)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = directory + train_feature + '_' + type + '_' + append + '_best_model.pth.tar'
+    filename = directory + args_dict.resume
     print('Model saved in ' + filename)
     torch.save(state, filename)
 
