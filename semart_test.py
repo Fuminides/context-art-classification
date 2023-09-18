@@ -167,16 +167,14 @@ def test_knowledgegraph(args_dict):
             
 
             else:
-                target_var = torch.tensor(np.array(target, dtype=np.float), dtype=torch.float32)
+                target_var = list()
+                for j in range(len(target)):
+                    target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
 
-                if j == 0:
-                  target[j] = torch.tensor(np.array(target[j].cpu(), dtype=np.int32))
-                else:
-                  target[j] = target_var # torch.tensor(target[j])
-                
-#                print(target)
-                if torch.cuda.is_available():
-                    target[j] = target[j].cuda(non_blocking=True)
+                    if torch.cuda.is_available():
+                        target[j] = target[j].cuda(non_blocking=True)
+
+                    target_var.append(torch.autograd.Variable(target[j]))
 
             target_var.append(torch.autograd.Variable(target[j]))
  #       print(target_var)

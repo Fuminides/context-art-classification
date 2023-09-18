@@ -228,20 +228,16 @@ def valEpoch(args_dict, val_loader, model, criterion, epoch, symbol_task=False):
             else:
                 input_var.append(torch.autograd.Variable(input[j]))
 
-        if not symbol_task:
-        # Targets to Variable type
-            target_var = list()
-            for j in range(len(target)):
-                target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
+        
+        target_var = list()
+        for j in range(len(target)):
+            target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
 
-                if torch.cuda.is_available():
-                    target[j] = target[j].cuda(non_blocking=True)
-
-                target_var.append(torch.autograd.Variable(target[j]))
-        else:
-            target_var = torch.tensor(np.array(target, dtype=np.float))
             if torch.cuda.is_available():
-                    target_var = target_var.cuda(non_blocking=True)
+                target[j] = target[j].cuda(non_blocking=True)
+
+            target_var.append(torch.autograd.Variable(target[j]))
+        
 
         # Predictions
         # with torch.no_grad():
