@@ -146,7 +146,7 @@ def test_knowledgegraph(args_dict):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
    
-    full_imgs = []
+    # full_imgs = []
     for i, (input, target, im_names) in enumerate(test_loader):
         # Inputs to Variable type
         input_var = list()
@@ -163,9 +163,7 @@ def test_knowledgegraph(args_dict):
                 target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
                 if torch.cuda.is_available():
                     target[j] = target[j].cuda(non_blocking=True)
-
-            
-
+                target_var.append(torch.autograd.Variable(target[j]))
             else:
                 target_var = list()
                 for j in range(len(target)):
@@ -176,7 +174,7 @@ def test_knowledgegraph(args_dict):
 
                     target_var.append(torch.autograd.Variable(target[j]))
 
-            target_var.append(torch.autograd.Variable(target[j]))
+            # target_var.append(torch.autograd.Variable(target[j]))
  #       print(target_var)
         
         # Output of the model
@@ -185,7 +183,7 @@ def test_knowledgegraph(args_dict):
         elif args_dict.append == 'append':
             output = model((input_var[0], target[1]))
             # feat_cache = model.features((input_var[0], target[1]))   
-        elif args_dict.model == 'kgm':
+        elif args_dict.att == 'all':
             pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
             # feat_cache = model.features(input_var[0]).detach().cpu().numpy()
         else:
@@ -194,23 +192,30 @@ def test_knowledgegraph(args_dict):
 
         #outsoftmax = torch.nn.functional.softmax(output[0])
         
-        if symbol_task:
-            pred = output > 0.5
-            label_actual = target.cpu().numpy()
-            symbols_detected += np.sum(np.logical_and(pred.cpu().numpy(), label_actual), axis=None) 
-            symbols_possible += np.sum(label_actual, axis=None)
-            acc_sample += np.sum(np.equal(pred.cpu().numpy(), label_actual), axis=None)
-            acc_possible += pred.shape[0] * pred.shape[1]
-            absence_detected += np.sum(np.logical_and(np.logical_not(pred.cpu().numpy()), np.logical_not(label_actual)), axis=None) 
-            absence_possible += np.sum(np.logical_not(label_actual), axis=None)
-        else:
+        if args_dict.att == 'all':
             conf, predicted_type = torch.max(pred_type, 1)
             conf, predicted_school = torch.max(pred_school, 1)
             conf, predicted_time = torch.max(pred_tf, 1)
             conf, predicted_author = torch.max(pred_author, 1)
 
+            out_type = predicted_type.data.cpu().numpy()
+            out_school = predicted_school.data.cpu().numpy()
+            out_time = predicted_time.data.cpu().numpy()
+            out_author = predicted_author.data.cpu().numpy()
+
+            label_type = target[0].cpu().numpy()
+            label_school = target[1].cpu().numpy()
+            label_time = target[2].cpu().numpy()
+            label_author = target[3].cpu().numpy()
+
+        else:
+            conf, predicted = torch.max(output, 1)
+
+            out = predicted.data.cpu().numpy()
+            label = target[0].cpu().numpy()
+
         # Store embeddings
-        if (not args_dict.symbol_task) and (i==0):
+        '''if (not args_dict.symbol_task) and (i==0):
             out_type = predicted_type.data.cpu().numpy()
             out_school = predicted_school.data.cpu().numpy()
             out_time = predicted_time.data.cpu().numpy()
@@ -238,33 +243,21 @@ def test_knowledgegraph(args_dict):
 
             scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
-        print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))
+        print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))'''
         
         # extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
         # features_matrix[actual_index:actual_index+feat_cache.shape[0], :] = feat_cache
         # actual_index += feat_cache.shape[0]
-        full_imgs.append(input_var[0].cpu().numpy())
+        # full_imgs.append(input_var[0].cpu().numpy())
 
     # pd.DataFrame(features_matrix, index=full_imgs).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index=True)
     # Compute Accuracy
-    # Accuracy
-    if symbol_task:
-        acc = acc_sample / acc_possible
-        acc_symbols = symbols_detected / symbols_possible
-        acc_absence = absence_detected / absence_possible
     
-        print('Symbols detected {acc}'.format(acc=acc_symbols))
-        print('Absence detected {acc}'.format(acc=acc_absence))
-    else:
-        
-        if not mtl_mode:
-          # acc = np.sum(out == label)/len(out)
-          acc = np.mean(np.equal(out_type, label_type))
-          print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
+
     if not mtl_mode:
-        pd.DataFrame(features_matrix.data.cpu().numpy()).to_csv('./DeepFeatures/test_x_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
-        # pd.DataFrame(label).to_csv('./DeepFeatures/test_y_' + str(args_dict.att) + '_' + str(args_dict.embedds) + '.csv', index_col=im_names)
+          acc = np.mean(np.equal(out, label))
+          print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
     else:
        # Compute Accuracy
       acc_type = np.mean(np.equal(out_type, label_type))
