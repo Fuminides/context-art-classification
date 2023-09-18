@@ -206,8 +206,9 @@ def test_knowledgegraph(args_dict):
             # print(output)
             conf, predicted = torch.max(output, 1)
 
-            out = predicted.data.cpu().numpy()
-            label = np.array(target) # .cpu().numpy()
+            out_actual = predicted.data.cpu().numpy()
+            target = [int(trt) for trt in target]
+            label_actual = np.array(target) # .cpu().numpy()
 
         if i==0:
             if args_dict.att == 'all':
@@ -223,9 +224,8 @@ def test_knowledgegraph(args_dict):
 
                 scores = conf.data.cpu().numpy()
             else:
-                out = predicted.data.cpu().numpy()
-                target = [int(trt) for trt in target]
-                labels = np.array(target) # .cpu().numpy()
+                out = out_actual
+                labels = label_actual # .cpu().numpy()
             # logits = output.data.cpu().numpy()
 
         else:
@@ -242,9 +242,8 @@ def test_knowledgegraph(args_dict):
 
                 scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             else:
-                out = np.concatenate((out,predicted.data.cpu().numpy()),axis=0)
-                target = [int(trt) for trt in target]
-                labels = np.concatenate((labels, np.array(target)),axis=0)
+                out = np.concatenate((out,out_actual),axis=0)
+                labels = np.concatenate((labels, label_actual),axis=0)
 
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
         
