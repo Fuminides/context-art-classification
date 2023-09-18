@@ -186,6 +186,9 @@ def test_knowledgegraph(args_dict):
         elif args_dict.att == 'all':
             pred_type, pred_school, pred_tf, pred_author, _ = model(input_var[0]) 
             # feat_cache = model.features(input_var[0]).detach().cpu().numpy()
+        elif args_dict.embedds == 'graph' or args_dict.embedds == 'bow' or args_dict.embedds == 'kmeans':
+            output, context_output = model(input_var[0])
+            # feat_cache = model.features(input_var[0])
         else:
             output = model(input_var[0])
             # feat_cache = model.features(input_var[0])   
@@ -209,6 +212,7 @@ def test_knowledgegraph(args_dict):
             label_author = target[3].cpu().numpy()
 
         else:
+            print(output)
             conf, predicted = torch.max(output, 1)
 
             out = predicted.data.cpu().numpy()
