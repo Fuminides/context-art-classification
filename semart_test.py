@@ -164,7 +164,7 @@ def test_knowledgegraph(args_dict):
                 if torch.cuda.is_available():
                     target[j] = target[j].cuda(non_blocking=True)
                 target_var.append(torch.autograd.Variable(target[j]))
-            else:
+            '''else:
                 target_var = list()
                 for j in range(len(target)):
                     target[j] = torch.tensor(np.array(target[j], dtype=np.uint8))
@@ -172,7 +172,7 @@ def test_knowledgegraph(args_dict):
                     if torch.cuda.is_available():
                         target[j] = target[j].cuda(non_blocking=True)
 
-                    target_var.append(torch.autograd.Variable(target[j]))
+                    target_var.append(torch.autograd.Variable(target[j]))'''
 
             # target_var.append(torch.autograd.Variable(target[j]))
  #       print(target_var)
