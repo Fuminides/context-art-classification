@@ -46,12 +46,16 @@ def test_knowledgegraph(args_dict):
     mtl_mode = args_dict.att == 'all'
     if args_dict.att == 'type':
         att2i = type2idx
+        num_classes = len(type2idx)
     elif args_dict.att == 'school':
         att2i = school2idx
+        num_classes = len(school2idx)
     elif args_dict.att == 'time':
         att2i = time2idx
+        num_classes = len(time2idx)
     elif args_dict.att == 'author':
         att2i = author2idx
+        num_classes = len(author2idx)
     elif args_dict.att == 'all':
         att2i = [type2idx, school2idx, time2idx, author2idx]
         num_classes = [len(type2idx), len(school2idx), len(time2idx), len(author2idx)]
