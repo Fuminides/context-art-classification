@@ -209,36 +209,45 @@ def test_knowledgegraph(args_dict):
             out = predicted.data.cpu().numpy()
             label = np.array(target) # .cpu().numpy()
 
-        # Store embeddings
-        '''if (not args_dict.symbol_task) and (i==0):
-            out_type = predicted_type.data.cpu().numpy()
-            out_school = predicted_school.data.cpu().numpy()
-            out_time = predicted_time.data.cpu().numpy()
-            out_author = predicted_author.data.cpu().numpy()
+        if i==0:
+            if args_dict.att == 'all':
+                out_type = predicted_type.data.cpu().numpy()
+                out_school = predicted_school.data.cpu().numpy()
+                out_time = predicted_time.data.cpu().numpy()
+                out_author = predicted_author.data.cpu().numpy()
 
-            label_type = target[0].cpu().numpy()
-            label_school = target[1].cpu().numpy()
-            label_time = target[2].cpu().numpy()
-            label_author = target[3].cpu().numpy()
+                label_type = target[0].cpu().numpy()
+                label_school = target[1].cpu().numpy()
+                label_time = target[2].cpu().numpy()
+                label_author = target[3].cpu().numpy()
 
-            scores = conf.data.cpu().numpy()
+                scores = conf.data.cpu().numpy()
+            else:
+                out = predicted.data.cpu().numpy()
+                target = [int(trt) for trt in target]
+                labels = np.array(target) # .cpu().numpy()
             # logits = output.data.cpu().numpy()
 
-        elif (not args_dict.symbol_task):
-            out_type = np.concatenate((out_type,predicted_type.data.cpu().numpy()), axis=0)
-            out_school = np.concatenate((out_school,predicted_school.data.cpu().numpy()), axis=0)
-            out_time = np.concatenate((out_time,predicted_time.data.cpu().numpy()), axis=0)
-            out_author = np.concatenate((out_author,predicted_author.data.cpu().numpy()), axis=0)
+        else:
+            if args_dict.att == 'all':
+                out_type = np.concatenate((out_type,predicted_type.data.cpu().numpy()),axis=0)
+                out_school = np.concatenate((out_school,predicted_school.data.cpu().numpy()),axis=0)
+                out_time = np.concatenate((out_time,predicted_time.data.cpu().numpy()),axis=0)
+                out_author = np.concatenate((out_author,predicted_author.data.cpu().numpy()),axis=0)
 
+                label_type = np.concatenate((label_type,target[0].cpu().numpy()),axis=0)
+                label_school = np.concatenate((label_school,target[1].cpu().numpy()),axis=0)
+                label_time = np.concatenate((label_time,target[2].cpu().numpy()),axis=0)
+                label_author = np.concatenate((label_author,target[3].cpu().numpy()),axis=0)
 
-            label_type = np.concatenate((label_type,target[0].cpu().numpy()),axis=0)
-            label_school = np.concatenate((label_school,target[1].cpu().numpy()),axis=0)
-            label_time = np.concatenate((label_time,target[2].cpu().numpy()),axis=0)
-            label_author = np.concatenate((label_author,target[3].cpu().numpy()),axis=0)
+                scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
+            else:
+                out = np.concatenate((out,predicted.data.cpu().numpy()),axis=0)
+                target = [int(trt) for trt in target]
+                labels = np.concatenate((labels, np.array(target)),axis=0)
 
-            scores = np.concatenate((scores, conf.data.cpu().numpy()), axis=0)
             # logits = np.concatenate((logits, output.data.cpu().numpy()), axis=0)
-        print('Generating gradcams for batch {i} of {total}'.format(i=i, total=len(test_loader)))'''
+        
         
         # extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
         # print(features_matrix[actual_index:actual_index+args_dict.batch_size].shape, feat_cache.shape)
@@ -252,6 +261,8 @@ def test_knowledgegraph(args_dict):
 
     if not mtl_mode:
           print(out, label)
+          # Map labels to numbers
+
           acc = np.mean(np.equal(out, label))
           print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
     else:
