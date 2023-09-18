@@ -130,18 +130,6 @@ def test_knowledgegraph(args_dict):
 
     # Switch to evaluation mode & compute test samples embeddings
     model.eval()
-
-    acc_sample = 0
-    symbols_detected = 0
-    symbols_possible = 0
-    acc_possible = 0
-    absence_detected = 0
-    absence_possible = 0
-
-    features_matrix = np.zeros((1069, model.deep_feature_size))
-    actual_index = 0
-
-    grad_classifier_path = args_dict.grad_cam_model_path
     
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -149,6 +137,9 @@ def test_knowledgegraph(args_dict):
     # full_imgs = []
     for i, (input, target, im_names) in enumerate(test_loader):
         # Inputs to Variable type
+        if args_dict.model == 'kgm':
+            target, embd = target
+            
         input_var = list()
         for j in range(len(input)):
             if torch.cuda.is_available():
