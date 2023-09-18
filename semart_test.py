@@ -212,11 +212,11 @@ def test_knowledgegraph(args_dict):
             label_author = target[3].cpu().numpy()
 
         else:
-            print(output)
+            # print(output)
             conf, predicted = torch.max(output, 1)
 
             out = predicted.data.cpu().numpy()
-            label = target[0].cpu().numpy()
+            label = target.cpu().numpy()
 
         # Store embeddings
         '''if (not args_dict.symbol_task) and (i==0):
