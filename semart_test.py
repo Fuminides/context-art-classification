@@ -251,6 +251,7 @@ def test_knowledgegraph(args_dict):
     
 
     if not mtl_mode:
+          print(out, label)
           acc = np.mean(np.equal(out, label))
           print('Model %s\tTest Accuracy %.03f' % (args_dict.model_path, acc))
     else:
