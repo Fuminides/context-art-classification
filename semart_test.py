@@ -139,7 +139,7 @@ def test_knowledgegraph(args_dict):
         # Inputs to Variable type
         if args_dict.model == 'kgm':
             target, embd = target
-            
+
         input_var = list()
         for j in range(len(input)):
             if torch.cuda.is_available():
@@ -207,7 +207,7 @@ def test_knowledgegraph(args_dict):
             conf, predicted = torch.max(output, 1)
 
             out = predicted.data.cpu().numpy()
-            label = target.cpu().numpy()
+            label = np.array(target) # .cpu().numpy()
 
         # Store embeddings
         '''if (not args_dict.symbol_task) and (i==0):
