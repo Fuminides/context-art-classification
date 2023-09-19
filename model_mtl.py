@@ -34,10 +34,10 @@ class MTL(nn.Module):
 
         
         # Classifiers
-        self.class_type = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[0]))
+        '''self.class_type = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[0]))
         self.class_school = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[1]))
         self.class_tf = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[2]))
-        self.class_author = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[3]))
+        self.class_author = nn.Sequential(nn.Linear(self.deep_feature_size, num_class[3]))'''
 
     def forward(self, img):
         if self.model == 'vit':
@@ -49,20 +49,25 @@ class MTL(nn.Module):
             # Classifier
             self.deep_feature_size = visual_emb.size(1)
             
-            self.classifier1 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class))
+            self.classifier1 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[0]))
+            self.classifier2 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[1]))
+            self.classifier3 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[2]))
+            self.classifier4 = nn.Sequential(nn.Linear(self.deep_feature_size, self.num_class[3]))
             # Graph space encoder
-            self.nodeEmb = nn.Sequential(nn.Linear(self.deep_feature_size, self.end_dim))
 
             if visual_emb.is_cuda:
                 self.classifier1.cuda()
-                self.nodeEmb.cuda()
+                self.classifier2.cuda()
+                self.classifier3.cuda()
+                self.classifier4.cuda()
+
 
             
 
         visual_emb = visual_emb.view(visual_emb.size(0), -1)
-        out_type = self.class_type(visual_emb)
-        out_school = self.class_school(visual_emb)
-        out_time = self.class_tf(visual_emb)
-        out_author = self.class_author(visual_emb)
+        out_type = self.classifier1(visual_emb)
+        out_school = self.classifier2(visual_emb)
+        out_time = self.classifier3(visual_emb)
+        out_author = self.classifier4(visual_emb)
 
         return [out_type, out_school, out_time, out_author]
