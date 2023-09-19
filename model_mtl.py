@@ -10,7 +10,7 @@ class MTL(nn.Module):
 
     # Inputs an image and ouputs the predictions for each classification task
 
-    def __init__(self, num_class, model='resnet'):
+    def __init__(self, num_class: list[int], model='resnet'):
         super(MTL, self).__init__()
         self.deep_feature_size = None
         self.model = model
