@@ -497,6 +497,7 @@ def train_multitask_classifier(args_dict):
     att2i = [type2idx, school2idx, time2idx, author2idx]
 
     # Define model
+    print(num_classes)
     model = MTL(num_classes, model=args_dict.architecture)
     if torch.cuda.is_available():
         model.cuda()
