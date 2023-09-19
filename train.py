@@ -182,7 +182,6 @@ def trainEpoch(args_dict, train_loader, model, criterion, optimizer, epoch, symb
                     encoder_loss = criterion[1](output[1], target_var[1].float())
 
                     if args_dict.base == 'base':
-                        print('No enhanced feautures model')
                         train_loss = class_loss
                     else:
                         train_loss = args_dict.lambda_c * class_loss + \
