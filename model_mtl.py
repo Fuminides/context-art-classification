@@ -14,6 +14,7 @@ class MTL(nn.Module):
         super(MTL, self).__init__()
         self.deep_feature_size = None
         self.model = model
+        self.num_class = num_class
         # Load pre-trained visual model
         if model == 'resnet':
             resnet = models.resnet50(pretrained=True)
