@@ -370,7 +370,7 @@ def test_multitask(args_dict):
             label_time = np.concatenate((label_time,target[2].cpu().numpy()),axis=0)
             label_author = np.concatenate((label_author,target[3].cpu().numpy()),axis=0)
 
-        extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
+        # extract_grad_cam_features(model, input_var[0], target_var, args_dict, i, im_names)
 
     # Compute Accuracy
     acc_type = np.sum(out_type == label_type)/len(out_type)
