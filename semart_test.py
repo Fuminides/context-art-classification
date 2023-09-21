@@ -289,6 +289,9 @@ def test_multitask(args_dict):
     model = MTL(num_classes, model=args_dict.architecture)
     if torch.cuda.is_available():
         model.cuda()
+    # Create a random batch
+    dummy_batch = torch.randn(1, 3, 224, 224).cuda()
+    model(dummy_batch)
 
     # Load best model
     print("=> loading checkpoint '{}'".format(args_dict.model_path))
